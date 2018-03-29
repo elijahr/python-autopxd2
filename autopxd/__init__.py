@@ -57,8 +57,6 @@ def parse(code, extra_cpp_args=[], whitelist=None):
     return ast
 
 
-
-
 def translate(code, hdrname, extra_cpp_args=[], whitelist=None):
     """
     to generate pxd mappings for only certain files, populate the whitelist parameter
