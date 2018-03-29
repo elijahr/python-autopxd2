@@ -9,6 +9,7 @@ from pycparser import c_parser
 from .declarations import BUILTIN_HEADERS_DIR, IGNORE_DECLARATIONS
 from .writer import AutoPxd
 
+
 def ensure_binary(s, encoding='utf-8', errors='strict'):
     """Coerce **s** to six.binary_type.
     For Python 2:
@@ -26,12 +27,15 @@ def ensure_binary(s, encoding='utf-8', errors='strict'):
         raise TypeError("not expecting type '%s'" % type(s))
 
 
-
-
 def preprocess(code, extra_cpp_args=[]):
-    proc = subprocess.Popen([
-        'cpp', '-nostdinc', '-D__attribute__(x)=', '-I', BUILTIN_HEADERS_DIR,
-    ] + extra_cpp_args + ['-'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+    proc = subprocess.Popen(['cpp',
+                             '-nostdinc',
+                             '-D__attribute__(x)=',
+                             '-I',
+                             BUILTIN_HEADERS_DIR,
+                             ] + extra_cpp_args + ['-'],
+                            stdin=subprocess.PIPE,
+                            stdout=subprocess.PIPE)
     result = [proc.communicate(input=ensure_binary(code))[0]]
     while proc.poll() is None:
         result.append(proc.communicate()[0])
@@ -57,7 +61,7 @@ def translate(code, hdrname, extra_cpp_args=[], whitelist=None):
     """
     to generate pxd mappings for only certain files, populate the whitelist parameter
     with the filenames (including relative path):
-    whitelist = ['/usr/include/baz.h', 'include/tux.h']    
+    whitelist = ['/usr/include/baz.h', 'include/tux.h']
 
     if the input file is a file that we want in the whitelist, i.e. `whitelist = [hdrname]`,
     the following extra step is required:
@@ -69,7 +73,8 @@ def translate(code, hdrname, extra_cpp_args=[], whitelist=None):
     p.visit(parse(code, extra_cpp_args=extra_cpp_args, whitelist=whitelist))
     pxd_string = ''
     if p.stdint_declarations:
-        pxd_string += 'from libc.stdint cimport {:s}\n\n'.format(', '.join(p.stdint_declarations))
+        pxd_string += 'from libc.stdint cimport {:s}\n\n'.format(
+            ', '.join(p.stdint_declarations))
     pxd_string += str(p)
     return pxd_string
 
@@ -88,12 +93,12 @@ def translate_command_line(input_path, output_path=None, include_dir=None):
     open(output_path, 'a+').write(output_string)
 
 
-
-
 WHITELIST = []
 
+
 @click.command()
-@click.option('--include-dir', '-I', multiple=True, metavar='<dir>', help='Allow the C preprocessor to search for files in <dir>.')
+@click.option('--include-dir', '-I', multiple=True, metavar='<dir>',
+              help='Allow the C preprocessor to search for files in <dir>.')
 @click.argument('infile', type=click.File('r'), default=sys.stdin)
 @click.argument('outfile', type=click.File('w'), default=sys.stdout)
 def cli(infile, outfile, include_dir):

@@ -1,11 +1,19 @@
 language: python
 
-python:
-  - 2.7
-  - 3.4
-  - 3.6
+matrix:
+    include:
+        - python: 2.7
+        - python: 3.4
+        - python: 3.6
+        - python: 3.6
+          env: TEST_MODE=PEP8
 
-install: pip install -e .
+install:
+  - pip install -e .
 
 script:
-  - pytest
+  - if [[ "$TEST_MODE" == "PEP8" ]]; then
+      pycodestyle --max-line-length=95 --show-source ;
+    else
+      pytest;
+    fi

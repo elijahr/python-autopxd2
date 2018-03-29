@@ -113,17 +113,16 @@ class AutoPxd(c_ast.NodeVisitor, PxdNode):
         fname = decls[-1].name
         args = decls[:-1]
         if (len(args) == 1 and isinstance(args[0], IdentifierType) and
-            args[0].type_name == 'void'):
+                args[0].type_name == 'void'):
             args = []
         if (self.child_of(c_ast.PtrDecl, -2) and not
-            self.child_of(c_ast.Typedef, -3)):
+                self.child_of(c_ast.Typedef, -3)):
             # declaring a variable or parameter
             name = self.path_name('ft'.format(fname))
             self.decl_stack[0].append(Type(Ptr(Function(return_type, name, args))))
             self.append(name)
         else:
             self.append(Function(return_type, fname, args))
-
 
     def visit_PtrDecl(self, node):
         decls = self.collect(node)
@@ -161,7 +160,7 @@ class AutoPxd(c_ast.NodeVisitor, PxdNode):
         assert self.decl_stack.pop() == decls
         return decls
 
-    def path_name(self, tag = None):
+    def path_name(self, tag=None):
         names = []
         for node in self.visit_stack[:-2]:
             if hasattr(node, 'declname') and node.declname:
@@ -192,4 +191,3 @@ class AutoPxd(c_ast.NodeVisitor, PxdNode):
                 rv.append(self.indent + line)
             rv.append('')
         return rv
-
