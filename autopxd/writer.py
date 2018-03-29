@@ -141,7 +141,6 @@ class AutoPxd(c_ast.NodeVisitor, PxdNode):
             elif hasattr(node.dim, 'name') and node.dim.name in self.constants:
                 dim = str(self.constants[node.dim.name])
         self.dimension_stack.append(dim)
-        level = len(self.dimension_stack)
         decls = self.collect(node)
         assert len(decls) == 1
         self.append(Array(decls[0], self.dimension_stack))
@@ -158,7 +157,7 @@ class AutoPxd(c_ast.NodeVisitor, PxdNode):
     def collect(self, node):
         decls = []
         self.decl_stack.append(decls)
-        name = self.generic_visit(node)
+        self.generic_visit(node)
         assert self.decl_stack.pop() == decls
         return decls
 
@@ -174,14 +173,14 @@ class AutoPxd(c_ast.NodeVisitor, PxdNode):
         else:
             return '_{0}_{1}'.format('_'.join(names), tag)
 
-    def child_of(self, type, index=None):
+    def child_of(self, node_type, index=None):
         if index is None:
             for node in reversed(self.visit_stack):
-                if isinstance(node, type):
+                if isinstance(node, node_type):
                     return True
             return False
         else:
-            return isinstance(self.visit_stack[index], type)
+            return isinstance(self.visit_stack[index], node_type)
 
     def append(self, node):
         self.decl_stack[-1].append(node)

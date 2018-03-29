@@ -59,7 +59,9 @@ class Ptr(IdentifierType):
 
 
 class Array(IdentifierType):
-    def __init__(self, node, dimensions=[1]):
+    def __init__(self, node, dimensions=None):
+        if dimensions is None:
+            dimensions = [1]
         self.node = node
         self.dimensions = dimensions
 
