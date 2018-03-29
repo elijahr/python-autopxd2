@@ -1,0 +1,17 @@
+union some_union {
+  int a, *b, **c, ***d;
+  char ac, *bc, *cc[5];
+};
+
+---
+
+cdef extern from "union.test":
+
+    cdef union some_union:
+        int a
+        int* b
+        int** c
+        int*** d
+        char ac
+        char* bc
+        char* cc[5]

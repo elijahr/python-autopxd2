@@ -1,0 +1,23 @@
+void (*my_func)(int a, char b);
+
+struct {
+  int a, b;
+} my_anon_struct[10];
+
+int c;
+
+---
+
+cdef extern from "globals.test":
+
+    ctypedef void (*_my_func_ft)(int a, char b)
+
+    _my_func_ft my_func
+
+    cdef struct _my_anon_struct_s:
+        int a
+        int b
+
+    _my_anon_struct_s my_anon_struct[10]
+
+    int c

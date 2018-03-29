@@ -1,0 +1,14 @@
+enum MyEnum {
+    C1,
+    C2,
+    C3
+};
+
+---
+
+cdef extern from "enum.test":
+
+    cdef enum MyEnum:
+        C1
+        C2
+        C3

@@ -1,0 +1,16 @@
+typedef enum my_enum {
+    C1,
+    C2,
+    C3
+} MyEnumType;
+
+---
+
+cdef extern from "typedef_enum.test":
+
+    cdef enum my_enum:
+        C1
+        C2
+        C3
+
+    ctypedef my_enum MyEnumType

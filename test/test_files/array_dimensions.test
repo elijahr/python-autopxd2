@@ -1,0 +1,30 @@
+#define DIM_X 5
+#define DIM_Y 6
+typedef enum {
+        ZERO = 0,
+        ONE,
+        TWO,
+        THREE
+} my_enum_t;
+
+char *my_ptr_array[];
+
+int my_array[DIM_X][DIM_Y];
+
+float my_other_array[TWO][THREE];
+
+---
+
+cdef extern from "array_dimensions.test":
+
+    ctypedef enum my_enum_t:
+        ZERO
+        ONE
+        TWO
+        THREE
+
+    char* my_ptr_array[]
+
+    int my_array[5][6]
+
+    float my_other_array[2][3]

@@ -1,0 +1,30 @@
+void my_func_1(void (*my_cb)(int *a), int b);
+
+void my_func_2(void (*my_cb2)(void (*my_cb3)(int *a)), int b);
+
+struct my_struct {
+  void (*my_func_3)(void (*my_cb1)(int *a), void (*my_cb2)(int *a));
+};
+
+---
+
+cdef extern from "inline_proto_nested.test":
+
+    ctypedef void (*_my_func_1_my_cb_ft)(int* a)
+
+    void my_func_1(_my_func_1_my_cb_ft my_cb, int b)
+
+    ctypedef void (*_my_func_2_my_cb2_my_cb3_ft)(int* a)
+
+    ctypedef void (*_my_func_2_my_cb2_ft)(_my_func_2_my_cb2_my_cb3_ft my_cb3)
+
+    void my_func_2(_my_func_2_my_cb2_ft my_cb2, int b)
+
+    ctypedef void (*_my_struct_my_func_3_my_cb1_ft)(int* a)
+
+    ctypedef void (*_my_struct_my_func_3_my_cb2_ft)(int* a)
+
+    ctypedef void (*_my_struct_my_func_3_ft)(_my_struct_my_func_3_my_cb1_ft my_cb1, _my_struct_my_func_3_my_cb2_ft my_cb2)
+
+    cdef struct my_struct:
+        _my_struct_my_func_3_ft my_func_3

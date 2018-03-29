@@ -1,0 +1,17 @@
+struct some_struct {
+  int a, *b, **c, ***d;
+  char ac, *bc, *cc[5];
+};
+
+---
+
+cdef extern from "struct.test":
+
+    cdef struct some_struct:
+        int a
+        int* b
+        int** c
+        int*** d
+        char ac
+        char* bc
+        char* cc[5]

@@ -1,0 +1,14 @@
+enum {
+    C1 = 5,
+    C2 = 4,
+    C3 = 3
+};
+
+---
+
+cdef extern from "anonymous_enum.test":
+
+    cdef enum:
+        C1
+        C2
+        C3

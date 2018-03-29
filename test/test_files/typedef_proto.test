@@ -1,0 +1,24 @@
+struct my_struct {
+  int a, b;
+};
+
+typedef void (*my_func_1)(void);
+typedef void (*my_func_2)(struct my_struct *p);
+typedef int (*my_func_3)(char *a1, char **a2, char **a3[3][4]);
+typedef int ***(*my_func_4)(char *a1, char **a2, char **a3[3][4]);
+
+---
+
+cdef extern from "typedef_proto.test":
+
+    cdef struct my_struct:
+        int a
+        int b
+
+    ctypedef void (*my_func_1)()
+
+    ctypedef void (*my_func_2)(my_struct* p)
+
+    ctypedef int (*my_func_3)(char* a1, char** a2, char** a3[3][4])
+
+    ctypedef int*** (*my_func_4)(char* a1, char** a2, char** a3[3][4])

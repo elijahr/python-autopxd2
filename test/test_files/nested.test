@@ -1,0 +1,28 @@
+typedef struct my_s {
+  union my_nested_u {
+    char c;
+    struct my_nested_s {
+      int i;
+    } n;
+    int i;
+  } n;
+  unsigned u;
+} my_t;
+
+---
+
+cdef extern from "nested.test":
+
+    cdef struct my_nested_s:
+        int i
+
+    cdef union my_nested_u:
+        char c
+        my_nested_s n
+        int i
+
+    cdef struct my_s:
+        my_nested_u n
+        unsigned u
+
+    ctypedef my_s my_t

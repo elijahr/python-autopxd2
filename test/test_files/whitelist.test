@@ -1,0 +1,11 @@
+#include "tux_foo.h"
+
+---
+
+cdef extern from "whitelist.test":
+
+    void foo(tux*, int a)
+
+    cdef struct tux:
+        int a
+        int b

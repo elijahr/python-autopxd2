@@ -1,0 +1,16 @@
+typedef struct my_struct_s {
+  int s1, **s2;
+  char c1, *c2;
+} my_struct_t;
+
+---
+
+cdef extern from "typedef_struct.test":
+
+    cdef struct my_struct_s:
+        int s1
+        int** s2
+        char c1
+        char* c2
+
+    ctypedef my_struct_s my_struct_t

@@ -1,0 +1,16 @@
+typedef union my_union_u {
+  int s1, **s2;
+  char c1, *c2;
+} my_union_t;
+
+---
+
+cdef extern from "typedef_union.test":
+
+    cdef union my_union_u:
+        int s1
+        int** s2
+        char c1
+        char* c2
+
+    ctypedef my_union_u my_union_t

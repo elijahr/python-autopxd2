@@ -1,0 +1,18 @@
+struct my_struct;
+
+void my_func(struct my_struct *, int a);
+
+struct my_struct {
+  int a;
+  int b;
+};
+
+---
+
+cdef extern from "forward_empty_struct.test":
+
+    void my_func(my_struct*, int a)
+
+    cdef struct my_struct:
+        int a
+        int b

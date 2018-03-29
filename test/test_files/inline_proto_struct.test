@@ -1,0 +1,24 @@
+struct my_struct {
+  void (*my_func_1)(void);
+  void (*my_func_2)(struct my_struct *p);
+  int (*my_func_3)(char *a1, char **a2, char **a3[3][4]);
+  int ***(*my_func_4)(char *a1, char **a2, char **a3[3][4]);
+};
+
+---
+
+cdef extern from "inline_proto_struct.test":
+
+    ctypedef void (*_my_struct_my_func_1_ft)()
+
+    ctypedef void (*_my_struct_my_func_2_ft)(my_struct* p)
+
+    ctypedef int (*_my_struct_my_func_3_ft)(char* a1, char** a2, char** a3[3][4])
+
+    ctypedef int*** (*_my_struct_my_func_4_ft)(char* a1, char** a2, char** a3[3][4])
+
+    cdef struct my_struct:
+        _my_struct_my_func_1_ft my_func_1
+        _my_struct_my_func_2_ft my_func_2
+        _my_struct_my_func_3_ft my_func_3
+        _my_struct_my_func_4_ft my_func_4

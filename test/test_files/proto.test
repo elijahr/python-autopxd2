@@ -1,0 +1,27 @@
+struct my_struct {
+  int a, b;
+};
+
+void my_func_1(void);
+void my_func_2(struct my_struct *p);
+int my_func_3(char *a1, char **a2, char **a3[3][4]);
+int ***my_func_4(char *a1, char **a2, char **a3[3][4]);
+void my_func_5(char *, int);
+
+---
+
+cdef extern from "proto.test":
+
+    cdef struct my_struct:
+        int a
+        int b
+
+    void my_func_1()
+
+    void my_func_2(my_struct* p)
+
+    int my_func_3(char* a1, char** a2, char** a3[3][4])
+
+    int*** my_func_4(char* a1, char** a2, char** a3[3][4])
+
+    void my_func_5(char*, int)

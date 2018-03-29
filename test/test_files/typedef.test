@@ -1,0 +1,10 @@
+typedef int custom_int_t;
+typedef unsigned long custom_uint_t;
+
+---
+
+cdef extern from "typedef.test":
+
+    ctypedef int custom_int_t
+
+    ctypedef unsigned long custom_uint_t
