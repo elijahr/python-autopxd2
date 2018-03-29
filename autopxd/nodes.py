@@ -24,12 +24,12 @@ class Function(PxdNode):
         self.args = args
 
     def argstr(self):
-        l = []
+        arguments_list = []
         for arg in self.args:
             lines = arg.lines()
             assert len(lines) == 1
-            l.append(lines[0])
-        return ', '.join(l)
+            arguments_list.append(lines[0])
+        return ', '.join(arguments_list)
 
     def lines(self):
         return [
@@ -68,7 +68,8 @@ class Array(IdentifierType):
     @property
     def name(self):
         if self.dimensions:
-            return self.node.name + '[' + ']['.join([str(dim) for dim in self.dimensions]) + ']'
+            return self.node.name + '[' + ']['.join(
+                [str(dim) for dim in self.dimensions]) + ']'
         else:
             return self.node.name
 
@@ -117,4 +118,3 @@ class Enum(PxdNode):
         for item in self.items:
             rv.append(self.indent + item)
         return rv
-

@@ -15,15 +15,15 @@ def install_libc_headers_and(cmdclass):
                 raise Exception(
                     '"{0}" already exists and is not a directory'.format(inc))
             return
-        repo = 'https://github.com/eliben/pycparser' 
+        repo = 'https://github.com/eliben/pycparser'
         commit = 'a47b919287a33dea55cc02b2f8c5f4be2ee8613c'
         url = '{0}/archive/{1}.tar.gz'.format(repo, commit)
         subprocess.check_call((
-            'mkdir {0} && cd {0} && '
-            'curl -L -o - {1} | '
-            'tar xfz - --strip-components=3 '
-            'pycparser-{2}/utils/fake_libc_include/'
-        ).format(inc, url, commit), shell=True)
+                                  'mkdir {0} && cd {0} && '
+                                  'curl -L -o - {1} | '
+                                  'tar xfz - --strip-components=3 '
+                                  'pycparser-{2}/utils/fake_libc_include/'
+                              ).format(inc, url, commit), shell=True)
 
     class Sub(cmdclass):
         def run(self):
@@ -34,8 +34,7 @@ def install_libc_headers_and(cmdclass):
 
 
 VERSION = '1.1.2'
-REPO    = 'http://github.com/tarruda/python-autopxd'
-
+REPO = 'http://github.com/tarruda/python-autopxd'
 
 setup(
     name='autopxd',
@@ -57,9 +56,11 @@ setup(
         'six',
         'Click',
         'pycparser',
+        'pytest',
+        'pycodestyle'
     ],
     entry_points='''
     [console_scripts]
     autopxd=autopxd:cli
     ''',
-    )
+)
