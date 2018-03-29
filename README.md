@@ -1,13 +1,24 @@
 # python-autopxd2
 A friendly fork of autopxd https://github.com/tarruda/python-autopxd
 
-This repo isn't usable for now but will be soon.
-It will allow to generate `.pxd` files automatically from `.h` files.
+It allows to generate `.pxd` files automatically from `.h` files.
+
+### installation:
+```shell
+git clone https://github.com/gabrieldemarmiesse/python-autopxd2.git
+cd python-autopxd2
+pip install -e .
+```
+
+### usage:
+```shell
+autopxd INPUT_PATH OUTPUT_PATH
+```
 
 Roadmap:
 
-- Refactoring of the code
-- Adding tests for PEP8
+- Refactoring of the code __DONE__
+- Adding tests for PEP8 __DONE__
 - Adding tests for the command line
 - Uploading to PyPi
 - Check that the generated code is correct by comparing it to the libc in Cython
