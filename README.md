@@ -3,6 +3,13 @@ A friendly fork of autopxd https://github.com/tarruda/python-autopxd
 
 It allows to generate `.pxd` files automatically from `.h` files.
 
+Tested against:
+
+- Python 2.7
+- Python 3.4
+- Python 3.6
+- PEP8
+
 [![Build Status](https://travis-ci.org/gabrieldemarmiesse/python-autopxd2.svg?branch=master)](https://travis-ci.org/gabrieldemarmiesse/python-autopxd2)
 
 ### installation:
