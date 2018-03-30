@@ -1,4 +1,4 @@
-import os.path
+import os
 import subprocess
 
 from setuptools import setup
@@ -33,19 +33,18 @@ def install_libc_headers_and(cmdclass):
     return Sub
 
 
-VERSION = '1.1.2'
-REPO = 'http://github.com/tarruda/python-autopxd'
+VERSION = '1.0.0'
+REPO = 'https://github.com/gabrieldemarmiesse/python-autopxd2'
 
 setup(
-    name='autopxd',
+    name='autopxd2',
     version=VERSION,
     description='Automatically generate Cython pxd files from C headers',
     packages=['autopxd'],
     package_data={'autopxd': ['include/*.h', 'include/**/*.h']},
-    author='Thiago de Arruda',
-    author_email='tpadilha84@gmail.com',
+    author='Gabriel de Marmiesse',
+    author_email='gabrieldemarmiesse@gmail.com',
     url=REPO,
-    download_url='{0}/archive/{1}.tar.gz'.format(REPO, VERSION),
     license='MIT',
     cmdclass={
         'develop': install_libc_headers_and(develop),
