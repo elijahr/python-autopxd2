@@ -28,7 +28,6 @@ Roadmap:
 
 - Refactoring of the code __DONE__
 - Adding tests for PEP8 __DONE__
-- Adding tests for the command line
 - Uploading to PyPi
 - Check that the generated code is correct by comparing it to the libc in Cython
 - More tests
