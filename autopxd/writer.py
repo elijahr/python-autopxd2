@@ -60,7 +60,11 @@ class AutoPxd(c_ast.NodeVisitor, PxdNode):
             for item in node.values.enumerators:
                 items.append(item.name)
                 if item.value is not None and hasattr(item.value, 'value'):
-                    value = int(item.value.value)
+                    value = item.value.value
+                    if value[0] == '0' and len(value) > 1 and value[1] in '0123456789':
+                        # convert octal to Python syntax:
+                        value = '0o' + value[1:]
+                    value = int(value, base=0)
                 else:
                     value += 1
                 self.constants[item.name] = value
