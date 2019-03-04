@@ -74,7 +74,7 @@ class AutoPxd(c_ast.NodeVisitor, PxdNode):
         if not name:
             if type_def:
                 name = self.path_name()
-            elif type_def:
+            elif type_decl:
                 name = self.path_name('e')
         # add the enum definition to the top level
         if node.name is None and type_def and len(items):
