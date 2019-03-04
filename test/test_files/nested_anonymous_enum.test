@@ -1,0 +1,15 @@
+struct nested_enum_struct {
+  enum { a, b, c } x;
+  };
+
+---
+
+cdef extern from "nested_anonymous_enum.test":
+
+    cdef enum _nested_enum_struct_x_e:
+        a
+        b
+        c
+
+    cdef struct nested_enum_struct:
+        _nested_enum_struct_x_e x
