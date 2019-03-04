@@ -3,7 +3,7 @@ enum MyEnum {
     C2 = 0b01010,
     C3 = 01234,
     C4,
-    C5 = 0Xabcd,
+    C5 = 0XabcdL,
     C6 = 0L,
     C7 = 0B1010
 };
@@ -22,4 +22,4 @@ cdef extern from "enum_integer_bases.test":
         C6
         C7
 
-    float my_other_array[0Xabcd][0B1010]
+    float my_other_array[0XabcdL][0B1010]

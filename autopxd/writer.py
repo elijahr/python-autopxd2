@@ -67,7 +67,7 @@ class AutoPxd(c_ast.NodeVisitor, PxdNode):
                         value = '0o' + value[1:]
                 else:
                     # Convert to Python integer if necessary and add one:
-                    if isinstance(value, str):
+                    if isinstance(value, six.string_types):
                         # Remove type suffixes
                         for suffix in 'lLuU':
                             value = value.replace(suffix, '')
