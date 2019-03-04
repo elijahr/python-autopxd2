@@ -1,0 +1,78 @@
+typedef int False;
+typedef False None, in, def;
+
+False **lambda = 0;
+
+void True(struct def from);
+
+struct class {
+   int finally;
+   char *is;
+   void (*global)(int a);
+};
+
+enum try {
+  del,
+  and,
+};
+
+typedef void (*foo)(int a);
+
+False *pass(None except, in raise);
+
+typedef enum {
+        ZERO = 0,
+        ONE,
+} with;
+
+
+union and {
+  char ac, *or[5];
+  void (*import)(int yield);
+};
+
+False yield[1][0];
+
+---
+
+cdef extern from "keywords.test":
+
+    ctypedef int False_ "False"
+
+    ctypedef False_ None_ "None"
+
+    ctypedef False_ in_ "in"
+
+    ctypedef False_ def_ "def"
+
+    False_** lambda_ "lambda"
+
+    void True_ "True"(def_ from_)
+
+    ctypedef void (*_class_global_ft)(int a)
+
+    cdef struct class_ "class":
+        int finally_ "finally"
+        char* is_ "is"
+        _class_global_ft global_ "global"
+
+    cdef enum try_ "try":
+        del_ "del"
+        and_ "and"
+
+    ctypedef void (*foo)(int a)
+
+    False_* pass_ "pass"(None_ except_, in_ raise_)
+
+    ctypedef enum with_ "with":
+        ZERO
+        ONE
+
+    ctypedef void (*_and_import_ft)(int yield_)
+
+    cdef union and_ "and":
+        char ac
+        char* or_ "or"[5]
+        _and_import_ft import_ "import"
+
+    False_ yield_ "yield"[1][0]
