@@ -1,0 +1,22 @@
+enum MyEnum {
+    C1 = 0xabcd,
+    C2 = 0b01010,
+    C3 = 01234,
+    C4,
+    C5 = 0Xabcd,
+    C6 = 0,
+    C7 = 0B1010
+};
+
+---
+
+cdef extern from "enum_integer_bases.test":
+
+    cdef enum MyEnum:
+        C1
+        C2
+        C3
+        C4
+        C5
+        C6
+        C7
