@@ -4,6 +4,20 @@ from pycparser import c_ast
 from .declarations import STDINT_DECLARATIONS
 from .nodes import PxdNode, Block, Enum, IdentifierType
 from .nodes import Type, Ptr, Function, Array
+from .keywords import keywords
+
+
+def escape(name, include_C_name=False):
+    """Avoid name collisions with Python keywords by appending an underscore. if
+    include_C_name=True, additionally append the orginal name in quotes, e.g.:
+        global -> global_ "global"
+    """
+    if name is not None and name in keywords:
+        if include_C_name:
+            name = '{name}_ "{name}"'.format(name=name)
+        else:
+            name = name + '_'
+    return name
 
 
 class AutoPxd(c_ast.NodeVisitor, PxdNode):
@@ -26,7 +40,7 @@ class AutoPxd(c_ast.NodeVisitor, PxdNode):
         for name in node.names:
             if name in STDINT_DECLARATIONS and name not in self.stdint_declarations:
                 self.stdint_declarations.append(name)
-        self.append(' '.join(node.names))
+        self.append(' '.join(escape(name) for name in node.names))
 
     def visit_Block(self, node, kind):
         type_decl = self.child_of(c_ast.TypeDecl, -2)
@@ -40,25 +54,25 @@ class AutoPxd(c_ast.NodeVisitor, PxdNode):
         if not node.decls:
             if self.child_of(c_ast.TypeDecl, -2):
                 # not a definition, must be a reference
-                self.append(name)
+                self.append(name if node.name is None else escape(name))
             return
         fields = self.collect(node)
         # add the struct/union definition to the top level
         if type_def and node.name is None:
             self.decl_stack[0].append(Block(name, fields, kind, 'ctypedef'))
         else:
-            self.decl_stack[0].append(Block(name, fields, kind, 'cdef'))
+            self.decl_stack[0].append(Block(escape(name, True), fields, kind, 'cdef'))
             if type_decl:
                 # inline struct/union, add a reference to whatever name it was
                 # defined on the top level
-                self.append(name)
+                self.append(escape(name))
 
     def visit_Enum(self, node):
         items = []
         if node.values:
             value = 0
             for item in node.values.enumerators:
-                items.append(item.name)
+                items.append(escape(item.name, True))
                 if item.value is not None and hasattr(item.value, 'value'):
                     value = int(item.value.value)
                 else:
@@ -74,12 +88,14 @@ class AutoPxd(c_ast.NodeVisitor, PxdNode):
                 name = self.path_name('e')
         # add the enum definition to the top level
         if node.name is None and type_def and len(items):
-            self.decl_stack[0].append(Enum(name, items, 'ctypedef'))
+            self.decl_stack[0].append(Enum(escape(name, True), items, 'ctypedef'))
         else:
             if len(items):
-                self.decl_stack[0].append(Enum(name, items, 'cdef'))
+                escname = name if node.name is None else escape(name, True)
+                self.decl_stack[0].append(Enum(escname, items, 'cdef'))
             if type_decl:
-                self.append(name)
+                escname = name if node.name is None else escape(name)
+                self.append(escname)
 
     def visit_Struct(self, node):
         return self.visit_Block(node, 'struct')
@@ -93,7 +109,8 @@ class AutoPxd(c_ast.NodeVisitor, PxdNode):
             return
         assert len(decls) == 1
         if isinstance(decls[0], six.string_types):
-            self.append(IdentifierType(node.declname, decls[0]))
+            include_C_name = not self.child_of(c_ast.ParamList)
+            self.append(IdentifierType(escape(node.declname, include_C_name), decls[0]))
         else:
             self.append(decls[0])
 
@@ -103,7 +120,8 @@ class AutoPxd(c_ast.NodeVisitor, PxdNode):
             return
         assert len(decls) == 1
         if isinstance(decls[0], six.string_types):
-            self.append(IdentifierType(node.name, decls[0]))
+            include_C_name = not self.child_of(c_ast.ParamList)
+            self.append(IdentifierType(escape(node.name, include_C_name), decls[0]))
         else:
             self.append(decls[0])
 
