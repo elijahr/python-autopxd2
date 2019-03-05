@@ -96,7 +96,9 @@ class Block(PxdNode):
         self.statement = statement
 
     def lines(self):
-        rv = ['{0} {1} {2}:'.format(self.statement, self.kind, self.name)]
+        rv = ['{0} {1} {2}'.format(self.statement, self.kind, self.name)]
+        if self.fields:
+            rv[0] += ':'
         for field in self.fields:
             for line in field.lines():
                 rv.append(self.indent + line)

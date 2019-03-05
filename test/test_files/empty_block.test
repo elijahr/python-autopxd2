@@ -1,0 +1,11 @@
+struct foo;
+union baz;
+
+---
+
+cdef extern from "empty_block.test":
+
+    cdef struct foo
+
+    cdef union baz
+    
