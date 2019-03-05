@@ -41,7 +41,7 @@ class AutoPxd(c_ast.NodeVisitor, PxdNode):
             if self.child_of(c_ast.TypeDecl, -2):
                 # not a definition, must be a reference
                 self.append(name)
-            return
+                return
         fields = self.collect(node)
         # add the struct/union definition to the top level
         if type_def and node.name is None:
