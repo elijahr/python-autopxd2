@@ -60,9 +60,20 @@ class AutoPxd(c_ast.NodeVisitor, PxdNode):
             for item in node.values.enumerators:
                 items.append(item.name)
                 if item.value is not None and hasattr(item.value, 'value'):
-                    value = int(item.value.value)
+                    # Store the integer literal as a string to preserve its base:
+                    value = item.value.value
+                    # convert octal to Python syntax:
+                    if value[0] == '0' and len(value) > 1 and value[1] in '0123456789':
+                        value = '0o' + value[1:]
                 else:
+                    # Convert to Python integer if necessary and add one:
+                    if isinstance(value, six.string_types):
+                        # Remove type suffixes
+                        for suffix in 'lLuU':
+                            value = value.replace(suffix, '')
+                        value = int(value, base=0)
                     value += 1
+                # These constants may be used as array indices:
                 self.constants[item.name] = value
         type_decl = self.child_of(c_ast.TypeDecl, -2)
         type_def = type_decl and self.child_of(c_ast.Typedef, -3)
