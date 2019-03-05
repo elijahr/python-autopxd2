@@ -4,6 +4,8 @@
 
 cdef extern from "whitelist.test":
 
+    cdef struct tux
+
     void foo(tux*, int a)
 
     cdef struct tux:
