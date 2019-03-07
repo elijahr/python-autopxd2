@@ -1,0 +1,6 @@
+#define foo 1.0
+
+---
+
+cdef extern from "no_declarations.test":
+    pass
