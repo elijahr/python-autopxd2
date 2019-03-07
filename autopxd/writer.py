@@ -219,4 +219,7 @@ class AutoPxd(c_ast.NodeVisitor, PxdNode):
             for line in decl.lines():
                 rv.append(self.indent + line)
             rv.append('')
+        if len(rv) == 2:
+            rv[1] = self.indent + 'pass'
+            rv.append('')
         return rv
