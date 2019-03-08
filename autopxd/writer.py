@@ -182,6 +182,10 @@ class AutoPxd(c_ast.NodeVisitor, PxdNode):
         if names[0] != names[1]:
             self.decl_stack[0].append(Type(decls[0]))
 
+    def visit_Compound(self, node):
+        # Do not recurse into the body of inline function definitions
+        pass
+
     def collect(self, node):
         decls = []
         self.decl_stack.append(decls)
