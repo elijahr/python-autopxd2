@@ -1,0 +1,15 @@
+int bar(int x);
+
+static inline int foo(int z) {
+    int y;
+    y = 2 * z;
+    return bar(y);
+}
+
+---
+
+cdef extern from "funcdef.test":
+
+    int bar(int x)
+
+    int foo(int z)
