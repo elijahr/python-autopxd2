@@ -1,0 +1,9 @@
+static inline int foo(int z) {
+    return 2*z;
+}
+
+---
+
+cdef extern from "funcdef.test":
+
+    int foo(int z)

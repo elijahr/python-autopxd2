@@ -50,7 +50,7 @@ def parse(code, extra_cpp_args=[], whitelist=None):
     ast = parser.parse(preprocessed)
     decls = []
     for decl in ast.ext:
-        if hasattr(decl, 'name') and decl.name not in IGNORE_DECLARATIONS:
+        if not hasattr(decl, 'name') or decl.name not in IGNORE_DECLARATIONS:
             if not whitelist or decl.coord.file in whitelist:
                 decls.append(decl)
     ast.ext = decls
