@@ -33,7 +33,8 @@ def install_libc_headers_and(cmdclass):
     return Sub
 
 
-VERSION = '1.0.0'
+VERSION = None  # version actually defined by the following exec
+exec(open("autopxd/_version.py", encoding="utf-8").read())
 REPO = 'https://github.com/gabrieldemarmiesse/python-autopxd2'
 
 setup(

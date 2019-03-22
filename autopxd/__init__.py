@@ -8,6 +8,7 @@ from pycparser import c_parser
 
 from .declarations import BUILTIN_HEADERS_DIR, IGNORE_DECLARATIONS
 from .writer import AutoPxd
+from ._version import __version__
 
 
 def ensure_binary(s, encoding='utf-8', errors='strict'):
@@ -83,11 +84,16 @@ WHITELIST = []
 
 
 @click.command()
+@click.option('--version', is_flag=True)
 @click.option('--include-dir', '-I', multiple=True, metavar='<dir>',
               help='Allow the C preprocessor to search for files in <dir>.')
 @click.argument('infile', type=click.File('r'), default=sys.stdin)
 @click.argument('outfile', type=click.File('w'), default=sys.stdout)
-def cli(infile, outfile, include_dir):
+def cli(version, infile, outfile, include_dir):
+    if version:
+        print(__version__)
+        return
+
     extra_cpp_args = []
     for directory in include_dir:
         extra_cpp_args += ['-I', directory]
