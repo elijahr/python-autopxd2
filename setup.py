@@ -56,15 +56,21 @@ def install_libc_headers_and(cmdclass):
 
     return Sub
 
+
 VERSION = '1.0.0'
 REPO = 'https://github.com/gabrieldemarmiesse/python-autopxd2'
+
+PACKAGE_DATA = ['include/*.h', 'include/**/*.h']
+
+if platform.system() == 'Darwin':
+    PACKAGE_DATA += ['darwin-include/*.h', 'darwin-include/**/*.h']
 
 setup(
     name='autopxd2',
     version=VERSION,
     description='Automatically generate Cython pxd files from C headers',
     packages=['autopxd'],
-    package_data={'autopxd': ['include/*.h', 'include/**/*.h', 'darwin-include/*.h', 'darwin-include/**/*.h']},
+    package_data={'autopxd': PACKAGE_DATA},
     author='Gabriel de Marmiesse',
     author_email='gabrieldemarmiesse@gmail.com',
     url=REPO,
