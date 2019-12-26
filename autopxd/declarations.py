@@ -2,7 +2,7 @@ import os
 
 BUILTIN_HEADERS_DIR = os.path.join(os.path.dirname(__file__), 'include')
 
-# Stubs for /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include
+# Stubs for /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include  # noqa
 DARWIN_HEADERS_DIR = os.path.join(os.path.dirname(__file__), 'darwin-include')
 
 
