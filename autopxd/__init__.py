@@ -1,4 +1,5 @@
 import os
+import platform
 import subprocess
 import sys
 
@@ -6,7 +7,7 @@ import click
 import six
 from pycparser import c_parser
 
-from .declarations import BUILTIN_HEADERS_DIR, IGNORE_DECLARATIONS
+from .declarations import BUILTIN_HEADERS_DIR, DARWIN_HEADERS_DIR, IGNORE_DECLARATIONS
 from .writer import AutoPxd
 
 
@@ -27,13 +28,20 @@ def ensure_binary(s, encoding='utf-8', errors='strict'):
         raise TypeError("not expecting type '%s'" % type(s))
 
 
-def preprocess(code, extra_cpp_args=[]):
-    proc = subprocess.Popen(['cpp',
-                             '-nostdinc',
-                             '-D__attribute__(x)=',
-                             '-I',
-                             BUILTIN_HEADERS_DIR,
-                             ] + extra_cpp_args + ['-'],
+def preprocess(code, extra_cpp_args=[], debug=False):
+    if platform.system() == 'Darwin':
+        cmd = ['clang', '-E', '-I%s' % DARWIN_HEADERS_DIR]
+    else:
+        cmd = ['cpp']
+    cmd += [
+        '-nostdinc',
+        '-D__attribute__(x)=',
+        '-D__extension__=',
+        '-D__inline=',
+        '-D__asm=',
+        '-I%s' % BUILTIN_HEADERS_DIR,
+        ] + extra_cpp_args + ['-']
+    proc = subprocess.Popen(cmd,
                             stdin=subprocess.PIPE,
                             stdout=subprocess.PIPE)
     result = [proc.communicate(input=ensure_binary(code))[0]]
@@ -41,11 +49,14 @@ def preprocess(code, extra_cpp_args=[]):
         result.append(proc.communicate()[0])
     if proc.returncode:
         raise Exception('Invoking C preprocessor failed')
-    return b''.join(result).decode('utf-8')
+    res = b''.join(result).decode('utf-8')
+    if debug:
+        sys.stderr.write(res)
+    return res
 
 
-def parse(code, extra_cpp_args=[], whitelist=None):
-    preprocessed = preprocess(code, extra_cpp_args=extra_cpp_args)
+def parse(code, extra_cpp_args=[], whitelist=None, debug=False):
+    preprocessed = preprocess(code, extra_cpp_args=extra_cpp_args, debug=debug)
     parser = c_parser.CParser()
     ast = parser.parse(preprocessed)
     decls = []
@@ -57,7 +68,7 @@ def parse(code, extra_cpp_args=[], whitelist=None):
     return ast
 
 
-def translate(code, hdrname, extra_cpp_args=[], whitelist=None):
+def translate(code, hdrname, extra_cpp_args=[], whitelist=None, debug=False):
     """
     to generate pxd mappings for only certain files, populate the whitelist parameter
     with the filenames (including relative path):
@@ -68,9 +79,9 @@ def translate(code, hdrname, extra_cpp_args=[], whitelist=None):
     extra_cpp_args += [hdrname]
     """
     extra_incdir = os.path.dirname(hdrname)
-    extra_cpp_args += ['-I', extra_incdir]
+    extra_cpp_args += ['-I%s' % extra_incdir]
     p = AutoPxd(hdrname)
-    p.visit(parse(code, extra_cpp_args=extra_cpp_args, whitelist=whitelist))
+    p.visit(parse(code, extra_cpp_args=extra_cpp_args, whitelist=whitelist, debug=debug))
     pxd_string = ''
     if p.stdint_declarations:
         pxd_string += 'from libc.stdint cimport {:s}\n\n'.format(
@@ -85,10 +96,12 @@ WHITELIST = []
 @click.command()
 @click.option('--include-dir', '-I', multiple=True, metavar='<dir>',
               help='Allow the C preprocessor to search for files in <dir>.')
+@click.option('--debug/--no-debug', default=False,
+              help='Dump preprocessor output to stderr')
 @click.argument('infile', type=click.File('r'), default=sys.stdin)
 @click.argument('outfile', type=click.File('w'), default=sys.stdout)
-def cli(infile, outfile, include_dir):
+def cli(infile, outfile, include_dir, debug):
     extra_cpp_args = []
     for directory in include_dir:
-        extra_cpp_args += ['-I', directory]
-    outfile.write(translate(infile.read(), infile.name, extra_cpp_args))
+        extra_cpp_args += ['-I%s' % directory]
+    outfile.write(translate(infile.read(), infile.name, extra_cpp_args, debug=debug))

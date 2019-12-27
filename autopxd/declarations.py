@@ -1,6 +1,11 @@
 import os
 
 BUILTIN_HEADERS_DIR = os.path.join(os.path.dirname(__file__), 'include')
+
+# Stubs for /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include  # noqa
+DARWIN_HEADERS_DIR = os.path.join(os.path.dirname(__file__), 'darwin-include')
+
+
 # Types declared by pycparser fake headers that we should ignore
 IGNORE_DECLARATIONS = {'size_t', '__builtin_va_list', '__gnuc_va_list', '__int8_t',
                        '__uint8_t', '__int16_t', '__uint16_t', '__int_least16_t',
