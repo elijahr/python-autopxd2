@@ -106,3 +106,4 @@ venv.bak/
 autopxd/include/*
 autopxd/darwin-include/*
 *.pyc
+.idea

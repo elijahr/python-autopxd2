@@ -22,6 +22,10 @@ pip install autopxd2
 autopxd INPUT_PATH OUTPUT_PATH
 ```
 
+### release history
+#### v1.1.0 - 2020-01-03
+* Support for OSX
+
 Roadmap:
 
 - Refactoring of the code __DONE__

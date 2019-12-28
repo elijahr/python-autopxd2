@@ -1,19 +1,45 @@
-language: python
+dist: xenial
+
+language: c
+
+cache:
+  - directories:
+    - /opt/python
 
 matrix:
-    include:
-        - python: 2.7
-        - python: 3.4
-        - python: 3.6
-        - python: 3.6
-          env: TEST_MODE=PEP8
+  include:
+    - env: PYENV_VERSION=2.7.17
+      os: linux
+    - env: PYENV_VERSION=3.4.10
+      os: linux
+    - env: PYENV_VERSION=3.6.9
+      os: linux
+    - env: PYENV_VERSION=2.7.17
+      os: osx
+    - env: PYENV_VERSION=3.6.9
+      os: osx
+    - env: PYENV_VERSION=3.6.9 TEST_MODE=PEP8
+      os: linux
+
+before_install:
+  - |
+      if [ "$TRAVIS_OS_NAME" = "linux" ]; then
+        # Update pyenv
+        pushd /opt/pyenv;
+        git pull origin master;
+        popd;
+      fi
+  - pyenv install $PYENV_VERSION --skip-existing;
+  - pip install pipenv;
+  - pipenv install --python=$(pyenv prefix $PYENV_VERSION)/bin/python;
 
 install:
-  - pip install -e .
+  - pipenv run pip install -e file:///$(pwd)#egg=autopxd2[dev]
 
 script:
-  - if [[ "$TEST_MODE" == "PEP8" ]]; then
-      pycodestyle --max-line-length=95 --show-source ;
+  - |
+    if [[ "$TEST_MODE" == "PEP8" ]]; then
+      pipenv run pycodestyle --max-line-length=95 --show-source;
     else
-      pytest;
+      pipenv run pytest;
     fi

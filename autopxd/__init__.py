@@ -79,7 +79,8 @@ def translate(code, hdrname, extra_cpp_args=[], whitelist=None, debug=False):
     extra_cpp_args += [hdrname]
     """
     extra_incdir = os.path.dirname(hdrname)
-    extra_cpp_args += ['-I%s' % extra_incdir]
+    if extra_incdir:
+        extra_cpp_args += ['-I%s' % extra_incdir]
     p = AutoPxd(hdrname)
     p.visit(parse(code, extra_cpp_args=extra_cpp_args, whitelist=whitelist, debug=debug))
     pxd_string = ''
