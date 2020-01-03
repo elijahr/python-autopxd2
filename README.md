@@ -19,7 +19,15 @@ pip install autopxd2
 
 ### usage:
 ```shell
-autopxd INPUT_PATH OUTPUT_PATH
+autopxd [OPTIONS] [INFILE] [OUTFILE]
+
+  Generate a Cython pxd file from a C header file.
+
+Options:
+  -I, --include-dir <dir>  Allow the C preprocessor to search for files in
+                           <dir>.
+  --debug / --no-debug     Dump preprocessor output to stderr.
+  --help                   Show this message and exit.              Show this message and exit.
 ```
 
 ### release history
