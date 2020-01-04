@@ -62,7 +62,10 @@ def install_libc_headers_and(cmdclass):
     return Sub
 
 
-VERSION = '1.1.0'
+with open("autopxd/_version.py", 'r') as f:
+    VERSION = f.read().split('= ')[1].strip()
+
+
 REPO = 'https://github.com/gabrieldemarmiesse/python-autopxd2'
 
 PACKAGE_DATA = ['include/*.h', 'include/**/*.h']

@@ -9,6 +9,7 @@ from pycparser import c_parser
 
 from .declarations import BUILTIN_HEADERS_DIR, DARWIN_HEADERS_DIR, IGNORE_DECLARATIONS
 from .writer import AutoPxd
+from ._version import __version__
 
 
 def ensure_binary(s, encoding='utf-8', errors='strict'):
@@ -95,13 +96,19 @@ WHITELIST = []
 
 
 @click.command(help='Generate a Cython pxd file from a C header file.')
+@click.option('--version', is_flag=True,
+              help='Print program version and exit.')
 @click.option('--include-dir', '-I', multiple=True, metavar='<dir>',
               help='Allow the C preprocessor to search for files in <dir>.')
 @click.option('--debug/--no-debug', default=False,
               help='Dump preprocessor output to stderr.')
 @click.argument('infile', type=click.File('r'), default=sys.stdin)
 @click.argument('outfile', type=click.File('w'), default=sys.stdout)
-def cli(infile, outfile, include_dir, debug):
+def cli(version, infile, outfile, include_dir, debug):
+    if version:
+        print(__version__)
+        return
+
     extra_cpp_args = []
     for directory in include_dir:
         extra_cpp_args += ['-I%s' % directory]
