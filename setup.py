@@ -44,7 +44,11 @@ def install_libc_headers_and(cmdclass):
                 root = root.replace(DARWIN_INCLUDE, '')
                 stub = os.path.join(inc, root, file)
                 print('Stubbing %s' % stub)
-                os.makedirs(os.path.join(inc, root), exist_ok=True)
+                try:
+                    os.makedirs(os.path.join(inc, root))
+                except OSError:
+                    # already exists
+                    pass
                 with open(stub, 'w') as f:
                     f.write('#include "_fake_defines.h"\n#include "_fake_typedefs.h"')
 
@@ -58,7 +62,7 @@ def install_libc_headers_and(cmdclass):
     return Sub
 
 
-VERSION = '1.0.0'
+VERSION = '1.1.0'
 REPO = 'https://github.com/gabrieldemarmiesse/python-autopxd2'
 
 PACKAGE_DATA = ['include/*.h', 'include/**/*.h']
@@ -66,10 +70,17 @@ PACKAGE_DATA = ['include/*.h', 'include/**/*.h']
 if platform.system() == 'Darwin':
     PACKAGE_DATA += ['darwin-include/*.h', 'darwin-include/**/*.h']
 
+
+with open("README.md", "r") as fh:
+    long_description = fh.read()
+
+
 setup(
     name='autopxd2',
     version=VERSION,
     description='Automatically generate Cython pxd files from C headers',
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     packages=['autopxd'],
     package_data={'autopxd': PACKAGE_DATA},
     author='Gabriel de Marmiesse',
@@ -85,9 +96,13 @@ setup(
         'six',
         'Click',
         'pycparser',
-        'pytest',
-        'pycodestyle'
     ],
+    extras_require={
+        'dev': [
+            'pytest',
+            'pycodestyle'
+        ]
+    },
     entry_points='''
     [console_scripts]
     autopxd=autopxd:cli

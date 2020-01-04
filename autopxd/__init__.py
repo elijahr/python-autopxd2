@@ -79,7 +79,8 @@ def translate(code, hdrname, extra_cpp_args=[], whitelist=None, debug=False):
     extra_cpp_args += [hdrname]
     """
     extra_incdir = os.path.dirname(hdrname)
-    extra_cpp_args += ['-I%s' % extra_incdir]
+    if extra_incdir:
+        extra_cpp_args += ['-I%s' % extra_incdir]
     p = AutoPxd(hdrname)
     p.visit(parse(code, extra_cpp_args=extra_cpp_args, whitelist=whitelist, debug=debug))
     pxd_string = ''
@@ -93,11 +94,11 @@ def translate(code, hdrname, extra_cpp_args=[], whitelist=None, debug=False):
 WHITELIST = []
 
 
-@click.command()
+@click.command(help='Generate a Cython pxd file from a C header file.')
 @click.option('--include-dir', '-I', multiple=True, metavar='<dir>',
               help='Allow the C preprocessor to search for files in <dir>.')
 @click.option('--debug/--no-debug', default=False,
-              help='Dump preprocessor output to stderr')
+              help='Dump preprocessor output to stderr.')
 @click.argument('infile', type=click.File('r'), default=sys.stdin)
 @click.argument('outfile', type=click.File('w'), default=sys.stdout)
 def cli(infile, outfile, include_dir, debug):

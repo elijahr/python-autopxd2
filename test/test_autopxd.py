@@ -16,12 +16,13 @@ def make_test(file_path):
         c = c.strip()
         cython = cython.strip() + '\n'
 
-        whitelist = None
+        whitelist = []
         cpp_args = []
-        if file_path == FILES_DIR + '/whitelist.test':
+        if file_path == os.path.join(FILES_DIR, 'whitelist.test'):
             test_path = os.path.dirname(file_path)
-            whitelist = [FILES_DIR + '/tux_foo.h']
-            cpp_args = ['-I', test_path]
+            whitelist.append(os.path.join(FILES_DIR, 'tux_foo.h'))
+            if test_path:
+                cpp_args.append('-I%s' % test_path)
         actual = autopxd.translate(c, os.path.basename(file_path), cpp_args, whitelist)
         assert cython == actual
 
@@ -31,8 +32,8 @@ def make_test(file_path):
 
 
 # Populate globals with one fixture for each test
-for file_path in glob.iglob(FILES_DIR + '/*.test'):
-    make_test(file_path)
+for fp in glob.iglob(os.path.abspath(os.path.join(FILES_DIR, '*.test'))):
+    make_test(fp)
 
 if __name__ == '__main__':
     pytest.main([__file__])
