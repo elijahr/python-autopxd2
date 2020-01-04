@@ -24,6 +24,7 @@ autopxd [OPTIONS] [INFILE] [OUTFILE]
   Generate a Cython pxd file from a C header file.
 
 Options:
+  --version                Print program version and exit.
   -I, --include-dir <dir>  Allow the C preprocessor to search for files in
                            <dir>.
   --debug / --no-debug     Dump preprocessor output to stderr.
