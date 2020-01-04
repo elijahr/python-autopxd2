@@ -31,11 +31,11 @@ Options:
   --help                   Show this message and exit.
 ```
 
-### release history
+### release history:
 #### v1.1.0 - 2020-01-03
 * Support for OSX
 
-Roadmap:
+### roadmap:
 
 - Refactoring of the code __DONE__
 - Adding tests for PEP8 __DONE__
