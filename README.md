@@ -27,7 +27,7 @@ Options:
   -I, --include-dir <dir>  Allow the C preprocessor to search for files in
                            <dir>.
   --debug / --no-debug     Dump preprocessor output to stderr.
-  --help                   Show this message and exit.              Show this message and exit.
+  --help                   Show this message and exit.
 ```
 
 ### release history
