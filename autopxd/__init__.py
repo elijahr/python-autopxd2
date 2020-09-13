@@ -53,7 +53,7 @@ def preprocess(code, extra_cpp_args=[], debug=False):
     res = b''.join(result).decode('utf-8')
     if debug:
         sys.stderr.write(res)
-    return res
+    return res.replace('\r\n', '\n')
 
 
 def parse(code, extra_cpp_args=[], whitelist=None, debug=False):
