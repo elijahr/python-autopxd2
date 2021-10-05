@@ -100,16 +100,18 @@ WHITELIST = []
               help='Print program version and exit.')
 @click.option('--include-dir', '-I', multiple=True, metavar='<dir>',
               help='Allow the C preprocessor to search for files in <dir>.')
+@click.option('--compiler_directives', '-D', multiple=True,
+              help='Additional directives for the C compiler.')
 @click.option('--debug/--no-debug', default=False,
               help='Dump preprocessor output to stderr.')
 @click.argument('infile', type=click.File('r'), default=sys.stdin)
 @click.argument('outfile', type=click.File('w'), default=sys.stdout)
-def cli(version, infile, outfile, include_dir, debug):
+def cli(version, infile, outfile, include_dir, compiler_directives, debug):
     if version:
         print(__version__)
         return
 
-    extra_cpp_args = []
+    extra_cpp_args = ['-D%s' % directive for directive in compiler_directives]
     for directory in include_dir:
         extra_cpp_args += ['-I%s' % directory]
     outfile.write(translate(infile.read(), infile.name, extra_cpp_args, debug=debug))
