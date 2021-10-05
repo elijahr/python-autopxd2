@@ -5,6 +5,6 @@ struct tux;
 void foo(struct tux *, int a);
 
 struct tux {
-  int a;
-  int b;
+	int	a;
+	int	b;
 };

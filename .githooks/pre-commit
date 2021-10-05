@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+
+set -ueo pipefail
+
+# Ensure ARM64 homebrew and /usr/local/bin are in PATH first.
+# This finds /usr/local/bin/lintball and finds newer Homebrew-installed bash.
+export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+
+if [ -f "${LINTBALL_DIR:-.}/bin/lintball" ]; then
+  "${LINTBALL_DIR:-.}/bin/lintball" pre-commit
+elif [ -n "$(command -v lintball)" ]; then
+  lintball pre-commit
+else
+  {
+    echo
+    echo "Error: could not find a lintball executable, but lintball's pre-commit hook is enabled."
+    echo
+    echo "Solutions:"
+    echo
+    echo '- Install lintball globally:'
+    echo '    npm install -g lintball'
+    echo '- And/or, ensure that that lintball can be found in PATH:'
+    # shellcheck disable=SC2016
+    echo '    ln -s "$(command -v lintball)" /usr/local/bin/'
+    echo
+    echo 'Workarounds:'
+    echo
+    echo '- Disable all git hooks:'
+    echo '    git config --local core.hooksPath ""'
+    echo "- Delete ${BASH_SOURCE[0]}"
+    echo
+  } >&2
+  exit 1
+fi
