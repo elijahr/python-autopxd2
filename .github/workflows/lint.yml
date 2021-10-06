@@ -2,7 +2,15 @@
 
 name: Lint
 
-on: pull_request
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - '*'
+  pull_request:
+    branches:
+      - '*'
 
 jobs:
   lint:
