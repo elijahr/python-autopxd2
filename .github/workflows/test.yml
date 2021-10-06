@@ -1,0 +1,38 @@
+# yamllint disable rule:line-length
+
+name: Test
+
+on: pull_request
+
+jobs:
+  lint:
+    name: Test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python-version: ['3.6', '3.7', '3.8', '3.9']
+        exclude:
+          - os: macos-latest
+            python-version: '3.6'
+          - os: macos-latest
+            python-version: '3.7'
+          - os: macos-latest
+            python-version: '3.8'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Test
+        shell: bash
+        run: |
+          set -uexo pipefail
+          pip install -e file:///$(pwd)#egg=autopxd2[dev]
+          pytest

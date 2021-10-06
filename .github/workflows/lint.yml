@@ -1,0 +1,66 @@
+# yamllint disable rule:line-length
+
+name: Lint
+
+on: pull_request
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '15'
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install lintball
+        run: |
+          npm install -g lintball@1.3.0
+          lintball install-tools --yes py c
+
+      - name: Check for linter issues
+        shell: bash
+        run: |
+          set -uexo pipefail
+
+          default_branch=master
+          if [ "$GITHUB_REF" = "refs/heads/$default_branch" ]; then
+            # A push to the default branch.
+            # Check files which were changed in the most recent commit.
+            commitish="HEAD~1"
+          elif [ -n "$GITHUB_BASE_REF" ]; then
+            # A pull request.
+            # Check files which have changed between the merge base and the
+            # current commit.
+            commitish="$(git merge-base -a refs/remotes/origin/$GITHUB_BASE_REF $GITHUB_SHA)"
+          else
+            # A push to a non-default, non-PR branch.
+            # Check files which have changed between default branch and the current
+            # commit.
+            commitish="$(git merge-base -a refs/remotes/origin/${default_branch} $GITHUB_SHA)"
+          fi
+          # Get the list of changed files
+          files="$(git diff --name-only "$commitish")"
+          # Check if any lintball configuration was changed. If so, check all files.
+          status=0
+          case "$files" in
+            *lintballrc.json* | *pyproject.toml* | *lint.yml*) lintball check || status=$? ;;
+            *) lintball check --since "$commitish" || status=$? ;;
+          esac
+          if [ "$status" -gt 0 ]; then
+            echo
+            echo "The above issues were found by lintball."
+            echo "To detect and auto-fix issues before pushing, install lintball's git hooks."
+            echo "See https://github.com/elijahr/lintball"
+            echo
+            exit $status
+          fi

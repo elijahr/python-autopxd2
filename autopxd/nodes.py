@@ -1,104 +1,134 @@
-class PxdNode(object):
-    indent = '    '
+from abc import (
+    ABCMeta,
+    abstractmethod,
+)
+from typing import (
+    List,
+    Union,
+)
+
+
+class PxdNode(metaclass=ABCMeta):
+    indent: str = "    "
 
     def __str__(self):
-        return '\n'.join(self.lines())
+        return "\n".join(self.lines())
+
+    @abstractmethod
+    def lines(self) -> List[str]:
+        pass
 
 
 class IdentifierType(PxdNode):
+    __slots__ = ("name", "type_name")
+    name: str
+    type_name: str
+
     def __init__(self, name, type_name):
-        self.name = name or ''
+        self.name = name or ""
         self.type_name = type_name
 
-    def lines(self):
+    def lines(self) -> List[str]:
         if self.name:
-            return ['{0} {1}'.format(self.type_name, self.name)]
-        else:
-            return [self.type_name]
+            return ["{0} {1}".format(self.type_name, self.name)]
+        return [self.type_name]
 
 
 class Function(PxdNode):
-    def __init__(self, return_type, name, args):
+    __slots__ = ("return_type", "name", "args")
+
+    return_type: str
+    name: str
+    args: List[PxdNode]
+
+    def __init__(self, return_type: str, name: str, args: List[PxdNode]):
         self.return_type = return_type
         self.name = name
         self.args = args
 
-    def argstr(self):
+    def argstr(self) -> str:
         arguments_list = []
         for arg in self.args:
             lines = arg.lines()
             assert len(lines) == 1
             arguments_list.append(lines[0])
-        return ', '.join(arguments_list)
+        return ", ".join(arguments_list)
 
-    def lines(self):
-        return [
-            '{0} {1}({2})'.format(self.return_type, self.name, self.argstr())
-        ]
+    def lines(self) -> List[str]:
+        return ["{0} {1}({2})".format(self.return_type, self.name, self.argstr())]
 
 
 class Ptr(IdentifierType):
-    def __init__(self, node):
+    __slots__ = ("node",) + IdentifierType.__slots__
+
+    node: PxdNode
+
+    def __init__(self, node: IdentifierType):
         self.node = node
+        if isinstance(node, Function):
+            type_name = node.return_type
+        else:
+            type_name = self.node.type_name
+        super().__init__(self.node.name, f"{type_name}*")
 
-    @property
-    def name(self):
-        return self.node.name
-
-    @property
-    def type_name(self):
-        return self.node.type_name + '*'
-
-    def lines(self):
+    def lines(self) -> List[str]:
         if isinstance(self.node, Function):
             f = self.node
             args = f.argstr()
-            return ['{0} (*{1})({2})'.format(f.return_type, f.name, args)]
-        else:
-            return super(Ptr, self).lines()
+            return ["{0} (*{1})({2})".format(f.return_type, f.name, args)]
+        return super().lines()
 
 
 class Array(IdentifierType):
-    def __init__(self, node, dimensions=None):
+    __slots__ = ("node", "dimensions")
+
+    node: PxdNode
+    dimensions: List[int]
+
+    def __init__(self, node: PxdNode, dimensions: Union[None, List[int]] = None):
         if dimensions is None:
             dimensions = [1]
         self.node = node
         self.dimensions = dimensions
-
-    @property
-    def name(self):
         if self.dimensions:
-            return self.node.name + '[' + ']['.join(
-                [str(dim) for dim in self.dimensions]) + ']'
+            name = self.node.name + "[" + "][".join([str(dim) for dim in self.dimensions]) + "]"
         else:
-            return self.node.name
-
-    @property
-    def type_name(self):
-        return self.node.type_name
+            name = self.node.name
+        super().__init__(name, self.node.type_name)
 
 
 class Type(PxdNode):
-    def __init__(self, node):
+    __slots__ = ("node",)
+
+    node: PxdNode
+
+    def __init__(self, node: PxdNode):
         self.node = node
 
-    def lines(self):
+    def lines(self) -> List[str]:
         lines = self.node.lines()
-        lines[0] = 'ctypedef ' + lines[0]
+        lines[0] = "ctypedef " + lines[0]
         return lines
 
 
 class Block(PxdNode):
-    def __init__(self, name, fields, kind, statement='cdef'):
+    __slots__ = ("name", "fields", "kind", "statement")
+
+    name: str
+    fields: List[PxdNode]
+    kind: str
+    statement: str
+
+    def __init__(self, name: str, fields: List[PxdNode], kind: str, statement: str = "cdef"):
         self.name = name
         self.fields = fields
         self.kind = kind
         self.statement = statement
 
-    def lines(self):
-        rv = ['{0} {1} {2}'.format(self.statement, self.kind, self.name)]
+    def lines(self) -> List[str]:
+        rv = ["{0} {1} {2}".format(self.statement, self.kind, self.name)]
         if self.fields:
-            rv[0] += ':'
+            rv[0] += ":"
         for field in self.fields:
             for line in field.lines():
                 rv.append(self.indent + line)
@@ -106,17 +136,23 @@ class Block(PxdNode):
 
 
 class Enum(PxdNode):
-    def __init__(self, name, items, statement='cdef'):
+    __slots__ = ("name", "items", "statement")
+
+    name: str
+    items: List[str]
+    statement: str
+
+    def __init__(self, name, items: List[str], statement="cdef"):
         self.name = name
         self.items = items
         self.statement = statement
 
-    def lines(self):
+    def lines(self) -> List[str]:
         rv = []
         if self.name:
-            rv.append('{0} enum {1}:'.format(self.statement, self.name))
+            rv.append("{0} enum {1}:".format(self.statement, self.name))
         else:
-            rv.append('cdef enum:')
+            rv.append("cdef enum:")
         for item in self.items:
             rv.append(self.indent + item)
         return rv

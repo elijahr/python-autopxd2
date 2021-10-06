@@ -1,0 +1,50 @@
+{
+  "check_args": {
+    "autopep8": "--global-config './pyproject.toml' --diff",
+    "black": "--config './pyproject.toml' --check",
+    "isort": "--settings-path './pyproject.toml' --check-only",
+    "pylint": "--rcfile='./pyproject.toml'"
+  },
+  "write_args": {
+    "autopep8": "--global-config './pyproject.toml' --in-place",
+    "black": "--config './pyproject.toml'",
+    "isort": "--settings-path './pyproject.toml'",
+    "pylint": "--rcfile='./pyproject.toml'"
+  },
+  "use": {
+    "autoflake": false,
+    "autopep8": true,
+    "black": true,
+    "docformatter": true,
+    "isort": true,
+    "prettier": true,
+    "prettier-eslint": false,
+    "pylint": true,
+    "rubocop": false,
+    "shellcheck": false,
+    "shfmt": false,
+    "yamllint": false
+  },
+  "ignores": [
+    "*/.build/*",
+    "*/.bundle/*",
+    "*/.cache/*",
+    "*/.git/*",
+    "*/.hg/*",
+    "*/.next/*",
+    "*/.serverless_nextjs/*",
+    "*/.tmp/*",
+    "*/.tox/*",
+    "*/__pycache__/*",
+    "*/build/*",
+    "*/Cargo.lock",
+    "*/dist/*",
+    "*/Gemfile.lock",
+    "*/node_modules/*",
+    "*/package-lock.json",
+    "*/Pipfile.lock",
+    "*/target/*",
+    "*/tmp/*",
+    "*/vendor/*"
+  ]
+}
