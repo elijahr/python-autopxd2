@@ -84,7 +84,7 @@ class AutoPxd(c_ast.NodeVisitor, PxdNode):
     def visit_Enum(self, node):
         items = []
         if node.values:
-            value = 0
+            value = "0"
             for item in node.values.enumerators:
                 items.append(escape(item.name, True))
                 if item.value is not None and hasattr(item.value, "value"):
@@ -98,9 +98,8 @@ class AutoPxd(c_ast.NodeVisitor, PxdNode):
                     if isinstance(value, str):
                         # Remove type suffixes
                         for suffix in "lLuU":
-                            val = val.replace(suffix, "")
-                        value = int(val, base=0)
-                    value += 1
+                            value = value.replace(suffix, "")
+                    value = str(int(value, base=0) + 1)
                 # These constants may be used as array indices:
                 self.constants[item.name] = value
         type_decl = self.child_of(c_ast.TypeDecl, -2)
