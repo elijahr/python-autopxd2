@@ -41,7 +41,7 @@ Options:
 
 ### release history:
 
-#### v2.0.0 - 2021-10-06
+#### v2.0.1 - 2021-10-06
 
 - Add `--compiler-directive` option to pass along to the compiler
 - Add some type annotations (`nodes.py`)
