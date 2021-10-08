@@ -41,6 +41,10 @@ Options:
 
 ### release history:
 
+#### v2.0.2 - 2021-10-07
+
+- Migrate to [`setup.cfg`](https://docs.python.org/3/distutils/configfile.html)
+
 #### v2.0.1 - 2021-10-06
 
 - Add `--compiler-directive` option to pass along to the compiler
