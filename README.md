@@ -41,6 +41,10 @@ Options:
 
 ### release history:
 
+#### v2.0.3 - 2021-10-08
+
+- fix: remove unnecessary `importlib_resources` from `install_requires`
+
 #### v2.0.2 - 2021-10-07
 
 - Migrate to [`setup.cfg`](https://docs.python.org/3/distutils/configfile.html)
