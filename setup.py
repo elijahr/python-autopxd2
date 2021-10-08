@@ -31,7 +31,7 @@ def install_libc_headers_and(cmdclass):
                 raise Exception('"{0}" already exists and is not a directory'.format(inc))
             return
         repo = "https://github.com/eliben/pycparser"
-        commit = "a47b919287a33dea55cc02b2f8c5f4be2ee8613c"
+        commit = "d554122e2a5702daeb68a3714826c1c7df8cbea3"
         url = "{0}/archive/{1}.tar.gz".format(repo, commit)
         subprocess.check_call(
             (
