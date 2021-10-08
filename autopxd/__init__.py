@@ -8,9 +8,6 @@ from pycparser import (
     c_parser,
 )
 
-from ._version import (
-    __version__,
-)
 from .declarations import (
     BUILTIN_HEADERS_DIR,
     DARWIN_HEADERS_DIR,
@@ -19,6 +16,8 @@ from .declarations import (
 from .writer import (
     AutoPxd,
 )
+
+__version__ = "2.0.2"
 
 
 def ensure_binary(s, encoding="utf-8", errors="strict"):
