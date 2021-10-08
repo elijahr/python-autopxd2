@@ -14,6 +14,9 @@ from setuptools.command.install import (
 from setuptools.command.sdist import (
     sdist,
 )
+from wheel.bdist_wheel import (
+    bdist_wheel,
+)
 
 DARWIN_INCLUDE = (
     "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/"
@@ -71,53 +74,11 @@ def install_libc_headers_and(cmdclass):
     return Sub
 
 
-with open("autopxd/_version.py", "r") as f:
-    VERSION = f.read().split("=")[1].strip().replace('"', "").strip()
-
-REPO = "https://github.com/gabrieldemarmiesse/python-autopxd2"
-
-PACKAGE_DATA = ["include/*.h", "include/**/*.h"]
-
-if platform.system() == "Darwin":
-    PACKAGE_DATA += ["darwin-include/*.h", "darwin-include/**/*.h"]
-
-
-with open("README.md", "r") as fh:
-    long_description = fh.read()
-
-
 setup(
-    name="autopxd2",
-    version=VERSION,
-    description="Automatically generate Cython pxd files from C headers",
-    long_description=long_description,
-    long_description_content_type="text/markdown",
-    packages=["autopxd"],
-    package_data={"autopxd": PACKAGE_DATA},
-    author="Gabriel de Marmiesse",
-    author_email="gabrieldemarmiesse@gmail.com",
-    url=REPO,
-    license="MIT",
     cmdclass={
         "develop": install_libc_headers_and(develop),
         "install": install_libc_headers_and(install),
         "sdist": install_libc_headers_and(sdist),
+        "bdist_wheel": install_libc_headers_and(bdist_wheel),
     },
-    install_requires=[
-        "Click",
-        "pycparser",
-    ],
-    extras_require={"dev": ["pytest", "pycodestyle"]},
-    entry_points="""
-    [console_scripts]
-    autopxd=autopxd:cli
-    """,
-    classifiers=[
-        "Topic :: Software Development :: Compilers",
-        "Topic :: Software Development :: Code Generators",
-        "Programming Language :: Python :: 3 :: Only",
-        "Programming Language :: Cython",
-        "Programming Language :: C",
-        "Programming Language :: C++",
-    ],
 )
