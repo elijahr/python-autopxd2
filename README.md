@@ -41,6 +41,10 @@ Options:
 
 ### release history:
 
+#### v2.0.4 - 2021-11-23
+
+- fix: Windows CRLF issue ([#24](https://github.com/gabrieldemarmiesse/python-autopxd2/pull/24))
+
 #### v2.0.3 - 2021-10-08
 
 - fix: remove unnecessary `importlib_resources` from `install_requires`
