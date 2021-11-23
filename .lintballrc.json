@@ -29,6 +29,7 @@
     "*/.build/*",
     "*/.bundle/*",
     "*/.cache/*",
+    "*/.eggs/*",
     "*/.git/*",
     "*/.hg/*",
     "*/.next/*",
@@ -45,6 +46,8 @@
     "*/Pipfile.lock",
     "*/target/*",
     "*/tmp/*",
-    "*/vendor/*"
+    "*/vendor/*",
+    "*/autopxd/include/*",
+    "*/autopxd/darwin-include/*"
   ]
 }
