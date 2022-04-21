@@ -1,5 +1,6 @@
 import os
 import platform
+import re
 import subprocess
 import sys
 
@@ -64,11 +65,20 @@ def preprocess(code, extra_cpp_args=None, debug=False):
     return res.replace("\r\n", "\n")
 
 
-def parse(code, extra_cpp_args=None, whitelist=None, debug=False):
+def parse(code, extra_cpp_args=None, whitelist=None, debug=False, regex=[]):
     if extra_cpp_args is None:
         extra_cpp_args = []
     preprocessed = preprocess(code, extra_cpp_args=extra_cpp_args, debug=debug)
     parser = c_parser.CParser()
+
+    for r in regex:
+        assert r[0] == "s" and r[-1] == "g" and r[1] == r[-2], 'Only search/replace is allowed: "s/.../.../g"'
+        delimiter = r[1]
+        assert r.count(delimiter) == 3, 'Malformed regex. Only search/replace is allowed: "s/.../.../g"'
+        _, search, replace, _ = r.split(delimiter)
+
+        preprocessed = re.sub(search, replace, preprocessed)
+
     ast = parser.parse(preprocessed)
     decls = []
     for decl in ast.ext:
@@ -79,7 +89,7 @@ def parse(code, extra_cpp_args=None, whitelist=None, debug=False):
     return ast
 
 
-def translate(code, hdrname, extra_cpp_args=None, whitelist=None, debug=False):
+def translate(code, hdrname, extra_cpp_args=None, whitelist=None, debug=False, regex=[]):
     """
     to generate pxd mappings for only certain files, populate the whitelist parameter
     with the filenames (including relative path):
@@ -95,7 +105,15 @@ def translate(code, hdrname, extra_cpp_args=None, whitelist=None, debug=False):
     if extra_incdir:
         extra_cpp_args += ["-I%s" % extra_incdir]
     p = AutoPxd(hdrname)
-    p.visit(parse(code, extra_cpp_args=extra_cpp_args, whitelist=whitelist, debug=debug))
+    p.visit(
+        parse(
+            code,
+            extra_cpp_args=extra_cpp_args,
+            whitelist=whitelist,
+            debug=debug,
+            regex=regex,
+        )
+    )
     pxd_string = ""
     if p.stdint_declarations:
         pxd_string += "from libc.stdint cimport {:s}\n\n".format(", ".join(p.stdint_declarations))
@@ -119,6 +137,12 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     multiple=True,
     metavar="<dir>",
     help="Allow the C preprocessor to search for files in <dir>.",
+)
+@click.option(
+    "--regex",
+    "-R",
+    multiple=True,
+    help="Apply sed-style search/replace (s/.../.../g) after preprocessor",
 )
 @click.option(
     "--compiler-directive",
@@ -147,6 +171,7 @@ def cli(
     infile,
     outfile,
     include_dir,
+    regex,
     compiler_directive,
     debug,
 ):
@@ -158,4 +183,4 @@ def cli(
     for directory in include_dir:
         extra_cpp_args += ["-I%s" % directory]
 
-    outfile.write(translate(infile.read(), infile.name, extra_cpp_args, debug=debug))
+    outfile.write(translate(infile.read(), infile.name, extra_cpp_args, debug=debug, regex=regex))
