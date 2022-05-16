@@ -219,6 +219,10 @@ class AutoPxd(c_ast.NodeVisitor, PxdNode):
         # Do not recurse into the body of inline function definitions
         pass
 
+    def visit_StaticAssert(self, node):
+        # Just ignore asserts for now. Otherwise we get invalid output.
+        pass
+
     def collect(self, node):
         decls = []
         self.decl_stack.append(decls)
