@@ -138,7 +138,7 @@ class AutoPxd(c_ast.NodeVisitor, PxdNode):
         else:
             if items:
                 escname = name if node.name is None else escape(name, True)
-                self.decl_stack[0].append(Enum(escname, items, "cdef"))
+                self.decl_stack[0].append(Enum(escname, items, "cpdef"))
             if type_decl:
                 escname = name if node.name is None else escape(name)
                 self.append(escname)

@@ -6,7 +6,7 @@ struct nested_enum_struct {
 
 cdef extern from "nested_anonymous_enum.test":
 
-    cdef enum _nested_enum_struct_x_e:
+    cpdef enum _nested_enum_struct_x_e:
         a
         b
         c

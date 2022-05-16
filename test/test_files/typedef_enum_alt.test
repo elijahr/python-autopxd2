@@ -12,7 +12,7 @@ typedef my_enum MyEnum;
 
 cdef extern from "typedef_enum_alt.test":
 
-    cdef enum my_enum:
+    cpdef enum my_enum:
         C1
         C2
         C3
