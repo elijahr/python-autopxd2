@@ -1,0 +1,14 @@
+#include "tux_foo.h"
+
+struct some_struct {
+  int a, b;
+};
+
+---
+
+cdef extern from "whitelist2.test":
+
+    cdef struct some_struct:
+        int a
+        int b
+

@@ -1,0 +1,76 @@
+#include <stdint.h>
+struct xnvme_opts {
+	const char *be;    ///< Backend/system interface to use
+	const char *dev;   ///< Device manager/enumerator
+	const char *mem;   ///< Memory allocator to use for buffers
+	const char *sync;  ///< Synchronous Command-interface
+	const char *async; ///> Asynchronous Command-interface
+	const char *admin; ///< Administrative Command-interface
+	uint32_t nsid;     ///< Namespace identifier
+	union {
+		struct {
+			uint32_t rdonly   : 1; ///< OS open; read-only
+			uint32_t wronly   : 1; ///< OS open; write-only
+			uint32_t rdwr     : 1; ///< OS open; for read and only
+			uint32_t create   : 1; ///< OS open; create if it does not exist
+			uint32_t truncate : 1; ///< OS open; truncate content
+			uint32_t direct   : 1; ///< OS open; attempt bypass OS-caching
+			uint32_t _rsvd    : 26;
+		};
+		uint32_t oflags;
+	};
+	uint32_t create_mode;     ///< OS file creation-mode
+	uint8_t poll_io;          ///< io_uring: enable io-polling
+	uint8_t poll_sq;          ///< io_uring: enable sqthread-polling
+	uint8_t register_files;   ///< io_uring: enable file-regirations
+	uint8_t register_buffers; ///< io_uring: enable buffer-registration
+	struct {
+		uint32_t value : 31;
+		uint32_t given : 1;
+	} css;                 ///< SPDK controller-setup: do command-set-selection
+	uint32_t use_cmb_sqs;  ///< SPDK controller-setup: use controller-memory-buffer for sq
+	uint32_t shm_id;       ///< SPDK multi-processing: shared-memory-id
+	uint32_t main_core;    ///< SPDK multi-processing: main-core
+	const char *core_mask; ///< SPDK multi-processing: core-mask
+	const char *adrfam;    ///< SPDK fabrics: address-family, IPv4/IPv6
+	uint32_t spdk_fabrics; ///< Is assigned a value by backend if SPDK uses fabrics
+};
+
+---
+from libc.stdint cimport uint32_t, uint8_t
+
+cdef extern from "xnvme_opts.test":
+
+    cdef struct _xnvme_opts_css_s:
+        uint32_t value
+        uint32_t given
+
+    cdef struct xnvme_opts:
+        char* be
+        char* dev
+        char* mem
+        char* sync
+        char* async_ "async"
+        char* admin
+        uint32_t nsid
+        uint32_t create_mode
+        uint8_t poll_io
+        uint8_t poll_sq
+        uint8_t register_files
+        uint8_t register_buffers
+        _xnvme_opts_css_s css
+        uint32_t use_cmb_sqs
+        uint32_t shm_id
+        uint32_t main_core
+        char* core_mask
+        char* adrfam
+        uint32_t spdk_fabrics
+        uint32_t oflags
+        uint32_t rdonly
+        uint32_t wronly
+        uint32_t rdwr
+        uint32_t create
+        uint32_t truncate
+        uint32_t direct
+        uint32_t _rsvd
+

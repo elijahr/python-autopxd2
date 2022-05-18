@@ -1,0 +1,33 @@
+struct inner_inner_s {
+  int d;
+  int e;
+};
+
+struct inner_s {
+  int b;
+  int c;
+  struct inner_inner_s y;
+};
+
+struct outer_s {
+  int a;
+  struct inner_s x;
+};
+
+---
+
+cdef extern from "nested_simple_named.test":
+
+    cdef struct inner_inner_s:
+        int d
+        int e
+
+    cdef struct inner_s:
+        int b
+        int c
+        inner_inner_s y
+
+    cdef struct outer_s:
+        int a
+        inner_s x
+

@@ -17,17 +17,22 @@ def test_cython_vs_header(file_path):
     c = c.strip()
     cython = cython.strip() + "\n"
 
-    # Special handling of whitelist.test
     whitelist = []
     cpp_args = []
-    if file_path == os.path.join(FILES_DIR, "whitelist.test"):
-        test_path = os.path.dirname(file_path)
+
+    # Special handling of whitelist.test
+    if file_path.endswith("whitelist.test"):
         whitelist.append(os.path.join(FILES_DIR, "tux_foo.h"))
-        if test_path:
-            cpp_args.append("-I%s" % test_path)
+        cpp_args.append("-I%s" % FILES_DIR)
+
+    # Special handling of whitelist2.test
+    if file_path.endswith("whitelist2.test"):
+        whitelist.append("<stdin>")  # Only whitelist declarations in 'whitelist2.test' and ignore includes
+        cpp_args.append("-I%s" % FILES_DIR)
 
     actual = autopxd.translate(c, os.path.basename(file_path), cpp_args, whitelist)
     assert cython == actual, f"\nCYTHON:\n{cython}\n\n\nACTUAL:\n{actual}"
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
