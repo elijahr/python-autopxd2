@@ -75,7 +75,6 @@ class AutoPxd(c_ast.NodeVisitor, PxdNode):
             self.append(name if node.name is None else escape(name))
             return
 
-        # TODO: Only cosmetic, but maybe do something to keep member order?
         def recursive_flatten_collect(node, prefix=""):
             if node.decls is None:
                 return []
@@ -239,7 +238,8 @@ class AutoPxd(c_ast.NodeVisitor, PxdNode):
                 names.append(node.name)
         if tag is None:
             return "_".join(names)
-        return "_{0}_{1}".format("_".join(names), tag)
+        name = "_".join(names)
+        return f"_{name}_{tag}"
 
     def child_of(self, node_type, index=None):
         if index is None:
@@ -253,7 +253,7 @@ class AutoPxd(c_ast.NodeVisitor, PxdNode):
         self.decl_stack[-1].append(node)
 
     def lines(self):
-        rv = ['cdef extern from "{0}":'.format(self.hdrname), ""]
+        rv = [f'cdef extern from "{self.hdrname}":', ""]
         for decl in self.decl_stack[0]:
             for line in decl.lines():
                 rv.append(self.indent + line)

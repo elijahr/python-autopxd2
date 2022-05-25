@@ -30,7 +30,7 @@ class IdentifierType(PxdNode):
 
     def lines(self) -> List[str]:
         if self.name:
-            return ["{0} {1}".format(self.type_name, self.name)]
+            return [f"{self.type_name} {self.name}"]
         return [self.type_name]
 
 
@@ -55,7 +55,7 @@ class Function(PxdNode):
         return ", ".join(arguments_list)
 
     def lines(self) -> List[str]:
-        return ["{0} {1}({2})".format(self.return_type, self.name, self.argstr())]
+        return [f"{self.return_type} {self.name}({self.argstr()})"]
 
 
 class Ptr(IdentifierType):
@@ -75,7 +75,7 @@ class Ptr(IdentifierType):
         if isinstance(self.node, Function):
             f = self.node
             args = f.argstr()
-            return ["{0} (*{1})({2})".format(f.return_type, f.name, args)]
+            return [f"{f.return_type} (*{f.name})({args})"]
         return super().lines()
 
 
@@ -126,7 +126,7 @@ class Block(PxdNode):
         self.statement = statement
 
     def lines(self) -> List[str]:
-        rv = ["{0} {1} {2}".format(self.statement, self.kind, self.name)]
+        rv = [f"{self.statement} {self.kind} {self.name}"]
         if self.fields:
             rv[0] += ":"
         for field in self.fields:
@@ -150,7 +150,7 @@ class Enum(PxdNode):
     def lines(self) -> List[str]:
         rv = []
         if self.name:
-            rv.append("{0} enum {1}:".format(self.statement, self.name))
+            rv.append(f"{self.statement} enum {self.name}:")
         else:
             rv.append("cpdef enum:")
         for item in self.items:

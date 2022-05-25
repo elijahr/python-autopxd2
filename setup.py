@@ -33,7 +33,7 @@ def install_libc_headers_and(cmdclass):
 
         repo = "https://github.com/eliben/pycparser"
         commit = "d554122e2a5702daeb68a3714826c1c7df8cbea3"
-        url = "{0}/archive/{1}.tar.gz".format(repo, commit)
+        url = f"{repo}/archive/{commit}.tar.gz"
 
         with urllib.request.urlopen(url) as include_data:
             os.makedirs(inc, exist_ok=True)
@@ -52,19 +52,19 @@ def install_libc_headers_and(cmdclass):
         inc = os.path.join("./autopxd", "darwin-include")
         if os.path.exists(inc):
             if not os.path.isdir(inc):
-                raise Exception('"{0}" already exists and is not a directory'.format(inc))
+                raise Exception(f'"{inc}" already exists and is not a directory')
             return
         for root, _, files in os.walk(DARWIN_INCLUDE):
             for file in files:
                 root = root.replace(DARWIN_INCLUDE, "")
                 stub = os.path.join(inc, root, file)
-                print("Stubbing %s" % stub)
+                print(f"Stubbing {stub}")
                 try:
                     os.makedirs(os.path.join(inc, root))
                 except OSError:
                     # already exists
                     pass
-                with open(stub, "w") as stub_f:
+                with open(stub, "w", encoding="utf-8") as stub_f:
                     stub_f.write('#include "_fake_defines.h"\n#include "_fake_typedefs.h"')
 
     class Sub(cmdclass):

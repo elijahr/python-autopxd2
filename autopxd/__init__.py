@@ -31,14 +31,14 @@ def ensure_binary(s, encoding="utf-8", errors="strict"):
         return s.encode(encoding, errors)
     if isinstance(s, bytes):
         return s
-    raise TypeError("not expecting type '%s'" % type(s))
+    raise TypeError(f"not expecting type '{type(s)}'")
 
 
 def preprocess(code, extra_cpp_args=None, debug=False):
     if extra_cpp_args is None:
         extra_cpp_args = []
     if platform.system() == "Darwin":
-        cmd = ["clang", "-E", "-I%s" % DARWIN_HEADERS_DIR]
+        cmd = ["clang", "-E", f"-I{DARWIN_HEADERS_DIR}"]
     else:
         cmd = ["cpp"]
     cmd += (
@@ -48,7 +48,7 @@ def preprocess(code, extra_cpp_args=None, debug=False):
             "-D__extension__=",
             "-D__inline=",
             "-D__asm=",
-            "-I%s" % BUILTIN_HEADERS_DIR,
+            f"-I{BUILTIN_HEADERS_DIR}",
         ]
         + extra_cpp_args
         + ["-"]
@@ -65,9 +65,11 @@ def preprocess(code, extra_cpp_args=None, debug=False):
     return res.replace("\r\n", "\n")
 
 
-def parse(code, extra_cpp_args=None, whitelist=None, debug=False, regex=[]):
+def parse(code, extra_cpp_args=None, whitelist=None, debug=False, regex=None):
     if extra_cpp_args is None:
         extra_cpp_args = []
+    if regex is None:
+        regex = []
     preprocessed = preprocess(code, extra_cpp_args=extra_cpp_args, debug=debug)
     parser = c_parser.CParser()
 
@@ -89,7 +91,7 @@ def parse(code, extra_cpp_args=None, whitelist=None, debug=False, regex=[]):
     return ast
 
 
-def translate(code, hdrname, extra_cpp_args=None, whitelist=None, debug=False, regex=[]):
+def translate(code, hdrname, extra_cpp_args=None, whitelist=None, debug=False, regex=None):
     """
     to generate pxd mappings for only certain files, populate the whitelist parameter
     with the filenames (including relative path):
@@ -101,9 +103,11 @@ def translate(code, hdrname, extra_cpp_args=None, whitelist=None, debug=False, r
     """
     if extra_cpp_args is None:
         extra_cpp_args = []
+    if regex is None:
+        regex = []
     extra_incdir = os.path.dirname(hdrname)
     if extra_incdir:
-        extra_cpp_args += ["-I%s" % extra_incdir]
+        extra_cpp_args += [f"-I{extra_incdir}"]
     p = AutoPxd(hdrname)
     p.visit(
         parse(
@@ -116,7 +120,8 @@ def translate(code, hdrname, extra_cpp_args=None, whitelist=None, debug=False, r
     )
     pxd_string = ""
     if p.stdint_declarations:
-        pxd_string += "from libc.stdint cimport {:s}\n\n".format(", ".join(p.stdint_declarations))
+        cimports = ", ".join(p.stdint_declarations)
+        pxd_string += f"from libc.stdint cimport {cimports}\n\n"
     pxd_string += str(p)
     return pxd_string
 
@@ -179,8 +184,8 @@ def cli(
         print(__version__)
         return
 
-    extra_cpp_args = ["-D%s" % directive for directive in compiler_directive]
+    extra_cpp_args = [f"-D{directive}" for directive in compiler_directive]
     for directory in include_dir:
-        extra_cpp_args += ["-I%s" % directory]
+        extra_cpp_args += [f"-I{directory}"]
 
     outfile.write(translate(infile.read(), infile.name, extra_cpp_args, debug=debug, regex=regex))
