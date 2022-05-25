@@ -23,6 +23,7 @@
     "rubocop": false,
     "shellcheck": false,
     "shfmt": false,
+    "uncrustify": false,
     "yamllint": false
   },
   "ignores": [
