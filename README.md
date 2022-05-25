@@ -41,6 +41,11 @@ Options:
 
 ### release history:
 
+#### v2.1.1 - 2022-05-24
+
+- Add --regex for arbitrary conversions
+- Various other fixes and improvements from Mads Ynddal in [#38](https://github.com/gabrieldemarmiesse/python-autopxd2/pull/38)
+
 #### v2.0.4 - 2021-11-23
 
 - fix: Windows CRLF issue ([#24](https://github.com/gabrieldemarmiesse/python-autopxd2/pull/24))
