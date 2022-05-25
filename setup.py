@@ -1,6 +1,7 @@
 import os
 import platform
 import subprocess
+import urllib.request
 
 from setuptools import (
     setup,
@@ -27,21 +28,23 @@ def install_libc_headers_and(cmdclass):
     def download_fake_libc_include():
         inc = os.path.join("autopxd", "include")
         if os.path.exists(inc):
-            if not os.path.isdir(inc):
-                raise Exception('"{0}" already exists and is not a directory'.format(inc))
-            return
+            if len(os.listdir(inc)) > 1:  # In addition to .DS_Store on macOS -- we expect more files anyway
+                return
+
         repo = "https://github.com/eliben/pycparser"
         commit = "d554122e2a5702daeb68a3714826c1c7df8cbea3"
         url = "{0}/archive/{1}.tar.gz".format(repo, commit)
-        subprocess.check_call(
-            (
-                "mkdir {0} && cd {0} && "
-                "curl -L -o - {1} | "
-                "tar xfz - --strip-components=3 "
-                "pycparser-{2}/utils/fake_libc_include/"
-            ).format(inc, url, commit),
-            shell=True,
-        )
+
+        with urllib.request.urlopen(url) as include_data:
+            os.makedirs(inc, exist_ok=True)
+            with subprocess.Popen(
+                ["tar", "xfz", "-", f"-C{inc}", "--strip-components=3", f"pycparser-{commit}/utils/fake_libc_include/"],
+                stdout=subprocess.PIPE,
+                stdin=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            ) as proc:
+                _, stderr = proc.communicate(input=include_data.read())
+                assert proc.returncode == 0, stderr
 
     def generate_fake_darwin_include():
         if not os.path.exists(DARWIN_INCLUDE):

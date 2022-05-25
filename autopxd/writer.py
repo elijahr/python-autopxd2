@@ -1,3 +1,4 @@
+import pycparser
 from pycparser import (
     c_ast,
 )
@@ -63,14 +64,35 @@ class AutoPxd(c_ast.NodeVisitor, PxdNode):
         if not name:
             if type_def:
                 name = self.path_name()
-            else:
+            elif type_decl:
                 name = self.path_name(kind[0])
-        if not node.decls:
-            if self.child_of(c_ast.TypeDecl, -2):
-                # not a definition, must be a reference
-                self.append(name if node.name is None else escape(name))
+            else:
+                # Will be flattened and inlined somewhere else
                 return
-        fields = self.collect(node)
+
+        if not node.decls and type_decl:
+            # not a definition, must be a reference
+            self.append(name if node.name is None else escape(name))
+            return
+
+        # TODO: Only cosmetic, but maybe do something to keep member order?
+        def recursive_flatten_collect(node, prefix=""):
+            if node.decls is None:
+                return []
+
+            fields = [n for n in self.collect(node) if not hasattr(n, "name") or n.name != ""]
+            for n in fields:
+                if hasattr(n, "name") and prefix != "":
+                    n.name = prefix + n.name
+                    n.name = f'{n.name.split("[")[0]} "{n.name.replace("__", ".")}"'
+
+            for n in node.decls:
+                if n.name is None and isinstance(n.type, (pycparser.c_ast.Struct, pycparser.c_ast.Union)):
+                    fields.extend(recursive_flatten_collect(n.type, prefix=prefix))
+            return fields
+
+        fields = recursive_flatten_collect(node)
+
         # add the struct/union definition to the top level
         if type_def and node.name is None:
             self.decl_stack[0].append(Block(name, fields, kind, "ctypedef"))
@@ -116,7 +138,7 @@ class AutoPxd(c_ast.NodeVisitor, PxdNode):
         else:
             if items:
                 escname = name if node.name is None else escape(name, True)
-                self.decl_stack[0].append(Enum(escname, items, "cdef"))
+                self.decl_stack[0].append(Enum(escname, items, "cpdef"))
             if type_decl:
                 escname = name if node.name is None else escape(name)
                 self.append(escname)
@@ -195,6 +217,10 @@ class AutoPxd(c_ast.NodeVisitor, PxdNode):
 
     def visit_Compound(self, node):
         # Do not recurse into the body of inline function definitions
+        pass
+
+    def visit_StaticAssert(self, node):
+        # Just ignore asserts for now. Otherwise we get invalid output.
         pass
 
     def collect(self, node):

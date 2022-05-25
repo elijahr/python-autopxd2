@@ -8,7 +8,7 @@ enum {
 
 cdef extern from "anonymous_enum.test":
 
-    cdef enum:
+    cpdef enum:
         C1
         C2
         C3

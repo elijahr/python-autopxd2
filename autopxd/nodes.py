@@ -152,7 +152,7 @@ class Enum(PxdNode):
         if self.name:
             rv.append("{0} enum {1}:".format(self.statement, self.name))
         else:
-            rv.append("cdef enum:")
+            rv.append("cpdef enum:")
         for item in self.items:
             rv.append(self.indent + item)
         return rv
