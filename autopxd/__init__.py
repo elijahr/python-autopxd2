@@ -1,8 +1,10 @@
+import json
 import os
 import platform
 import re
 import subprocess
 import sys
+import tempfile
 
 import click
 from pycparser import (
@@ -34,11 +36,92 @@ def ensure_binary(s, encoding="utf-8", errors="strict"):
     raise TypeError(f"not expecting type '{type(s)}'")
 
 
+def _find_cl():
+    """Use vswhere.exe to locate the Microsoft C compiler."""
+    host_platform = {
+        "X86": "X86",
+        "AMD64": "X64",
+        "ARM64": "ARM64",
+    }.get(platform.machine(), "x86")
+    build_platform = {
+        "X86": "x86",
+        "AMD64": "x64",
+        "ARM64": "arm64",
+    }.get(platform.machine(), "x86")
+    cmd = [
+        os.path.expandvars(r"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe"),
+        "-prerelease",
+        "-latest",
+        "-format",
+        "json",
+        "-utf8",
+        "-find",
+        rf"**\bin\Host{host_platform}\{build_platform}\cl.exe",
+    ]
+    try:
+        return json.loads(subprocess.check_output(cmd, encoding="utf-8"))[-1]
+    except (OSError, subprocess.CalledProcessError, IndexError) as ex:
+        raise RuntimeError("No suitable compiler available") from ex
+
+
+def _preprocess_msvc(code, extra_cpp_args, debug):
+    fd, source_file = tempfile.mkstemp(suffix=".c")
+    os.close(fd)
+    with open(source_file, "wb") as f:
+        f.write(ensure_binary(code))
+
+    result = []
+    try:
+        cmd = [
+            _find_cl(),
+            "/E",
+            "/X",
+            "/utf-8",
+            "/D__attribute__(x)=",
+            "/D__extension__=",
+            "/D__inline=",
+            "/D__asm=",
+            f"/I{BUILTIN_HEADERS_DIR}",
+            *(extra_cpp_args or []),
+            source_file,
+        ]
+        with subprocess.Popen(cmd, stdout=subprocess.PIPE) as proc:
+            while proc.poll() is None:
+                result.extend(proc.communicate()[0].decode("utf-8").splitlines())
+    finally:
+        os.unlink(source_file)
+    if proc.returncode:
+        raise Exception("Invoking C preprocessor failed")
+
+    # Normalise the paths in #line pragmas so that they are correctly matched
+    # later on
+    def fix_path(match):
+        file = match.group(1).replace("\\\\", "\\")
+        if file == source_file:
+            file = "<stdin>"
+        return f'"{file}"'
+
+    res = "\n".join(re.sub(r'"(.+?)"', fix_path, line) for line in result)
+
+    if debug:
+        sys.stderr.write(res)
+    return res
+
+
 def preprocess(code, extra_cpp_args=None, debug=False):
     if extra_cpp_args is None:
         extra_cpp_args = []
     if platform.system() == "Darwin":
         cmd = ["clang", "-E", f"-I{DARWIN_HEADERS_DIR}"]
+    elif platform.system() == "Windows":
+        # Since Windows may not have GCC installed, we check for a cpp command
+        # first and if it does not run, then use our MSVC implementation
+        try:
+            subprocess.check_call(["cpp", "--version"])
+        except (OSError, subprocess.CalledProcessError):
+            return _preprocess_msvc(code, extra_cpp_args, debug)
+        else:
+            cmd = ["cpp"]
     else:
         cmd = ["cpp"]
     cmd += (
@@ -85,7 +168,7 @@ def parse(code, extra_cpp_args=None, whitelist=None, debug=False, regex=None):
     decls = []
     for decl in ast.ext:
         if not hasattr(decl, "name") or decl.name not in IGNORE_DECLARATIONS:
-            if not whitelist or decl.coord.file in whitelist:
+            if not whitelist or os.path.normpath(decl.coord.file) in whitelist:
                 decls.append(decl)
     ast.ext = decls
     return ast
