@@ -42,7 +42,7 @@ def _find_cl():
         "X86": "X86",
         "AMD64": "X64",
         "ARM64": "ARM64",
-    }.get(platform.machine(), "x86")
+    }.get(platform.machine(), "X86")
     build_platform = {
         "X86": "x86",
         "AMD64": "x64",
@@ -91,7 +91,7 @@ def _preprocess_msvc(code, extra_cpp_args, debug):
     finally:
         os.unlink(source_file)
     if proc.returncode:
-        raise Exception("Invoking C preprocessor failed")
+        raise RuntimeError("Invoking C preprocessor failed")
 
     # Normalise the paths in #line pragmas so that they are correctly matched
     # later on
