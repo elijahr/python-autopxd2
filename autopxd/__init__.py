@@ -48,8 +48,9 @@ def _find_cl():
         "AMD64": "x64",
         "ARM64": "arm64",
     }.get(platform.machine(), "x86")
+    program_files = os.getenv("ProgramFiles(x86)") or os.getenv("ProgramFiles")
     cmd = [
-        os.path.expandvars(r"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe"),
+        os.path.join(program_files, r"Microsoft Visual Studio\Installer\vswhere.exe"),
         "-prerelease",
         "-latest",
         "-format",
