@@ -20,7 +20,7 @@ from .writer import (
     AutoPxd,
 )
 
-__version__ = "2.1.1"
+__version__ = "2.2.0"
 
 
 def ensure_binary(s, encoding="utf-8", errors="strict"):

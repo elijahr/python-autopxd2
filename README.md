@@ -4,13 +4,13 @@ A friendly fork of autopxd https://github.com/tarruda/python-autopxd
 
 It generates `.pxd` files automatically from `.h` files.
 
-Tested against:
+#### Tested against:
 
 - Python 3.6
 - Python 3.7
 - Python 3.8
 - Python 3.9
-- PEP8
+- Python 3.10
 
 [![Test](https://github.com/gabrieldemarmiesse/python-autopxd2/actions/workflows/test.yml/badge.svg)](https://github.com/gabrieldemarmiesse/python-autopxd2/actions/workflows/test.yml)
 [![Lint](https://github.com/gabrieldemarmiesse/python-autopxd2/actions/workflows/lint.yml/badge.svg)](https://github.com/gabrieldemarmiesse/python-autopxd2/actions/workflows/lint.yml)
@@ -21,7 +21,7 @@ Tested against:
 pip install autopxd2
 ```
 
-### usage:
+### Usage:
 
 ```shell
 Usage: autopxd [OPTIONS] [INFILE] [OUTFILE]
@@ -39,20 +39,24 @@ Options:
   -h, --help                      Show this message and exit.
 ```
 
-### release history:
+### Release History:
+
+#### v2.2.0 - 2022-08-03
+
+- Add: Microsoft Visual C++ support from Steve Dower [#40](https://github.com/gabrieldemarmiesse/python-autopxd2/pull/40)
 
 #### v2.1.1 - 2022-05-24
 
-- Add --regex for arbitrary conversions
-- Various other fixes and improvements from Mads Ynddal in [#38](https://github.com/gabrieldemarmiesse/python-autopxd2/pull/38)
+- Add: `--regex` for arbitrary conversions
+- Fix: Various other fixes and improvements from Mads Ynddal in [#38](https://github.com/gabrieldemarmiesse/python-autopxd2/pull/38)
 
 #### v2.0.4 - 2021-11-23
 
-- fix: Windows CRLF issue ([#24](https://github.com/gabrieldemarmiesse/python-autopxd2/pull/24))
+- Fix: Windows CRLF issue ([#24](https://github.com/gabrieldemarmiesse/python-autopxd2/pull/24))
 
 #### v2.0.3 - 2021-10-08
 
-- fix: remove unnecessary `importlib_resources` from `install_requires`
+- Fix: remove unnecessary `importlib_resources` from `install_requires`
 
 #### v2.0.2 - 2021-10-07
 
@@ -60,17 +64,17 @@ Options:
 
 #### v2.0.1 - 2021-10-06
 
-- Add `--compiler-directive` option to pass along to the compiler
-- Add some type annotations (`nodes.py`)
-- Drop support for Python 2
-- Add linting, format with black
-- Migrate from Travis CI to Github Actions
+- Add: `--compiler-directive` option to pass along to the compiler
+- Add: some type annotations (`nodes.py`)
+- Deprecation: Drop support for Python 2
+- Add: linting, format with black
+- Add: Migrate from Travis CI to Github Actions
 
 #### v1.1.0 - 2020-01-03
 
-- Support for OSX
+- Add: Support for macOS
 
-### roadmap:
+### Roadmap:
 
 - Refactoring of the code **DONE**
 - Adding tests for PEP8 **DONE**
