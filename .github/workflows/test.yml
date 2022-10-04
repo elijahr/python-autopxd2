@@ -5,56 +5,69 @@ name: Test
 on:
   push:
     branches:
-      - master
-    tags:
       - '*'
-  pull_request:
-    branches:
+    tags:
       - '*'
 
 jobs:
-  lint:
-    name: Test
+  test-unix:
+    name: Test Unix
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ['3.6', '3.7', '3.8', '3.9', '3.10']
-        exclude:
+        include:
+          - os: ubuntu-latest
+            python-version: '3.6.15'
+          - os: ubuntu-latest
+            python-version: '3.7.14'
+          - os: ubuntu-latest
+            python-version: '3.8.14'
+          - os: ubuntu-latest
+            python-version: '3.9.14'
+          - os: ubuntu-latest
+            python-version: '3.10.7'
           - os: macos-latest
-            python-version: '3.6'
-          - os: macos-latest
-            python-version: '3.7'
-          - os: macos-latest
-            python-version: '3.8'
-          - os: windows-latest
-            python-version: '3.6'
-          - os: windows-latest
-            python-version: '3.7'
-          - os: windows-latest
-            python-version: '3.8'
+            python-version: '3.10.7'
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
-          fetch-depth: 0
+          fetch-depth: 5
 
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
 
       - name: Test
         shell: bash
-        if: ${{ matrix.os != 'windows-latest' }}
         run: |
           set -uexo pipefail
-          pip install -e file:///$(pwd)#egg=autopxd2[dev]
+          python -m venv venv
+          source venv/bin/activate
+          pip install .[dev]
           pytest
 
-      - name: Test_Windows
+  test-windows:
+    name: Test Windows
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest]
+        python-version: ['3.10']
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 5
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Test
         shell: powershell
-        if: ${{ matrix.os == 'windows-latest' }}
         run: |
-          pip install -e .[dev]
+          pip install .[dev]
           pytest

@@ -114,7 +114,7 @@ def preprocess(code, extra_cpp_args=None, debug=False):
         extra_cpp_args = []
     includes = []
     if platform.system() == "Darwin":
-        cmd = ["clang", "-E", "-iquote"]
+        cmd = ["clang", "-E"]
         includes.append(DARWIN_HEADERS_DIR)
     elif platform.system() == "Windows":
         # Since Windows may not have GCC installed, we check for a cpp command
@@ -126,14 +126,16 @@ def preprocess(code, extra_cpp_args=None, debug=False):
         else:
             cmd = ["cpp"]
     else:
-        cmd = ["cpp", "-I-"]
+        cmd = ["cpp"]
     includes.append(BUILTIN_HEADERS_DIR)
     cmd += (
-        [
+        [f"-I{inc}" for inc in includes]
+        + [
             "-nostdinc",
-        ] + [
-            f"-I{inc}" for inc in includes
-        ] + [
+            "-iquote",
+        ]
+        + [f"-I{inc}" for inc in includes]
+        + [
             "-D__attribute__(x)=",
             "-D__extension__=",
             "-D__inline=",
@@ -142,7 +144,11 @@ def preprocess(code, extra_cpp_args=None, debug=False):
         + extra_cpp_args
         + ["-"]
     )
-    with subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE) as proc:
+    with subprocess.Popen(
+        cmd,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+    ) as proc:
         result = [proc.communicate(input=ensure_binary(code))[0]]
         while proc.poll() is None:
             result.append(proc.communicate()[0])
