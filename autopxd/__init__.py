@@ -112,8 +112,10 @@ def _preprocess_msvc(code, extra_cpp_args, debug):
 def preprocess(code, extra_cpp_args=None, debug=False):
     if extra_cpp_args is None:
         extra_cpp_args = []
+    includes = []
     if platform.system() == "Darwin":
-        cmd = ["clang", "-E", f"-I{DARWIN_HEADERS_DIR}"]
+        cmd = ["clang", "-E", "-iquote"]
+        includes.append(DARWIN_HEADERS_DIR)
     elif platform.system() == "Windows":
         # Since Windows may not have GCC installed, we check for a cpp command
         # first and if it does not run, then use our MSVC implementation
@@ -124,15 +126,18 @@ def preprocess(code, extra_cpp_args=None, debug=False):
         else:
             cmd = ["cpp"]
     else:
-        cmd = ["cpp"]
+        cmd = ["cpp", "-I-"]
+    includes.append(BUILTIN_HEADERS_DIR)
     cmd += (
         [
             "-nostdinc",
+        ] + [
+            f"-I{inc}" for inc in includes
+        ] + [
             "-D__attribute__(x)=",
             "-D__extension__=",
             "-D__inline=",
             "-D__asm=",
-            f"-I{BUILTIN_HEADERS_DIR}",
         ]
         + extra_cpp_args
         + ["-"]
