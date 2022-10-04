@@ -34,13 +34,13 @@ def do_one_cython_vs_header_test(file_path):
     assert cython == actual, f"\nCYTHON:\n{cython}\n\n\nACTUAL:\n{actual}"
 
 
-@pytest.mark.parametrize("file_path", glob.iglob(os.path.abspath(os.path.join(FILES_DIR, "*.test"))))
+@pytest.mark.parametrize("file_path", glob.glob(os.path.abspath(os.path.join(FILES_DIR, "*.test"))))
 def test_cython_vs_header(file_path):
     do_one_cython_vs_header_test(file_path)
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows-only test")
-@pytest.mark.parametrize("file_path", glob.iglob(os.path.abspath(os.path.join(FILES_DIR, "*.test"))))
+@pytest.mark.parametrize("file_path", glob.glob(os.path.abspath(os.path.join(FILES_DIR, "*.test"))))
 def test_cython_vs_header_with_msvc(file_path, monkeypatch):
     monkeypatch.setattr(autopxd, "preprocess", autopxd._preprocess_msvc)  # pylint: disable=protected-access
     test_cython_vs_header(file_path)

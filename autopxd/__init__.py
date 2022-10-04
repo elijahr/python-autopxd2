@@ -127,12 +127,11 @@ def preprocess(code, extra_cpp_args=None, debug=False):
         cmd = ["cpp"]
     cmd += (
         [
-            "-nostdinc",
+            f"-I{BUILTIN_HEADERS_DIR}",
             "-D__attribute__(x)=",
             "-D__extension__=",
             "-D__inline=",
             "-D__asm=",
-            f"-I{BUILTIN_HEADERS_DIR}",
         ]
         + extra_cpp_args
         + ["-"]
