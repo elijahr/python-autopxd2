@@ -12,8 +12,8 @@ It generates `.pxd` files automatically from `.h` files.
 - Python 3.9
 - Python 3.10
 
-[![Test](https://github.com/gabrieldemarmiesse/python-autopxd2/actions/workflows/test.yml/badge.svg)](https://github.com/gabrieldemarmiesse/python-autopxd2/actions/workflows/test.yml)
-[![Lint](https://github.com/gabrieldemarmiesse/python-autopxd2/actions/workflows/lint.yml/badge.svg)](https://github.com/gabrieldemarmiesse/python-autopxd2/actions/workflows/lint.yml)
+[![Test](https://github.com/elijahr/python-autopxd2/actions/workflows/test.yml/badge.svg)](https://github.com/elijahr/python-autopxd2/actions/workflows/test.yml)
+[![Lint](https://github.com/elijahr/python-autopxd2/actions/workflows/lint.yml/badge.svg)](https://github.com/elijahr/python-autopxd2/actions/workflows/lint.yml)
 
 ### installation:
 
@@ -41,18 +41,22 @@ Options:
 
 ### Release History:
 
+#### v2.2.3 - 2022-10-04
+
+- Move to https://github.com/elijahr/python-autopxd2
+
 #### v2.2.0 - 2022-08-03
 
-- Add: Microsoft Visual C++ support from Steve Dower [#40](https://github.com/gabrieldemarmiesse/python-autopxd2/pull/40)
+- Add: Microsoft Visual C++ support from Steve Dower [#40](https://github.com/elijahr/python-autopxd2/pull/40)
 
 #### v2.1.1 - 2022-05-24
 
 - Add: `--regex` for arbitrary conversions
-- Fix: Various other fixes and improvements from Mads Ynddal in [#38](https://github.com/gabrieldemarmiesse/python-autopxd2/pull/38)
+- Fix: Various other fixes and improvements from Mads Ynddal in [#38](https://github.com/elijahr/python-autopxd2/pull/38)
 
 #### v2.0.4 - 2021-11-23
 
-- Fix: Windows CRLF issue ([#24](https://github.com/gabrieldemarmiesse/python-autopxd2/pull/24))
+- Fix: Windows CRLF issue ([#24](https://github.com/elijahr/python-autopxd2/pull/24))
 
 #### v2.0.3 - 2021-10-08
 

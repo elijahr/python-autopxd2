@@ -24,7 +24,7 @@ jobs:
 
       - name: Install lintball
         run: |
-          npm install -g lintball
+          npm install -g lintball@v1.5.0
           lintball install-tools --yes
 
       - name: Check for linter issues
