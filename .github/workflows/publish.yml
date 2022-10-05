@@ -33,7 +33,8 @@ jobs:
           pip3 install -v --upgrade \
             "pip >= 22.2.2" \
             "setuptools >= 65.4.1" \
-            "cython >= 0.29.0"
+            "cython >= 0.29.0" \
+            "wheel >= 0.37.1"
 
           python setup.py sdist
 
