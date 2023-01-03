@@ -3,6 +3,7 @@ from abc import (
     abstractmethod,
 )
 from typing import (
+    Iterable,
     List,
     Union,
 )
@@ -63,13 +64,18 @@ class Ptr(IdentifierType):
 
     node: PxdNode
 
-    def __init__(self, node: IdentifierType):
+    def __init__(self, node: IdentifierType, quals: Iterable[str] = ()):
         self.node = node
         if isinstance(node, Function):
             type_name = node.return_type
         else:
             type_name = self.node.type_name
-        super().__init__(self.node.name, f"{type_name}*")
+        type_name = f"{type_name}*"
+        # Cython supports const and volatile C type qualifiers
+        for qual in ("const", "volatile"):
+            if qual in quals:
+                type_name = f"{type_name} {qual}"
+        super().__init__(self.node.name, type_name)
 
     def lines(self) -> List[str]:
         if isinstance(self.node, Function):
