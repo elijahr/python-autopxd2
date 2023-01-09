@@ -153,6 +153,10 @@ class AutoPxd(c_ast.NodeVisitor, PxdNode):
         if not decls:
             return
         assert len(decls) == 1
+        # Cython supports const and volatile C type qualifiers
+        for qual in ("const", "volatile"):
+            if qual in node.quals:
+                decls[0] = f"{qual} {decls[0]}"
         if isinstance(decls[0], str):
             include_C_name = not self.child_of(c_ast.ParamList)
             self.append(IdentifierType(escape(node.declname, include_C_name), decls[0]))
@@ -189,9 +193,13 @@ class AutoPxd(c_ast.NodeVisitor, PxdNode):
         decls = self.collect(node)
         assert len(decls) == 1
         if isinstance(decls[0], str):
+            # Cython supports const and volatile C type qualifiers
+            for qual in ("const", "volatile"):
+                if qual in node.quals:
+                    decls[0] = f"{qual} {decls[0]}"
             self.append(decls[0])
         else:
-            self.append(Ptr(decls[0]))
+            self.append(Ptr(decls[0], node.quals))
 
     def visit_ArrayDecl(self, node):
         dim = ""

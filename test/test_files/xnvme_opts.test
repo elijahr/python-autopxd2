@@ -46,12 +46,12 @@ cdef extern from "xnvme_opts.test":
         uint32_t given
 
     cdef struct xnvme_opts:
-        char* be
-        char* dev
-        char* mem
-        char* sync
-        char* async_ "async"
-        char* admin
+        const char* be
+        const char* dev
+        const char* mem
+        const char* sync
+        const char* async_ "async"
+        const char* admin
         uint32_t nsid
         uint32_t create_mode
         uint8_t poll_io
@@ -62,8 +62,8 @@ cdef extern from "xnvme_opts.test":
         uint32_t use_cmb_sqs
         uint32_t shm_id
         uint32_t main_core
-        char* core_mask
-        char* adrfam
+        const char* core_mask
+        const char* adrfam
         uint32_t spdk_fabrics
         uint32_t oflags
         uint32_t rdonly

@@ -1,0 +1,85 @@
+struct my_struct {
+  const int a, b;
+  int const c;
+  const char *d;
+  char const *e;
+  char * const f;
+  const char const *g;  // "const char const" is equivalent to "const char"
+  char const * const h;
+  char const * const * const i;
+  const char ** const j;
+};
+
+union my_union {
+    const int *a;
+    int * const b;
+    const struct my_struct c;
+    const struct my_struct *d;
+    const struct my_struct * const e;
+};
+
+const int *(*my_func_ptr_1)();
+int * const(*my_func_ptr_2)();
+const int const * const(*my_func_ptr_3)();
+void const(*my_func_ptr_4)(const int *a, const int * const b, const int const * const c, const struct my_struct d, const union my_union *e);
+
+const int *my_func_1();
+int const *my_func_2();
+const int const *my_func_3();
+int * const my_func_4();
+const int const * const my_func_5();
+void my_func_6(const struct my_struct *s, const union my_union const * const u);
+void my_func_7(const char *a1, char const * const *a2, char ** const a3[3][4]);
+
+---
+
+cdef extern from "c_qualifiers.test":
+
+    cdef struct my_struct:
+        const int a
+        const int b
+        const int c
+        const char* d
+        const char* e
+        char* const f
+        const char* g
+        const char* const h
+        const char* const* const i
+        const char** const j
+
+    cdef union my_union:
+        const int* a
+        int* const b
+        const my_struct c
+        const my_struct* d
+        const my_struct* const e
+
+    ctypedef const int* (*_my_func_ptr_1_ft)()
+
+    _my_func_ptr_1_ft my_func_ptr_1
+
+    ctypedef int* const (*_my_func_ptr_2_ft)()
+
+    _my_func_ptr_2_ft my_func_ptr_2
+
+    ctypedef const int* const (*_my_func_ptr_3_ft)()
+
+    _my_func_ptr_3_ft my_func_ptr_3
+
+    ctypedef const void (*_my_func_ptr_4_ft)(const int* a, const int* const b, const int* const c, const my_struct d, const my_union* e)
+
+    _my_func_ptr_4_ft my_func_ptr_4
+
+    const int* my_func_1()
+
+    const int* my_func_2()
+
+    const int* my_func_3()
+
+    int* const my_func_4()
+
+    const int* const my_func_5()
+
+    void my_func_6(const my_struct* s, const my_union* const u)
+
+    void my_func_7(const char* a1, const char* const* a2, char** const a3[3][4])
