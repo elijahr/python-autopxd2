@@ -2,12 +2,16 @@
 
 set -ueo pipefail
 
-# Ensure ARM64 homebrew and /usr/local/bin are in PATH first.
+# Ensure ARM64 homebrew and /usr/local/bin are in PATH before system PATH.
 # This finds /usr/local/bin/lintball and finds newer Homebrew-installed bash.
-export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+export PATH
+PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
 
-if [ -f "${LINTBALL_DIR:-.}/bin/lintball" ]; then
-  "${LINTBALL_DIR:-.}/bin/lintball" pre-commit
+export LINTBALL_DIR
+LINTBALL_DIR="${LINTBALL_DIR:-node_modules/lintball}"
+
+if [ -f "${LINTBALL_DIR}/bin/lintball" ]; then
+  "${LINTBALL_DIR}/bin/lintball" pre-commit
 elif [ -n "$(command -v lintball)" ]; then
   lintball pre-commit
 else

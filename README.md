@@ -6,7 +6,6 @@ It generates `.pxd` files automatically from `.h` files.
 
 #### Tested against:
 
-- Python 3.6
 - Python 3.7
 - Python 3.8
 - Python 3.9
@@ -40,6 +39,10 @@ Options:
 ```
 
 ### Release History:
+
+#### v2.3.0 - 2023-01-08
+
+- Add: Support for const & volatile qualifiers from Emmanuel Leblond [#42](https://github.com/elijahr/python-autopxd2/pull/42)
 
 #### v2.2.3 - 2022-10-04
 

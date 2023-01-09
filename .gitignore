@@ -107,3 +107,4 @@ autopxd/include/*
 autopxd/darwin-include/*
 *.pyc
 .idea
+/node_modules
