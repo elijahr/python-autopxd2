@@ -35,6 +35,43 @@ def escape(name, include_C_name=False):
     return name
 
 
+def parse_enum_value(node):
+    if isinstance(node, c_ast.Constant):
+        if node.type in ("int", "long int"):
+            c_raw = node.value
+            # Convert octal to Python syntax
+            if c_raw[0] == "0" and len(c_raw) > 1 and c_raw[1] in "0123456789":
+                value_as_str = "0o" + c_raw[1:]
+            else:
+                value_as_str = c_raw
+
+            # Remove type suffixes
+            if value_as_str[-1] in "lLuU":
+                value_as_int = int(value_as_str[:-1], base=0)
+            else:
+                value_as_int = int(value_as_str, base=0)
+
+        elif node.type == "char":
+            assert len(node.value) == 3
+            assert node.value[0] == "'"
+            assert node.value[-1] == "'"
+
+            value_as_int = ord(node.value[1])
+            value_as_str = f"0x{value_as_int:X}"
+
+        else:
+            assert False, f"Unsuported constant type for enum value: {node}"
+
+    elif isinstance(node, c_ast.BinaryOp):
+        value_as_str = f"{node.left.name} {node.op} {node.right.name}"
+        value_as_int = None
+
+    else:
+        assert False, f"Unsuported expression for enum value: {node}"
+
+    return value_as_str, value_as_int
+
+
 class AutoPxd(c_ast.NodeVisitor, PxdNode):
     def __init__(self, hdrname):
         self.hdrname = hdrname
@@ -105,24 +142,28 @@ class AutoPxd(c_ast.NodeVisitor, PxdNode):
     def visit_Enum(self, node):
         items = []
         if node.values:
-            value = "0"
+            maybe_last_value_as_str = None
+            maybe_last_value_as_int = None
+            index_since_last_str_value = 0
             for item in node.values.enumerators:
                 items.append(escape(item.name, True))
-                if item.value is not None and hasattr(item.value, "value"):
-                    # Store the integer literal as a string to preserve its base:
-                    value = item.value.value
-                    # convert octal to Python syntax:
-                    if value[0] == "0" and len(value) > 1 and value[1] in "0123456789":
-                        value = "0o" + value[1:]
+                if item.value:
+                    value_as_str, maybe_value_as_int = parse_enum_value(item.value)
+                    index_since_last_str_value = 0
+                    maybe_last_value_as_str = value_as_str
+                    maybe_last_value_as_int = maybe_value_as_int
                 else:
-                    # Convert to Python integer if necessary and add one:
-                    if isinstance(value, str):
-                        # Remove type suffixes
-                        for suffix in "lLuU":
-                            value = value.replace(suffix, "")
-                    value = str(int(value, base=0) + 1)
+                    if maybe_last_value_as_int is not None:
+                        maybe_last_value_as_int += 1
+                        value_as_str = str(maybe_last_value_as_int)
+                    elif maybe_last_value_as_str is not None:
+                        index_since_last_str_value += 1
+                        value_as_str = f"{maybe_last_value_as_str} + {index_since_last_str_value}"
+                    else:
+                        maybe_last_value_as_int = 0
+                        value_as_str = "0"
                 # These constants may be used as array indices:
-                self.constants[item.name] = value
+                self.constants[item.name] = value_as_str
         type_decl = self.child_of(c_ast.TypeDecl, -2)
         type_def = type_decl and self.child_of(c_ast.Typedef, -3)
         name = node.name
