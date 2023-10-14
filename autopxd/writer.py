@@ -117,9 +117,13 @@ class AutoPxd(c_ast.NodeVisitor, PxdNode):
                 else:
                     # Convert to Python integer if necessary and add one:
                     if isinstance(value, str):
-                        # Remove type suffixes
-                        for suffix in "lLuU":
-                            value = value.replace(suffix, "")
+                        if "'" in value:
+                            # Handle characters
+                            value = str(int.from_bytes(value[1:-1].encode('raw_unicode_escape')))
+                        else:
+                            # Remove type suffixes
+                            for suffix in "lLuU":
+                                value = value.replace(suffix, "")
                     value = str(int(value, base=0) + 1)
                 # These constants may be used as array indices:
                 self.constants[item.name] = value
