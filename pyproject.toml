@@ -1,11 +1,19 @@
-# black-compatible configurations for various Python code formatters.
-# Assembled from https://black.readthedocs.io/en/stable/compatible_configs.html
+[build-system]
+requires = [
+  "wheel",
+  # Setuptools 18.0 properly handles Cython extensions.
+  "setuptools>=18.0",
+  "cython"
+]
+build-backend = "setuptools.build_meta"
 
 [tool.black]
+# black-compatible configurations for various Python code formatters.
+# Assembled from https://black.readthedocs.io/en/stable/compatible_configs.html
 line_length = 120
-target_version = ["py37", "py38", "py39", "py310"]
+target_version = ["py39", "py310", "py311", "py312"]
 preview = true
-required_version = "22.3.0"
+required_version = "24.8.0"
 
 [tool.autopep8]
 exclude = ".git,__pycache__"
