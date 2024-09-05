@@ -6,10 +6,10 @@ It generates `.pxd` files automatically from `.h` files.
 
 #### Tested against:
 
-- Python 3.7
-- Python 3.8
 - Python 3.9
 - Python 3.10
+- Python 3.11
+- Python 3.12
 
 [![Test](https://github.com/elijahr/python-autopxd2/actions/workflows/test.yml/badge.svg)](https://github.com/elijahr/python-autopxd2/actions/workflows/test.yml)
 [![Lint](https://github.com/elijahr/python-autopxd2/actions/workflows/lint.yml/badge.svg)](https://github.com/elijahr/python-autopxd2/actions/workflows/lint.yml)
