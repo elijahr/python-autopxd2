@@ -25,18 +25,14 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Build sdist
+      - name: Build sdist & wheel
         shell: bash
         run: |
           set -ueo pipefail
 
-          pip3 install -v --upgrade \
-            "pip >= 22.2.2" \
-            "setuptools >= 65.4.1" \
-            "cython >= 0.29.0" \
-            "wheel >= 0.37.1"
+          pip install build
 
-          python setup.py sdist
+          python -m build
 
       - name: Publish
         uses: pypa/gh-action-pypi-publish@release/v1
