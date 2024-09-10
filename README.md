@@ -40,6 +40,12 @@ Options:
 
 ### Release History:
 
+#### v2.4.0 - 2024-09-10
+
+- Add: Support for Python 3.12 from Michael Milton [#45](https://github.com/elijahr/python-autopxd2/pull/45)
+- Add: Support for char and binary expression in enum from Poiuzy & Emmanuel Leblond [#47](https://github.com/elijahr/python-autopxd2/pull/47)
+- Release now also provide a Wheel on Pypi from Emmanuel Leblond #[#46](https://github.com/elijahr/python-autopxd2/pull/46)
+
 #### v2.3.0 - 2023-01-08
 
 - Add: Support for const & volatile qualifiers from Emmanuel Leblond [#42](https://github.com/elijahr/python-autopxd2/pull/42)
