@@ -44,7 +44,7 @@ jobs:
           python -m venv venv
           source venv/bin/activate
           pip install .[dev]
-          pytest
+          pytest ./test
 
   test-windows:
     name: Test Windows
@@ -68,4 +68,4 @@ jobs:
         shell: powershell
         run: |
           pip install .[dev]
-          pytest
+          pytest ./test
