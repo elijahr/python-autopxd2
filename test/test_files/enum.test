@@ -4,6 +4,10 @@ enum MyEnum {
     C3
 };
 
+float my_array_c1[C1];
+float my_array_c2[C2];
+float my_array_c3[C3];
+
 ---
 
 cdef extern from "enum.test":
@@ -12,3 +16,9 @@ cdef extern from "enum.test":
         C1
         C2
         C3
+
+    float my_array_c1[0]
+
+    float my_array_c2[1]
+
+    float my_array_c3[2]

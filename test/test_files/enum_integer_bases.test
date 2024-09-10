@@ -2,13 +2,27 @@ enum MyEnum {
     C1 = 0xabcd,
     C2 = 0b01010,
     C3 = 01234,
-    C4,
+    C4, // i.e. C3 + 1
     C5 = 0XabcdL,
     C6 = 0L,
-    C7 = 0B1010
+    C7 = 0B1010,
+    C8 = 'a', // ASCII 0x61
+    C9 = C1 + C2,
+    C10,
+    C11,
 };
 
-float my_other_array[C5][C7];
+float my_array_c1[C1];
+float my_array_c2[C2];
+float my_array_c3[C3];
+float my_array_c4[C4];
+float my_array_c5[C5];
+float my_array_c6[C6];
+float my_array_c7[C7];
+float my_array_c8[C8];
+float my_array_c9[C9];
+float my_array_c10[C10];
+float my_array_c11[C11];
 ---
 
 cdef extern from "enum_integer_bases.test":
@@ -21,5 +35,29 @@ cdef extern from "enum_integer_bases.test":
         C5
         C6
         C7
+        C8
+        C9
+        C10
+        C11
 
-    float my_other_array[0XabcdL][0B1010]
+    float my_array_c1[0xabcd]
+
+    float my_array_c2[0b01010]
+
+    float my_array_c3[0o1234]
+
+    float my_array_c4[669]
+
+    float my_array_c5[0XabcdL]
+
+    float my_array_c6[0L]
+
+    float my_array_c7[0B1010]
+
+    float my_array_c8[0x61]
+
+    float my_array_c9[C1 + C2]
+
+    float my_array_c10[C1 + C2 + 1]
+
+    float my_array_c11[C1 + C2 + 2]
