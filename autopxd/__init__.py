@@ -53,6 +53,8 @@ def _find_cl():
         os.path.join(program_files, r"Microsoft Visual Studio\Installer\vswhere.exe"),
         "-prerelease",
         "-latest",
+        "-products",
+        "*",
         "-format",
         "json",
         "-utf8",
