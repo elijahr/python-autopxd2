@@ -103,8 +103,6 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-autopxd/include/*
-autopxd/darwin-include/*
 *.pyc
 .idea
 /node_modules

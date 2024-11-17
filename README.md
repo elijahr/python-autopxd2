@@ -6,15 +6,15 @@ It generates `.pxd` files automatically from `.h` files.
 
 #### Tested against:
 
-- Python 3.9
 - Python 3.10
 - Python 3.11
 - Python 3.12
+- Python 3.13
 
 [![Test](https://github.com/elijahr/python-autopxd2/actions/workflows/test.yml/badge.svg)](https://github.com/elijahr/python-autopxd2/actions/workflows/test.yml)
 [![Lint](https://github.com/elijahr/python-autopxd2/actions/workflows/lint.yml/badge.svg)](https://github.com/elijahr/python-autopxd2/actions/workflows/lint.yml)
 
-### installation:
+### Installation:
 
 ```shell
 pip install autopxd2
@@ -38,7 +38,32 @@ Options:
   -h, --help                      Show this message and exit.
 ```
 
+### Contributing:
+
+Contributions are welcome! Please ensure that your code includes unit tests. To install the package in development mode and run tests, use the following commands:
+
+```shell
+python -m venv .venv
+source .venv/bin/activate
+pip install -e '.[dev]'
+pytest ./test
+```
+
+Additionally, we use pre-commit to ensure code quality. To install pre-commit and run it, use the following commands:
+
+```shell
+pip install pre-commit
+pre-commit install
+pre-commit run --all-files
+```
+
 ### Release History:
+
+#### v2.4.1 - 2024-11-17
+
+- Refactor installation to use only pyproject.toml.
+- Update linting to use pre-commit.
+- Add contribution guidelines.
 
 #### v2.4.0 - 2024-09-10
 
