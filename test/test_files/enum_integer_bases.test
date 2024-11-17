@@ -11,6 +11,11 @@ enum MyEnum {
     C10,
     C11,
     C12 = 5 + 6,
+    C13 = ((1 << 2) + 3) * 4,
+    C14, // i.e. C13 + 1
+    C15 = C14 * 2,
+    C16_SUB = 1 << 2,
+    C16 = C16_SUB + 3,
 };
 
 float my_array_c1[C1];
@@ -25,6 +30,10 @@ float my_array_c9[C9];
 float my_array_c10[C10];
 float my_array_c11[C11];
 float my_array_c12[C12];
+float my_array_c13[C13];
+float my_array_c14[C14];
+float my_array_c15[C15];
+float my_array_c16[C16];
 ---
 
 cdef extern from "enum_integer_bases.test":
@@ -42,6 +51,11 @@ cdef extern from "enum_integer_bases.test":
         C10
         C11
         C12
+        C13
+        C14
+        C15
+        C16_SUB
+        C16
 
     float my_array_c1[0xabcd]
 
@@ -59,10 +73,18 @@ cdef extern from "enum_integer_bases.test":
 
     float my_array_c8[0x61]
 
-    float my_array_c9[C1 + C2]
+    float my_array_c9[(0xabcd) + (0b01010)]
 
-    float my_array_c10[C1 + C2 + 1]
+    float my_array_c10[((0xabcd) + (0b01010)) + 1]
 
-    float my_array_c11[C1 + C2 + 2]
+    float my_array_c11[((0xabcd) + (0b01010)) + 2]
 
     float my_array_c12[5 + 6]
+
+    float my_array_c13[((1 << 2) + 3) * 4]
+
+    float my_array_c14[(((1 << 2) + 3) * 4) + 1]
+
+    float my_array_c15[((((1 << 2) + 3) * 4) + 1) * 2]
+
+    float my_array_c16[(1 << 2) + 3]

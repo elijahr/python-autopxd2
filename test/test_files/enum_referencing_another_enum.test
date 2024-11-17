@@ -1,0 +1,38 @@
+enum MyEnumA {
+    A1 = 10,
+    A2 = 20
+};
+
+enum MyEnumB {
+    B1 = A1,
+    B2 = A1 + A2,
+    B3 = B1 + A1 + 10,
+    B4
+};
+
+float my_array_b1[B1];
+float my_array_b2[B2];
+float my_array_b3[B3];
+float my_array_b4[B4];
+
+---
+
+cdef extern from "enum_referencing_another_enum.test":
+
+    cpdef enum MyEnumA:
+        A1
+        A2
+
+    cpdef enum MyEnumB:
+        B1
+        B2
+        B3
+        B4
+
+    float my_array_b1[10]
+
+    float my_array_b2[(10) + (20)]
+
+    float my_array_b3[(10) + (10) + 10]
+
+    float my_array_b4[((10) + (10) + 10) + 1]

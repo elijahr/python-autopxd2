@@ -35,7 +35,7 @@ def escape(name, include_C_name=False):
     return name
 
 
-def parse_enum_value(node):
+def parse_enum_value(node, constants):
     if isinstance(node, c_ast.Constant):
         if node.type in ("int", "long int"):
             c_raw = node.value
@@ -63,21 +63,44 @@ def parse_enum_value(node):
             assert False, f"Unsuported constant type for enum value: {node}"
 
     elif isinstance(node, c_ast.BinaryOp):
-        if isinstance(node.left, c_ast.Constant):
-            nodeleft = parse_enum_value(node.left)[0]
-        elif hasattr(node.left, "name"):
-            nodeleft = node.left.name
-        else:
-            assert False, f"Unsuported expression for enum value: {node.left}"
+        # We wrap the left and right sub-expression with parenthesis to avoid
+        # error when doing advanced arithmetic.
+        # For instance, let's consider the following:
+        # - C input code: `((1 << 2) + 3) * 4` (= 28)
+        # - pycparser: BinaryOp(BinaryOp(BinaryOp(1, "<<", 2), "+", 3), "*", 4)
+        # - output if we wouldn't add parenthesis: 1 << 2 + 3 * 4 (= 16384)
+        #
+        # Note we treat differently the case of a binary expression only composed of
+        # additions in order to improve readability on this very common case (e.g.
+        # `((1 + 2) + 3) + 4` -> `1 + 2 + 3 + 4`).
 
-        if isinstance(node.right, c_ast.Constant):
-            noderight = parse_enum_value(node.right)[0]
-        elif hasattr(node.right, "name"):
-            noderight = node.right.name
-        else:
-            assert False, f"Unsuported expression for enum value: {node.right}"
+        def need_parenthesis(sub_node):
+            if isinstance(sub_node, c_ast.Constant):
+                # A scalar never need parenthesis !
+                return False
 
-        value_as_str = f"{nodeleft} {node.op} {noderight}"
+            if isinstance(sub_node, c_ast.ID):
+                # The ID may correspond to an expression, so we must enclose it in parenthesis
+                return True
+
+            # Parenthesis are superfluous if parent and child are both addition expressions
+            assert isinstance(sub_node, c_ast.BinaryOp)
+            return node.op != "+" or sub_node.op != "+"
+
+        left_value_as_str, _ = parse_enum_value(node.left, constants)
+        if need_parenthesis(node.left):
+            left_value_as_str = f"({left_value_as_str})"
+        right_value_as_str, _ = parse_enum_value(node.right, constants)
+        if need_parenthesis(node.right):
+            right_value_as_str = f"({right_value_as_str})"
+        value_as_str = f"{left_value_as_str} {node.op} {right_value_as_str}"
+        value_as_int = None
+
+    elif isinstance(node, c_ast.ID):
+        try:
+            value_as_str = constants[node.name]
+        except ValueError:
+            assert False, f"Enum value references an unknown constant: {node.name}"
         value_as_int = None
 
     else:
@@ -162,7 +185,7 @@ class AutoPxd(c_ast.NodeVisitor, PxdNode):
             for item in node.values.enumerators:
                 items.append(escape(item.name, True))
                 if item.value:
-                    value_as_str, maybe_value_as_int = parse_enum_value(item.value)
+                    value_as_str, maybe_value_as_int = parse_enum_value(item.value, self.constants)
                     index_since_last_str_value = 0
                     maybe_last_value_as_str = value_as_str
                     maybe_last_value_as_int = maybe_value_as_int
@@ -172,9 +195,14 @@ class AutoPxd(c_ast.NodeVisitor, PxdNode):
                         value_as_str = str(maybe_last_value_as_int)
                     elif maybe_last_value_as_str is not None:
                         index_since_last_str_value += 1
-                        value_as_str = f"{maybe_last_value_as_str} + {index_since_last_str_value}"
+                        # Given we don't know what `maybe_last_value_as_str` contains, we
+                        # must enclose it in parenthesis to avoid messing with operator
+                        # priority.
+                        # e.g. `A + 1` if A is `2 << 3`: `2 << 3 + 1` != `(2 << 3) + 1`
+                        value_as_str = f"({maybe_last_value_as_str}) + {index_since_last_str_value}"
                     else:
                         maybe_last_value_as_int = 0
+                        maybe_last_value_as_str = None
                         value_as_str = "0"
                 # These constants may be used as array indices:
                 self.constants[item.name] = value_as_str
