@@ -1,16 +1,50 @@
 [build-system]
-requires = [
-  "setuptools",
-]
+requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "autopxd2"
+version = "2.4.1"
+description = "Automatically generate Cython pxd files from C headers"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [
+  { name = "elijahr", email = "elijahr+autopxd2@gmail.com" },
+  { name = "Emmanuel Leblond", email = "emmanuel.leblond@gmail.com" },
+  { name = "Gabriel de Marmiesse", email = "gabrieldemarmiesse@gmail.com" },
+  { name = "Thiago de Arruda", email = "tpadilha84@gmail.com" },
+]
+urls = { "Homepage" = "https://github.com/elijahr/python-autopxd2" }
+keywords = ["autopxd", "autopxd2", "cython", "code-generators"]
+classifiers = [
+  "Topic :: Software Development :: Compilers",
+  "Topic :: Software Development :: Code Generators",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Cython",
+  "Programming Language :: C",
+  "Programming Language :: C++",
+]
+dependencies = ["Click", "pycparser"]
+
+[project.optional-dependencies]
+dev = ["pytest", "cython", "pre-commit"]
+
+[project.scripts]
+autopxd = "autopxd:cli"
+
+[tool.setuptools.package-data]
+autopxd = [
+  "stubs/include/*",
+  "stubs/include/**/*",
+  "stubs/darwin-include/*",
+  "stubs/darwin-include/**/*",
+]
 
 [tool.black]
 # black-compatible configurations for various Python code formatters.
 # Assembled from https://black.readthedocs.io/en/stable/compatible_configs.html
 line_length = 120
-target_version = ["py39", "py310", "py311", "py312"]
 preview = true
-required_version = "24.8.0"
 
 [tool.autopep8]
 exclude = ".git,__pycache__"
@@ -19,24 +53,28 @@ ignore = "E203,E501,W6"
 
 [tool.isort]
 profile = "black"
-py_version = "all"
 known_first_party = "autopxd"
-known_third_party = ["click", "pycparser"]
+known_third_party = ["click", "pycparser", "pytest", "Cython", "libc"]
 # line_length is intentionally small, to ensure each imported object gets its
 # own line.
 line_length = 10
 multi_line_output = 3
 include_trailing_comma = true
 
-[tool.pylint.messages_control]
-disable = """missing-module-docstring,
-             missing-class-docstring,
-             too-few-public-methods,
-             missing-function-docstring,
-             import-error,
-             invalid-name,
-             too-many-branches,
-             too-many-arguments,"""
+[tool.pylint]
+max-line-length = 120
+disable = [
+  "missing-class-docstring",
+  "missing-module-docstring",
+  "import-error",
+  "invalid-name",
+  "missing-function-docstring",
+  "too-many-arguments",
+  "too-few-public-methods",
+  "too-many-branches",
+  "consider-using-f-string",
+  "unused-import",
+]
 
-[tool.pylint.format]
-max-line-length = "120"
+[tool.pytest.ini_options]
+testpaths = ["test"]

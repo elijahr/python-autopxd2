@@ -73,4 +73,3 @@ cdef extern from "xnvme_opts.test":
         uint32_t truncate
         uint32_t direct
         uint32_t _rsvd
-

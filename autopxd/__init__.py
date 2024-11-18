@@ -5,6 +5,9 @@ import re
 import subprocess
 import sys
 import tempfile
+from importlib.metadata import (
+    version as get_version,
+)
 
 import click
 from pycparser import (
@@ -20,7 +23,7 @@ from .writer import (
     AutoPxd,
 )
 
-__version__ = "2.4.0"
+__version__ = get_version("autopxd2")
 
 
 def ensure_binary(s, encoding="utf-8", errors="strict"):
@@ -153,7 +156,7 @@ def preprocess(code, extra_cpp_args=None, debug=False):
         while proc.poll() is None:
             result.append(proc.communicate()[0])
     if proc.returncode:
-        raise Exception("Invoking C preprocessor failed")
+        raise Exception("Invoking C preprocessor failed. extra_cpp_args: %s" % extra_cpp_args)
     res = b"".join(result).decode("utf-8")
     if debug:
         sys.stderr.write(res)

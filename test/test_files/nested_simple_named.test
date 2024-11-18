@@ -30,4 +30,3 @@ cdef extern from "nested_simple_named.test":
     cdef struct outer_s:
         int a
         inner_s x
-

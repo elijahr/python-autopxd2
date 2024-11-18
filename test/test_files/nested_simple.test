@@ -14,4 +14,3 @@ cdef extern from "nested_simple.test":
         int a
         int b
         int c
-
