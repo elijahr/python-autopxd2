@@ -63,7 +63,21 @@ def parse_enum_value(node):
             assert False, f"Unsuported constant type for enum value: {node}"
 
     elif isinstance(node, c_ast.BinaryOp):
-        value_as_str = f"{node.left.name} {node.op} {node.right.name}"
+        if isinstance(node.left, c_ast.Constant):
+            nodeleft = parse_enum_value(node.left)[0]
+        elif hasattr(node.left, "name"):
+            nodeleft = node.left.name
+        else:
+            assert False, f"Unsuported expression for enum value: {node.left}"
+
+        if isinstance(node.right, c_ast.Constant):
+            noderight = parse_enum_value(node.right)[0]
+        elif hasattr(node.right, "name"):
+            noderight = node.right.name
+        else:
+            assert False, f"Unsuported expression for enum value: {node.right}"
+
+        value_as_str = f"{nodeleft} {node.op} {noderight}"
         value_as_int = None
 
     else:
