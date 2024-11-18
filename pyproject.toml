@@ -10,7 +10,7 @@ readme = "README.md"
 license = { file = "LICENSE" }
 authors = [
   { name = "elijahr", email = "elijahr+autopxd2@gmail.com" },
-  { name = "touilleMan", email = "emmanuel.leblond@gmail.com" },
+  { name = "Emmanuel Leblond", email = "emmanuel.leblond@gmail.com" },
   { name = "Gabriel de Marmiesse", email = "gabrieldemarmiesse@gmail.com" },
   { name = "Thiago de Arruda", email = "tpadilha84@gmail.com" },
 ]
@@ -24,7 +24,7 @@ classifiers = [
   "Programming Language :: C",
   "Programming Language :: C++",
 ]
-dependencies = ["Click", "pycparser", "setuptools", "wheel"]
+dependencies = ["Click", "pycparser"]
 
 [project.optional-dependencies]
 dev = ["pytest", "cython", "pre-commit"]
@@ -54,18 +54,7 @@ ignore = "E203,E501,W6"
 [tool.isort]
 profile = "black"
 known_first_party = "autopxd"
-known_third_party = [
-  "click",
-  "pycparser",
-  "pytest",
-  "setuptools",
-  "wheel",
-  "black",
-  "isort",
-  "autopep8",
-  "pylint",
-  "pkg_resources",
-]
+known_third_party = ["click", "pycparser", "pytest", "Cython", "libc"]
 # line_length is intentionally small, to ensure each imported object gets its
 # own line.
 line_length = 10
@@ -84,5 +73,8 @@ disable = [
   "too-few-public-methods",
   "too-many-branches",
   "consider-using-f-string",
-  "unused-import"
+  "unused-import",
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["test"]

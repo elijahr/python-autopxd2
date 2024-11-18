@@ -1,8 +1,9 @@
-import importlib.resources as pkg_resources
-import os
+from importlib import (
+    resources,
+)
 
-BUILTIN_HEADERS_DIR = pkg_resources.files("autopxd").joinpath("stubs/include")
-DARWIN_HEADERS_DIR = pkg_resources.files("autopxd").joinpath("stubs/darwin-include")
+BUILTIN_HEADERS_DIR = resources.files("autopxd").joinpath("stubs/include")
+DARWIN_HEADERS_DIR = resources.files("autopxd").joinpath("stubs/darwin-include")
 
 # Types declared by pycparser fake headers that we should ignore
 IGNORE_DECLARATIONS = {

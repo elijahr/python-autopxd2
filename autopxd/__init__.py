@@ -5,11 +5,11 @@ import re
 import subprocess
 import sys
 import tempfile
+from importlib.metadata import (
+    version as get_version,
+)
 
 import click
-from pkg_resources import (
-    get_distribution,
-)
 from pycparser import (
     c_parser,
 )
@@ -23,7 +23,7 @@ from .writer import (
     AutoPxd,
 )
 
-__version__ = get_distribution("autopxd2").version
+__version__ = get_version("autopxd2")
 
 
 def ensure_binary(s, encoding="utf-8", errors="strict"):

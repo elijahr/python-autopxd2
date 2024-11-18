@@ -46,7 +46,7 @@ Contributions are welcome! Please ensure that your code includes unit tests. To 
 python -m venv .venv
 source .venv/bin/activate
 pip install -e '.[dev]'
-pytest ./test
+pytest
 ```
 
 Additionally, we use pre-commit to ensure code quality. To install pre-commit and run it, use the following commands:
