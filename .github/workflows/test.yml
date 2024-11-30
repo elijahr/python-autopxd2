@@ -2,12 +2,7 @@
 
 name: Test
 
-on:
-  push:
-    branches:
-      - '*'
-    tags:
-      - '*'
+on: [push, pull_request]
 
 jobs:
   test-unix:
