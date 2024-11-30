@@ -30,14 +30,13 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Install project & dependencies
+        shell: bash
+        run: pip install .[dev]
+
       - name: Test
         shell: bash
-        run: |
-          set -uexo pipefail
-          python -m venv venv
-          source venv/bin/activate
-          pip install .[dev]
-          pytest ./test
+        run: pytest ./test
 
   test-windows:
     name: Test Windows
@@ -57,8 +56,10 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Install project & dependencies
+        shell: powershell
+        run: pip install '.[dev]'
+
       - name: Test
         shell: powershell
-        run: |
-          pip install '.[dev]'
-          pytest ./test
+        run: pytest ./test
