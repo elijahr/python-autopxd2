@@ -1,4 +1,3 @@
-import json
 import os
 import platform
 import re
@@ -52,22 +51,36 @@ def _find_cl():
         "ARM64": "arm64",
     }.get(platform.machine(), "x86")
     program_files = os.getenv("ProgramFiles(x86)") or os.getenv("ProgramFiles")
+
+    if build_platform in ("x86", "x64"):
+        # Note the `x86.x64` here not related to cross compilation, but just
+        # poor naming of something which should have been called `x86_or_x64`.
+        require = "Microsoft.VisualStudio.Component.VC.Tools.x86.x64"
+    else:
+        assert build_platform == "arm64"
+        require = "Microsoft.VisualStudio.Component.VC.Tools.ARM64"
+
     cmd = [
         os.path.join(program_files, r"Microsoft Visual Studio\Installer\vswhere.exe"),
         "-prerelease",
         "-latest",
         "-products",
         "*",
-        "-format",
-        "json",
+        "-requires",
+        require,
+        "-property",
+        "installationPath",
         "-utf8",
-        "-find",
-        rf"**\bin\Host{host_platform}\{build_platform}\cl.exe",
     ]
     try:
-        return json.loads(subprocess.check_output(cmd, encoding="utf-8"))[-1]
-    except (OSError, subprocess.CalledProcessError, IndexError) as ex:
+        install_dir = subprocess.check_output(cmd, encoding="utf-8").strip()
+    except subprocess.CalledProcessError as ex:
         raise RuntimeError("No suitable compiler available") from ex
+
+    with open(rf"{install_dir}\VC\Auxiliary\Build\Microsoft.VCToolsVersion.default.txt", encoding="ascii") as fd:
+        default_version = fd.read().strip()
+
+    return rf"{install_dir}\VC\Tools\MSVC\{default_version}\bin\Host{host_platform}\{build_platform}\cl.exe"
 
 
 def _preprocess_msvc(code, extra_cpp_args, debug):
