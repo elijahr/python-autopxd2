@@ -59,11 +59,15 @@ pre-commit run --all-files
 
 ### Release History:
 
-#### v2.4.1 - 2024-11-17
+#### v2.5.0 - 2024-12-01
 
-- Refactor installation to use only pyproject.toml.
-- Update linting to use pre-commit.
-- Add contribution guidelines.
+- Greatly improve time taken by `vswhere.exe` to find `cl.exe` on Windows [#55](https://github.com/elijahr/python-autopxd2/pull/55)
+- Refactor installation to use only pyproject.toml. [#53](https://github.com/elijahr/python-autopxd2/pull/53)
+- Update linting to use pre-commit [#53](https://github.com/elijahr/python-autopxd2/pull/53)
+- Add contribution guidelines [#53](https://github.com/elijahr/python-autopxd2/pull/53)
+- Improve handling of non-literal-as-value in enum parsing [#52](https://github.com/elijahr/python-autopxd2/pull/52)
+- Fix parsing crash when using binary operation in enum [#51](https://github.com/elijahr/python-autopxd2/pull/51)
+- Fix use configuration of `vswhere.exe` to find `cl.exe` on Windows [#49](https://github.com/elijahr/python-autopxd2/pull/49)
 
 #### v2.4.0 - 2024-09-10
 
