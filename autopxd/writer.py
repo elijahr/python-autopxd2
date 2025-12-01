@@ -99,8 +99,8 @@ def parse_enum_value(node, constants):
     elif isinstance(node, c_ast.ID):
         try:
             value_as_str = constants[node.name]
-        except ValueError:
-            assert False, f"Enum value references an unknown constant: {node.name}"
+        except KeyError as exc:
+            raise ValueError(f"Enum value references an unknown constant: {node.name}") from exc
         value_as_int = None
 
     else:

@@ -89,7 +89,6 @@ def _preprocess_msvc(code, extra_cpp_args, debug):
     with open(source_file, "wb") as f:
         f.write(ensure_binary(code))
 
-    result = []
     try:
         cmd = [
             _find_cl(),
@@ -105,12 +104,12 @@ def _preprocess_msvc(code, extra_cpp_args, debug):
             source_file,
         ]
         with subprocess.Popen(cmd, stdout=subprocess.PIPE) as proc:
-            while proc.poll() is None:
-                result.extend(proc.communicate()[0].decode("utf-8").splitlines())
+            stdout, _ = proc.communicate()
+            result = stdout.decode("utf-8").splitlines()
+            if proc.returncode:
+                raise RuntimeError("Invoking C preprocessor failed")
     finally:
         os.unlink(source_file)
-    if proc.returncode:
-        raise RuntimeError("Invoking C preprocessor failed")
 
     # Normalise the paths in #line pragmas so that they are correctly matched
     # later on
@@ -167,12 +166,10 @@ def preprocess(code, extra_cpp_args=None, debug=False):
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
     ) as proc:
-        result = [proc.communicate(input=ensure_binary(code))[0]]
-        while proc.poll() is None:
-            result.append(proc.communicate()[0])
-    if proc.returncode:
-        raise Exception("Invoking C preprocessor failed. extra_cpp_args: %s" % extra_cpp_args)
-    res = b"".join(result).decode("utf-8")
+        stdout, _ = proc.communicate(input=ensure_binary(code))
+        if proc.returncode:
+            raise RuntimeError(f"Invoking C preprocessor failed. extra_cpp_args: {extra_cpp_args}")
+    res = stdout.decode("utf-8")
     if debug:
         sys.stderr.write(res)
     return res.replace("\r\n", "\n")
