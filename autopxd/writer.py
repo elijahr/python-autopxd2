@@ -52,15 +52,14 @@ def parse_enum_value(node, constants):
                 value_as_int = int(value_as_str, base=0)
 
         elif node.type == "char":
-            assert len(node.value) == 3
-            assert node.value[0] == "'"
-            assert node.value[-1] == "'"
+            if len(node.value) != 3 or node.value[0] != "'" or node.value[-1] != "'":
+                raise ValueError(f"Invalid char constant format: {node.value!r}")
 
             value_as_int = ord(node.value[1])
             value_as_str = f"0x{value_as_int:X}"
 
         else:
-            assert False, f"Unsuported constant type for enum value: {node}"
+            raise ValueError(f"Unsupported constant type for enum value: {node}")
 
     elif isinstance(node, c_ast.BinaryOp):
         # We wrap the left and right sub-expression with parenthesis to avoid
@@ -84,7 +83,8 @@ def parse_enum_value(node, constants):
                 return True
 
             # Parenthesis are superfluous if parent and child are both addition expressions
-            assert isinstance(sub_node, c_ast.BinaryOp)
+            if not isinstance(sub_node, c_ast.BinaryOp):
+                raise ValueError(f"Unexpected node type in enum expression: {type(sub_node).__name__}")
             return node.op != "+" or sub_node.op != "+"
 
         left_value_as_str, _ = parse_enum_value(node.left, constants)
@@ -104,7 +104,7 @@ def parse_enum_value(node, constants):
         value_as_int = None
 
     else:
-        assert False, f"Unsuported expression for enum value: {node}"
+        raise ValueError(f"Unsupported expression for enum value: {node}")
 
     return value_as_str, value_as_int
 
@@ -122,7 +122,8 @@ class AutoPxd(c_ast.NodeVisitor, PxdNode):
         self.visit_stack.append(node)
         rv = super().visit(node)
         n = self.visit_stack.pop()
-        assert n == node
+        if n != node:
+            raise RuntimeError(f"Visit stack mismatch: expected {node}, got {n}")
         return rv
 
     def visit_IdentifierType(self, node):
@@ -235,7 +236,8 @@ class AutoPxd(c_ast.NodeVisitor, PxdNode):
         decls = self.collect(node)
         if not decls:
             return
-        assert len(decls) == 1
+        if len(decls) != 1:
+            raise RuntimeError(f"Expected 1 declaration in TypeDecl, got {len(decls)}")
         # Cython supports const and volatile C type qualifiers
         for qual in ("const", "volatile"):
             if qual in node.quals:
@@ -250,7 +252,8 @@ class AutoPxd(c_ast.NodeVisitor, PxdNode):
         decls = self.collect(node)
         if not decls:
             return
-        assert len(decls) == 1
+        if len(decls) != 1:
+            raise RuntimeError(f"Expected 1 declaration in Decl, got {len(decls)}")
         if isinstance(decls[0], str):
             include_C_name = not self.child_of(c_ast.ParamList)
             self.append(IdentifierType(escape(node.name, include_C_name), decls[0]))
@@ -274,7 +277,8 @@ class AutoPxd(c_ast.NodeVisitor, PxdNode):
 
     def visit_PtrDecl(self, node):
         decls = self.collect(node)
-        assert len(decls) == 1
+        if len(decls) != 1:
+            raise RuntimeError(f"Expected 1 declaration in PtrDecl, got {len(decls)}")
         if isinstance(decls[0], str):
             # Cython supports const and volatile C type qualifiers
             for qual in ("const", "volatile"):
@@ -293,7 +297,8 @@ class AutoPxd(c_ast.NodeVisitor, PxdNode):
                 dim = str(self.constants[node.dim.name])
         self.dimension_stack.append(dim)
         decls = self.collect(node)
-        assert len(decls) == 1
+        if len(decls) != 1:
+            raise RuntimeError(f"Expected 1 declaration in ArrayDecl, got {len(decls)}")
         self.append(Array(decls[0], self.dimension_stack))
         self.dimension_stack = []
 
@@ -317,7 +322,9 @@ class AutoPxd(c_ast.NodeVisitor, PxdNode):
         decls = []
         self.decl_stack.append(decls)
         self.generic_visit(node)
-        assert self.decl_stack.pop() == decls
+        popped = self.decl_stack.pop()
+        if popped != decls:
+            raise RuntimeError("Declaration stack mismatch in collect()")
         return decls
 
     def path_name(self, tag=None):

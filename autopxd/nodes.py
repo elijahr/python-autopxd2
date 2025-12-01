@@ -51,7 +51,8 @@ class Function(PxdNode):
         arguments_list = []
         for arg in self.args:
             lines = arg.lines()
-            assert len(lines) == 1
+            if len(lines) != 1:
+                raise RuntimeError(f"Expected 1 line for function argument, got {len(lines)}")
             arguments_list.append(lines[0])
         return ", ".join(arguments_list)
 
