@@ -40,22 +40,7 @@ Options:
 
 ### Contributing:
 
-Contributions are welcome! Please ensure that your code includes unit tests. To install the package in development mode and run tests, use the following commands:
-
-```shell
-python -m venv .venv
-source .venv/bin/activate
-pip install -e '.[dev]'
-pytest
-```
-
-Additionally, we use pre-commit to ensure code quality. To install pre-commit and run it, use the following commands:
-
-```shell
-pip install pre-commit
-pre-commit install
-pre-commit run --all-files
-```
+Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, code quality standards, and the release process.
 
 ### Release History:
 
@@ -131,6 +116,4 @@ It's difficult to catch all the corner cases.
 
 ### Stub Headers:
 
-To prevent generating Cython code for `#include <foo>` system headers, python-autopxd2 uses stubbed headers. These are installed with the package and are located in the `autopxd/stubs` directory.
-
-To regenerate the stub headers, use the `regenerate_stubs.py` script. This script downloads the necessary libc stub headers and optionally generates macOS stub headers. This is rarely necessary: only when libc or macOS introduce new header files. Submit a pull request with the updated files.
+To prevent generating Cython code for `#include <foo>` system headers, python-autopxd2 uses stubbed headers located in `autopxd/stubs/`. See [CONTRIBUTING.md](CONTRIBUTING.md) for instructions on regenerating them.
