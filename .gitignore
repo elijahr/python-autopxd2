@@ -103,6 +103,9 @@ venv.bak/
 # mypy
 .mypy_cache/
 
+# Local planning docs
+docs/plans/
+
 *.pyc
 .idea
 /node_modules
