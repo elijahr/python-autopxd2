@@ -56,9 +56,10 @@ def _find_cl():
         # Note the `x86.x64` here not related to cross compilation, but just
         # poor naming of something which should have been called `x86_or_x64`.
         require = "Microsoft.VisualStudio.Component.VC.Tools.x86.x64"
-    else:
-        assert build_platform == "arm64"
+    elif build_platform == "arm64":
         require = "Microsoft.VisualStudio.Component.VC.Tools.ARM64"
+    else:
+        raise RuntimeError(f"Unsupported build platform: {build_platform}")
 
     cmd = [
         os.path.join(program_files, r"Microsoft Visual Studio\Installer\vswhere.exe"),
@@ -184,9 +185,11 @@ def parse(code, extra_cpp_args=None, whitelist=None, debug=False, regex=None):
     parser = c_parser.CParser()
 
     for r in regex:
-        assert r[0] == "s" and r[-1] == "g" and r[1] == r[-2], 'Only search/replace is allowed: "s/.../.../g"'
+        if not (r[0] == "s" and r[-1] == "g" and r[1] == r[-2]):
+            raise ValueError(f'Only search/replace is allowed: "s/.../.../g", got: {r!r}')
         delimiter = r[1]
-        assert r.count(delimiter) == 3, 'Malformed regex. Only search/replace is allowed: "s/.../.../g"'
+        if r.count(delimiter) != 3:
+            raise ValueError(f'Malformed regex. Only search/replace is allowed: "s/.../.../g", got: {r!r}')
         _, search, replace, _ = r.split(delimiter)
 
         preprocessed = re.sub(search, replace, preprocessed)
