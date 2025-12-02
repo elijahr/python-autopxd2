@@ -27,7 +27,14 @@ classifiers = [
 dependencies = ["Click", "pycparser"]
 
 [project.optional-dependencies]
-dev = ["pytest", "cython", "pre-commit"]
+dev = ["pytest", "cython", "pre-commit", "ruff", "mypy"]
+docs = [
+    "mkdocs>=1.5",
+    "mkdocs-material>=9.0",
+    "mkdocstrings[python]>=0.24",
+]
+libclang = ["clang"]
+all = ["autopxd2[dev,docs,libclang]"]
 
 [project.scripts]
 autopxd = "autopxd:cli"

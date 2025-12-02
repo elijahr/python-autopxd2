@@ -1,0 +1,70 @@
+site_name: autopxd2
+site_description: Automatically generate Cython pxd files from C/C++ headers
+site_url: https://elijahr.github.io/python-autopxd2/
+repo_url: https://github.com/elijahr/python-autopxd2
+repo_name: elijahr/python-autopxd2
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: deep purple
+      accent: purple
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: deep purple
+      accent: purple
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - content.code.copy
+    - content.code.annotate
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: google
+            show_source: true
+            show_root_heading: true
+            show_root_full_path: false
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+            members_order: source
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Installation: getting-started/installation.md
+      - Quick Start: getting-started/quickstart.md
+      - Docker Usage: getting-started/docker.md
+  - User Guide:
+      - CLI Reference: user-guide/cli.md
+      - Parser Backends: user-guide/backends.md
+      - C++ Support: user-guide/cpp.md
+  - API Reference:
+      - Overview: api/index.md
+      - IR Module: api/ir.md
+      - Backends: api/backends.md
+  - Contributing: contributing.md
