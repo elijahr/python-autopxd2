@@ -3,12 +3,23 @@
 """pycparser-based parser backend.
 
 This backend uses pycparser (pure Python C99 parser) to parse C header files.
-It's the default backend since it has no external dependencies.
+It's the default backend since it requires no external dependencies beyond
+the pycparser package itself.
 
-Limitations:
-- C99 only (no C++ support)
-- Cannot extract #define macro values (they're processed by cpp before parsing)
-- Requires a C preprocessor (cpp or cl.exe on Windows)
+Limitations
+-----------
+* C99 only - no C++ support (use libclang for C++)
+* Cannot extract ``#define`` macro values (processed by preprocessor)
+* Requires preprocessed input (run through ``cpp``, ``clang -E``, or ``cl.exe /E``)
+
+Example
+-------
+::
+
+    from autopxd.backends.pycparser_backend import PycparserBackend
+
+    backend = PycparserBackend()
+    header = backend.parse(preprocessed_code, "myheader.h")
 """
 
 from pycparser import (
@@ -21,6 +32,7 @@ from autopxd.backends import (
 from autopxd.ir import (
     Array,
     CType,
+    Declaration,
     Enum,
     EnumValue,
     Field,
@@ -37,12 +49,24 @@ from autopxd.ir import (
 )
 
 
-class ASTConverter(c_ast.NodeVisitor):
-    """Converts pycparser AST to autopxd IR."""
+class ASTConverter(c_ast.NodeVisitor):  # type: ignore[misc]
+    """Converts pycparser AST to autopxd IR.
+
+    This class walks a pycparser AST and produces the equivalent
+    autopxd IR declarations. It handles all C99 constructs including
+    structs, unions, enums, typedefs, functions, and variables.
+
+    :param filename: Source filename for source location tracking.
+
+    Note
+    ----
+    This class is internal to the pycparser backend. Use
+    :class:`PycparserBackend` for the public API.
+    """
 
     def __init__(self, filename: str) -> None:
         self.filename = filename
-        self.declarations: list[Enum | Struct | Function | Typedef | Variable] = []
+        self.declarations: list[Declaration] = []
         # Track enum values for use in array dimensions
         self.constants: dict[str, str] = {}
         # Track path through AST for naming anonymous types
@@ -303,7 +327,7 @@ class ASTConverter(c_ast.NodeVisitor):
             for decl in node.decls:
                 if isinstance(decl, c_ast.Decl):
                     # Handle inline anonymous struct/union
-                    if decl.name is None and isinstance(decl.type, (c_ast.Struct, c_ast.Union)):
+                    if decl.name is None and isinstance(decl.type, c_ast.Struct | c_ast.Union):
                         # Flatten anonymous nested struct/union fields
                         nested_fields = self._flatten_anonymous_struct(decl.type)
                         fields.extend(nested_fields)
@@ -327,7 +351,7 @@ class ASTConverter(c_ast.NodeVisitor):
         if node.decls:
             for decl in node.decls:
                 if isinstance(decl, c_ast.Decl):
-                    if decl.name is None and isinstance(decl.type, (c_ast.Struct, c_ast.Union)):
+                    if decl.name is None and isinstance(decl.type, c_ast.Struct | c_ast.Union):
                         # Recursively flatten
                         nested = self._flatten_anonymous_struct(decl.type, prefix)
                         fields.extend(nested)
@@ -489,20 +513,26 @@ class ASTConverter(c_ast.NodeVisitor):
 
     def _compute_binary(self, left: int, op: str, right: int) -> int:
         """Compute a binary operation on integers."""
-        ops = {
-            "+": lambda a, b: a + b,
-            "-": lambda a, b: a - b,
-            "*": lambda a, b: a * b,
-            "/": lambda a, b: a // b,
-            "%": lambda a, b: a % b,
-            "<<": lambda a, b: a << b,
-            ">>": lambda a, b: a >> b,
-            "&": lambda a, b: a & b,
-            "|": lambda a, b: a | b,
-            "^": lambda a, b: a ^ b,
-        }
-        if op in ops:
-            return ops[op](left, right)
+        if op == "+":
+            return left + right
+        if op == "-":
+            return left - right
+        if op == "*":
+            return left * right
+        if op == "/":
+            return left // right
+        if op == "%":
+            return left % right
+        if op == "<<":
+            return left << right
+        if op == ">>":
+            return left >> right
+        if op == "&":
+            return left & right
+        if op == "|":
+            return left | right
+        if op == "^":
+            return left ^ right
         raise ValueError(f"Unknown operator: {op}")
 
     # pylint: disable-next=too-many-return-statements
@@ -512,9 +542,9 @@ class ASTConverter(c_ast.NodeVisitor):
             _, value = self._eval_constant(node)
             if value is not None:
                 return value
-            return node.value
+            return str(node.value)
         if isinstance(node, c_ast.ID):
-            name = node.name
+            name: str = node.name
             if name in self.constants:
                 # Return the expression (may be int or string)
                 const_val = self.constants[name]
@@ -548,7 +578,36 @@ class ASTConverter(c_ast.NodeVisitor):
 
 
 class PycparserBackend:
-    """Parser backend using pycparser."""
+    """Parser backend using pycparser.
+
+    The default autopxd parser backend, using the pure-Python pycparser
+    library. This backend has no external dependencies but requires
+    preprocessed C code as input.
+
+    Properties
+    ----------
+    name : str
+        Returns ``"pycparser"``.
+    supports_macros : bool
+        Returns ``False`` - macros are consumed by the preprocessor.
+    supports_cpp : bool
+        Returns ``False`` - pycparser only supports C99.
+
+    Example
+    -------
+    ::
+
+        from autopxd.backends.pycparser_backend import PycparserBackend
+
+        backend = PycparserBackend()
+
+        # Parse preprocessed code
+        preprocessed = run_cpp("myheader.h")
+        header = backend.parse(preprocessed, "myheader.h")
+
+        for decl in header.declarations:
+            print(decl)
+    """
 
     @property
     def name(self) -> str:
@@ -571,17 +630,17 @@ class PycparserBackend:
     ) -> Header:
         """Parse C code using pycparser.
 
-        Note: This method expects PREPROCESSED code. The preprocessing
-        step (running cpp/clang/cl.exe) should be done by the caller.
+        .. note::
 
-        Args:
-            code: Preprocessed C source code to parse
-            filename: Source filename for error messages
-            include_dirs: Not used (preprocessing done by caller)
-            extra_args: Not used (preprocessing done by caller)
+            This method expects **preprocessed** code. Run the C preprocessor
+            (``cpp``, ``clang -E``, or ``cl.exe /E``) before calling this method.
 
-        Returns:
-            Header containing parsed declarations
+        :param code: Preprocessed C source code to parse.
+        :param filename: Source filename for error messages and location tracking.
+        :param include_dirs: Not used (preprocessing done by caller).
+        :param extra_args: Not used (preprocessing done by caller).
+        :returns: :class:`~autopxd.ir.Header` containing parsed declarations.
+        :raises pycparser.plyparser.ParseError: If the code has syntax errors.
         """
         # pylint: disable=import-outside-toplevel
         from pycparser import (

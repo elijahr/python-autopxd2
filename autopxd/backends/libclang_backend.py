@@ -3,20 +3,33 @@
 """libclang-based parser backend.
 
 This backend uses libclang (LLVM's C/C++ parser) to parse header files.
-It provides full C/C++ support and can extract #define macro values.
+It provides full C/C++ support including templates, namespaces, and classes.
 
-Requirements:
-- libclang must be installed (e.g., via `pip install libclang` or system package)
-- On some systems, you may need to set LIBCLANG_PATH environment variable
+Requirements
+------------
+* libclang must be installed (``pip install clang`` or system package)
+* On some systems, set ``LIBCLANG_PATH`` environment variable
 
-Advantages over pycparser:
-- Full C++ support
-- Handles complex preprocessor constructs
-- Uses the same parser as actual compilers
-- Better error messages
+Advantages over pycparser
+-------------------------
+* Full C++ support (classes, templates, namespaces)
+* Handles complex preprocessor constructs
+* Uses the same parser as production compilers
+* Better error messages with source locations
 
-Limitations:
-- Macro extraction is limited due to Python bindings constraints
+Limitations
+-----------
+* Macro extraction is limited due to Python bindings constraints
+* Requires external libclang installation
+
+Example
+-------
+::
+
+    from autopxd.backends.libclang_backend import LibclangBackend
+
+    backend = LibclangBackend()
+    header = backend.parse(code, "myheader.hpp", extra_args=["-std=c++17"])
 """
 
 # Try to import clang - this may fail if not installed
@@ -30,12 +43,13 @@ try:
     CLANG_AVAILABLE = True
 except ImportError:
     CLANG_AVAILABLE = False
-    CursorKind = None  # type: ignore
-    TypeKind = None  # type: ignore
+    CursorKind = None
+    TypeKind = None
 
 from autopxd.ir import (
     Array,
     CType,
+    Declaration,
     Enum,
     EnumValue,
     Field,
@@ -57,11 +71,24 @@ if CLANG_AVAILABLE:
     )
 
     class ClangASTConverter:
-        """Converts libclang cursors to autopxd IR."""
+        """Converts libclang cursors to autopxd IR.
+
+        This class walks a libclang translation unit and produces the
+        equivalent autopxd IR declarations. It handles C and C++ constructs
+        including structs, unions, enums, typedefs, functions, classes, and variables.
+
+        :param filename: Source filename for filtering declarations.
+            Only declarations from this file are included (system headers excluded).
+
+        Note
+        ----
+        This class is internal to the libclang backend. Use
+        :class:`LibclangBackend` for the public API.
+        """
 
         def __init__(self, filename: str) -> None:
             self.filename = filename
-            self.declarations: list[Enum | Struct | Function | Typedef | Variable] = []
+            self.declarations: list[Declaration] = []
             # Track seen declarations to avoid duplicates
             self._seen: dict[str, bool] = {}
 
@@ -79,7 +106,7 @@ if CLANG_AVAILABLE:
             loc = cursor.location
             if loc.file is None:
                 return False
-            return loc.file.name == self.filename
+            return bool(loc.file.name == self.filename)
 
         def _process_cursor(self, cursor: "clang.cindex.Cursor") -> None:
             """Process a top-level cursor."""
@@ -356,7 +383,35 @@ if CLANG_AVAILABLE:
             return None
 
     class LibclangBackend:
-        """Parser backend using libclang."""
+        """Parser backend using libclang.
+
+        Uses LLVM's libclang to parse C and C++ code. This backend supports
+        the full C++ language including templates, classes, and namespaces.
+
+        Properties
+        ----------
+        name : str
+            Returns ``"libclang"``.
+        supports_macros : bool
+            Returns ``False`` - macro extraction is limited in Python bindings.
+        supports_cpp : bool
+            Returns ``True`` - full C++ support.
+
+        Example
+        -------
+        ::
+
+            from autopxd.backends.libclang_backend import LibclangBackend
+
+            backend = LibclangBackend()
+
+            # Parse C++ code with specific standard
+            header = backend.parse(
+                code,
+                "myheader.hpp",
+                extra_args=["-std=c++17", "-DDEBUG=1"]
+            )
+        """
 
         def __init__(self) -> None:
             self._index: clang.cindex.Index | None = None
@@ -389,14 +444,26 @@ if CLANG_AVAILABLE:
         ) -> Header:
             """Parse C/C++ code using libclang.
 
-            Args:
-                code: C/C++ source code to parse
-                filename: Source filename for error messages
-                include_dirs: Additional include directories
-                extra_args: Additional compiler arguments
+            Unlike the pycparser backend, this method handles raw (unpreprocessed)
+            code and performs preprocessing internally.
 
-            Returns:
-                Header containing parsed declarations
+            :param code: C/C++ source code to parse (raw, not preprocessed).
+            :param filename: Source filename for error messages and location tracking.
+            :param include_dirs: Additional include directories (converted to ``-I`` flags).
+            :param extra_args: Additional compiler arguments (e.g., ``["-std=c++17"]``).
+            :returns: :class:`~autopxd.ir.Header` containing parsed declarations.
+            :raises RuntimeError: If parsing fails with errors.
+
+            Example
+            -------
+            ::
+
+                header = backend.parse(
+                    code,
+                    "myheader.hpp",
+                    include_dirs=["/usr/local/include"],
+                    extra_args=["-std=c++17", "-DNDEBUG"]
+                )
             """
             args: list[str] = []
 
