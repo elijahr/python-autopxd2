@@ -40,7 +40,7 @@ Uses LLVM's clang library for parsing. Provides the same parser used by actual c
 **Cons:**
 
 - Requires libclang to be installed
-- Python `clang` package version must match system libclang (these are official LLVM bindings)
+- Python `clang2` package version must match system libclang (these are official LLVM bindings)
 - Slightly slower startup time
 
 **Usage:**
