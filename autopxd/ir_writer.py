@@ -1,27 +1,38 @@
-"""IR to Cython .pxd writer.
+"""IR to Cython ``.pxd`` writer.
 
-This module converts our IR (Intermediate Representation) to Cython .pxd files.
-It handles:
-- Keyword escaping (Python keywords get _ suffix)
-- stdint type imports
-- Proper Cython syntax for all declaration types
+This module converts the autopxd IR (Intermediate Representation) to
+Cython ``.pxd`` declaration files.
+
+Features
+--------
+* Keyword escaping - Python keywords get ``_`` suffix with C name alias
+* stdint type imports - Automatically adds ``cimport`` for ``libc.stdint`` types
+* Full Cython syntax - Supports all declaration types (structs, enums, functions, etc.)
+
+Example
+-------
+::
+
+    from autopxd.ir_writer import write_pxd
+    from autopxd.backends import get_backend
+
+    backend = get_backend()
+    header = backend.parse(code, "myheader.h")
+    pxd_content = write_pxd(header)
+
+    with open("myheader.pxd", "w") as f:
+        f.write(pxd_content)
 """
-
-from typing import (
-    List,
-    Optional,
-    Set,
-    Union,
-)
 
 from autopxd.declarations import (
     STDINT_DECLARATIONS,
 )
 from autopxd.ir import (
     Array,
+    Constant,
     CType,
+    Declaration,
     Enum,
-    Field,
     Function,
     FunctionPointer,
     Header,
@@ -38,17 +49,48 @@ from autopxd.keywords import (
 
 
 class PxdWriter:
-    """Writes IR to Cython .pxd format."""
+    """Writes IR to Cython ``.pxd`` format.
+
+    Converts an :class:`~autopxd.ir.Header` containing parsed C/C++ declarations
+    into valid Cython ``.pxd`` syntax. Handles keyword escaping, stdint imports,
+    and proper formatting for all declaration types.
+
+    :param header: The parsed header to convert.
+
+    Attributes
+    ----------
+    INDENT : str
+        Indentation string (4 spaces).
+
+    Example
+    -------
+    ::
+
+        from autopxd.ir_writer import PxdWriter
+        from autopxd.ir import Header, Function, CType, Parameter
+
+        header = Header("test.h", [
+            Function("strlen", CType("size_t"), [
+                Parameter("s", Pointer(CType("char", ["const"])))
+            ])
+        ])
+
+        writer = PxdWriter(header)
+        pxd_content = writer.write()
+    """
 
     INDENT = "    "
 
     def __init__(self, header: Header) -> None:
         self.header = header
-        self.stdint_types: Set[str] = set()
+        self.stdint_types: set[str] = set()
 
     def write(self) -> str:
-        """Convert IR Header to Cython .pxd string."""
-        lines: List[str] = []
+        """Convert IR Header to Cython ``.pxd`` string.
+
+        :returns: Complete ``.pxd`` file content as a string.
+        """
+        lines: list[str] = []
 
         # Collect stdint types used
         self._collect_stdint_types()
@@ -81,7 +123,7 @@ class PxdWriter:
         for decl in self.header.declarations:
             self._collect_stdint_from_decl(decl)
 
-    def _collect_stdint_from_decl(self, decl: Union[Enum, Struct, Function, Typedef, Variable]) -> None:
+    def _collect_stdint_from_decl(self, decl: Declaration) -> None:
         """Collect stdint types from a declaration."""
         if isinstance(decl, Struct):
             for field in decl.fields:
@@ -109,7 +151,7 @@ class PxdWriter:
             for param in type_expr.parameters:
                 self._collect_stdint_from_type(param.type)
 
-    def _write_declaration(self, decl: Union[Enum, Struct, Function, Typedef, Variable]) -> List[str]:
+    def _write_declaration(self, decl: Declaration) -> list[str]:
         """Write a single declaration."""
         if isinstance(decl, Struct):
             return self._write_struct(decl)
@@ -121,9 +163,11 @@ class PxdWriter:
             return self._write_typedef(decl)
         if isinstance(decl, Variable):
             return self._write_variable(decl)
+        if isinstance(decl, Constant):
+            return self._write_constant(decl)
         return []
 
-    def _write_struct(self, struct: Struct) -> List[str]:
+    def _write_struct(self, struct: Struct) -> list[str]:
         """Write a struct or union declaration."""
         kind = "union" if struct.is_union else "struct"
         name = self._escape_name(struct.name, include_c_name=True)
@@ -144,7 +188,7 @@ class PxdWriter:
 
         return lines
 
-    def _write_enum(self, enum: Enum) -> List[str]:
+    def _write_enum(self, enum: Enum) -> list[str]:
         """Write an enum declaration."""
         name = self._escape_name(enum.name, include_c_name=True)
 
@@ -163,7 +207,7 @@ class PxdWriter:
 
         return lines
 
-    def _write_function(self, func: Function) -> List[str]:
+    def _write_function(self, func: Function) -> list[str]:
         """Write a function declaration."""
         return_type = self._format_type(func.return_type)
         name = self._escape_name(func.name)
@@ -171,14 +215,14 @@ class PxdWriter:
 
         return [f"{return_type} {name}({params})"]
 
-    def _write_typedef(self, typedef: Typedef) -> List[str]:
+    def _write_typedef(self, typedef: Typedef) -> list[str]:
         """Write a typedef declaration."""
         underlying = self._format_type(typedef.underlying_type)
         name = self._escape_name(typedef.name)
 
         return [f"ctypedef {underlying} {name}"]
 
-    def _write_variable(self, var: Variable) -> List[str]:
+    def _write_variable(self, var: Variable) -> list[str]:
         """Write a variable declaration."""
         var_type = self._format_type(var.type)
         name = self._escape_name(var.name)
@@ -189,6 +233,21 @@ class PxdWriter:
             name = f"{name}{dims}"
 
         return [f"{var_type} {name}"]
+
+    def _write_constant(self, const: Constant) -> list[str]:
+        """Write a constant declaration.
+
+        Constants are written as Cython enum values for macros,
+        or typed constants for const declarations.
+        """
+        name = self._escape_name(const.name, include_c_name=True)
+        if const.is_macro:
+            # Macros become anonymous enum values
+            return [f"int {name}"]
+        if const.type:
+            type_str = self._format_ctype(const.type)
+            return [f"{type_str} {name}"]
+        return [f"int {name}"]
 
     def _format_type(self, type_expr: TypeExpr) -> str:
         """Format a type expression as Cython string."""
@@ -248,7 +307,7 @@ class PxdWriter:
         params = self._format_params(fp.parameters, fp.is_variadic)
         return f"{return_type} (*)({params})"
 
-    def _format_func_ptr_as_ptr(self, fp: FunctionPointer, ptr_quals: List[str]) -> str:
+    def _format_func_ptr_as_ptr(self, fp: FunctionPointer, ptr_quals: list[str]) -> str:
         """Format a pointer to function pointer."""
         return_type = self._format_type(fp.return_type)
         params = self._format_params(fp.parameters, fp.is_variadic)
@@ -260,7 +319,7 @@ class PxdWriter:
 
         return result
 
-    def _format_params(self, params: List[Parameter], is_variadic: bool) -> str:
+    def _format_params(self, params: list[Parameter], is_variadic: bool) -> str:
         """Format function parameters."""
         parts = []
         for param in params:
@@ -293,7 +352,7 @@ class PxdWriter:
             current = current.element_type
         return "".join(f"[{d}]" for d in dims)
 
-    def _escape_name(self, name: Optional[str], include_c_name: bool = False) -> str:
+    def _escape_name(self, name: str | None, include_c_name: bool = False) -> str:
         """Escape Python keywords by adding underscore suffix.
 
         If include_c_name is True, also add the original C name in quotes.
@@ -310,13 +369,27 @@ class PxdWriter:
 
 
 def write_pxd(header: Header) -> str:
-    """Convert an IR Header to Cython .pxd string.
+    """Convert an IR Header to Cython ``.pxd`` string.
 
-    Args:
-        header: Parsed header in IR format
+    Convenience function that creates a :class:`PxdWriter` and calls
+    :meth:`~PxdWriter.write`. This is the main entry point for converting
+    parsed headers to Cython declarations.
 
-    Returns:
-        Cython .pxd file content as string
+    :param header: Parsed header in IR format.
+    :returns: Complete ``.pxd`` file content as a string.
+
+    Example
+    -------
+    ::
+
+        from autopxd.backends import get_backend
+        from autopxd.ir_writer import write_pxd
+
+        backend = get_backend()
+        header = backend.parse(code, "myheader.h")
+        pxd = write_pxd(header)
+
+        print(pxd)
     """
     writer = PxdWriter(header)
     return writer.write()

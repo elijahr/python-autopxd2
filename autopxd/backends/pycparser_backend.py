@@ -3,21 +3,24 @@
 """pycparser-based parser backend.
 
 This backend uses pycparser (pure Python C99 parser) to parse C header files.
-It's the default backend since it has no external dependencies.
+It's the default backend since it requires no external dependencies beyond
+the pycparser package itself.
 
-Limitations:
-- C99 only (no C++ support)
-- Cannot extract #define macro values (they're processed by cpp before parsing)
-- Requires a C preprocessor (cpp or cl.exe on Windows)
+Limitations
+-----------
+* C99 only - no C++ support (use libclang for C++)
+* Cannot extract ``#define`` macro values (processed by preprocessor)
+* Requires preprocessed input (run through ``cpp``, ``clang -E``, or ``cl.exe /E``)
+
+Example
+-------
+::
+
+    from autopxd.backends.pycparser_backend import PycparserBackend
+
+    backend = PycparserBackend()
+    header = backend.parse(preprocessed_code, "myheader.h")
 """
-
-from typing import (
-    Dict,
-    List,
-    Optional,
-    Tuple,
-    Union,
-)
 
 from pycparser import (
     c_ast,
@@ -29,6 +32,7 @@ from autopxd.backends import (
 from autopxd.ir import (
     Array,
     CType,
+    Declaration,
     Enum,
     EnumValue,
     Field,
@@ -45,16 +49,28 @@ from autopxd.ir import (
 )
 
 
-class ASTConverter(c_ast.NodeVisitor):
-    """Converts pycparser AST to autopxd IR."""
+class ASTConverter(c_ast.NodeVisitor):  # type: ignore[misc]
+    """Converts pycparser AST to autopxd IR.
+
+    This class walks a pycparser AST and produces the equivalent
+    autopxd IR declarations. It handles all C99 constructs including
+    structs, unions, enums, typedefs, functions, and variables.
+
+    :param filename: Source filename for source location tracking.
+
+    Note
+    ----
+    This class is internal to the pycparser backend. Use
+    :class:`PycparserBackend` for the public API.
+    """
 
     def __init__(self, filename: str) -> None:
         self.filename = filename
-        self.declarations: List[Union[Enum, Struct, Function, Typedef, Variable]] = []
+        self.declarations: list[Declaration] = []
         # Track enum values for use in array dimensions
-        self.constants: Dict[str, str] = {}
+        self.constants: dict[str, str] = {}
         # Track path through AST for naming anonymous types
-        self.path: List[str] = []
+        self.path: list[str] = []
         # Counter for generating unique anonymous type names
         self.anon_counter = 0
 
@@ -177,7 +193,7 @@ class ASTConverter(c_ast.NodeVisitor):
         if enum:
             self.declarations.append(enum)
 
-    def _convert_type(self, node: c_ast.Node) -> Optional[TypeExpr]:
+    def _convert_type(self, node: c_ast.Node) -> TypeExpr | None:
         """Convert a type node to our IR type expression."""
         if isinstance(node, c_ast.TypeDecl):
             return self._convert_type_decl(node)
@@ -189,7 +205,7 @@ class ASTConverter(c_ast.NodeVisitor):
             return self._convert_func_ptr(node)
         return None
 
-    def _convert_type_decl(self, node: c_ast.TypeDecl) -> Optional[TypeExpr]:
+    def _convert_type_decl(self, node: c_ast.TypeDecl) -> TypeExpr | None:
         """Convert a TypeDecl to a type expression."""
         inner = node.type
         qualifiers = list(node.quals) if node.quals else []
@@ -209,7 +225,7 @@ class ASTConverter(c_ast.NodeVisitor):
 
         return None
 
-    def _convert_ptr_decl(self, node: c_ast.PtrDecl) -> Optional[Pointer]:
+    def _convert_ptr_decl(self, node: c_ast.PtrDecl) -> Pointer | None:
         """Convert a PtrDecl to a Pointer type."""
         qualifiers = list(node.quals) if node.quals else []
 
@@ -225,19 +241,19 @@ class ASTConverter(c_ast.NodeVisitor):
             return Pointer(pointee=pointee, qualifiers=qualifiers)
         return None
 
-    def _convert_array_decl(self, node: c_ast.ArrayDecl) -> Optional[Array]:
+    def _convert_array_decl(self, node: c_ast.ArrayDecl) -> Array | None:
         """Convert an ArrayDecl to an Array type."""
         element_type = self._convert_type(node.type)
         if not element_type:
             return None
 
-        size: Optional[Union[int, str]] = None
+        size: int | str | None = None
         if node.dim is not None:
             size = self._eval_dimension(node.dim)
 
         return Array(element_type=element_type, size=size)
 
-    def _convert_func_ptr(self, node: c_ast.FuncDecl) -> Optional[FunctionPointer]:
+    def _convert_func_ptr(self, node: c_ast.FuncDecl) -> FunctionPointer | None:
         """Convert a FuncDecl (in pointer context) to FunctionPointer."""
         # Get return type
         return_type = self._convert_type(node.type)
@@ -253,7 +269,7 @@ class ASTConverter(c_ast.NodeVisitor):
             is_variadic=is_variadic,
         )
 
-    def _convert_function_decl(self, node: c_ast.FuncDecl, name: str) -> Optional[Function]:
+    def _convert_function_decl(self, node: c_ast.FuncDecl, name: str) -> Function | None:
         """Convert a function declaration to our IR Function."""
         # Get return type
         return_type = self._convert_type(node.type)
@@ -270,9 +286,9 @@ class ASTConverter(c_ast.NodeVisitor):
             is_variadic=is_variadic,
         )
 
-    def _convert_params(self, param_list: Optional[c_ast.ParamList]) -> Tuple[List[Parameter], bool]:
+    def _convert_params(self, param_list: c_ast.ParamList | None) -> tuple[list[Parameter], bool]:
         """Convert a parameter list to IR Parameters."""
-        params: List[Parameter] = []
+        params: list[Parameter] = []
         is_variadic = False
 
         if param_list is None:
@@ -302,16 +318,16 @@ class ASTConverter(c_ast.NodeVisitor):
 
         return params, is_variadic
 
-    def _convert_struct(self, node: c_ast.Struct, is_union: bool) -> Optional[Struct]:
+    def _convert_struct(self, node: c_ast.Struct, is_union: bool) -> Struct | None:
         """Convert a struct/union to our IR Struct."""
         name = node.name
-        fields: List[Field] = []
+        fields: list[Field] = []
 
         if node.decls:
             for decl in node.decls:
                 if isinstance(decl, c_ast.Decl):
                     # Handle inline anonymous struct/union
-                    if decl.name is None and isinstance(decl.type, (c_ast.Struct, c_ast.Union)):
+                    if decl.name is None and isinstance(decl.type, c_ast.Struct | c_ast.Union):
                         # Flatten anonymous nested struct/union fields
                         nested_fields = self._flatten_anonymous_struct(decl.type)
                         fields.extend(nested_fields)
@@ -327,15 +343,15 @@ class ASTConverter(c_ast.NodeVisitor):
             location=self._get_location(node),
         )
 
-    def _flatten_anonymous_struct(self, node: Union[c_ast.Struct, c_ast.Union], prefix: str = "") -> List[Field]:
+    def _flatten_anonymous_struct(self, node: c_ast.Struct | c_ast.Union, prefix: str = "") -> list[Field]:
         """Flatten an anonymous struct/union into a list of fields."""
         # pylint: disable=too-many-nested-blocks
-        fields: List[Field] = []
+        fields: list[Field] = []
 
         if node.decls:
             for decl in node.decls:
                 if isinstance(decl, c_ast.Decl):
-                    if decl.name is None and isinstance(decl.type, (c_ast.Struct, c_ast.Union)):
+                    if decl.name is None and isinstance(decl.type, c_ast.Struct | c_ast.Union):
                         # Recursively flatten
                         nested = self._flatten_anonymous_struct(decl.type, prefix)
                         fields.extend(nested)
@@ -348,7 +364,7 @@ class ASTConverter(c_ast.NodeVisitor):
 
         return fields
 
-    def _convert_field(self, decl: c_ast.Decl) -> Optional[Field]:
+    def _convert_field(self, decl: c_ast.Decl) -> Field | None:
         """Convert a struct/union field declaration."""
         if decl.name is None:
             return None
@@ -358,14 +374,14 @@ class ASTConverter(c_ast.NodeVisitor):
             return Field(name=decl.name, type=type_expr)
         return None
 
-    def _convert_enum(self, node: c_ast.Enum) -> Optional[Enum]:
+    def _convert_enum(self, node: c_ast.Enum) -> Enum | None:
         """Convert an enum to our IR Enum."""
         name = node.name
-        values: List[EnumValue] = []
+        values: list[EnumValue] = []
 
         if node.values:
-            last_value: Optional[int] = None
-            last_expr: Optional[str] = None
+            last_value: int | None = None
+            last_expr: str | None = None
             offset_from_expr = 0
 
             for enumerator in node.values.enumerators:
@@ -399,7 +415,7 @@ class ASTConverter(c_ast.NodeVisitor):
 
         return Enum(name=name, values=values, location=self._get_location(node))
 
-    def _eval_enum_value(self, node: c_ast.Node) -> Tuple[str, Optional[int]]:
+    def _eval_enum_value(self, node: c_ast.Node) -> tuple[str, int | None]:
         """Evaluate an enum value expression.
 
         Returns (string_representation, optional_int_value).
@@ -420,7 +436,7 @@ class ASTConverter(c_ast.NodeVisitor):
         # Unknown expression type
         return "0", 0
 
-    def _eval_constant(self, node: c_ast.Constant) -> Tuple[str, Optional[int]]:
+    def _eval_constant(self, node: c_ast.Constant) -> tuple[str, int | None]:
         """Evaluate a constant node."""
         if node.type in ("int", "long int"):
             raw = node.value
@@ -446,7 +462,7 @@ class ASTConverter(c_ast.NodeVisitor):
 
         return node.value, None
 
-    def _eval_binary_op(self, node: c_ast.BinaryOp) -> Tuple[str, Optional[int]]:
+    def _eval_binary_op(self, node: c_ast.BinaryOp) -> tuple[str, int | None]:
         """Evaluate a binary operation."""
         left_str, left_int = self._eval_enum_value(node.left)
         right_str, right_int = self._eval_enum_value(node.right)
@@ -469,7 +485,7 @@ class ASTConverter(c_ast.NodeVisitor):
 
         return expr, None
 
-    def _eval_unary_op(self, node: c_ast.UnaryOp) -> Tuple[str, Optional[int]]:
+    def _eval_unary_op(self, node: c_ast.UnaryOp) -> tuple[str, int | None]:
         """Evaluate a unary operation."""
         operand_str, operand_int = self._eval_enum_value(node.expr)
 
@@ -492,39 +508,43 @@ class ASTConverter(c_ast.NodeVisitor):
             return True  # Constants might be expressions
         if isinstance(node, c_ast.BinaryOp):
             # Parens not needed for chains of the same associative op
-            if parent_op == "+" and node.op == "+":
-                return False
-            return True
+            return not (parent_op == "+" and node.op == "+")
         return True
 
     def _compute_binary(self, left: int, op: str, right: int) -> int:
         """Compute a binary operation on integers."""
-        ops = {
-            "+": lambda a, b: a + b,
-            "-": lambda a, b: a - b,
-            "*": lambda a, b: a * b,
-            "/": lambda a, b: a // b,
-            "%": lambda a, b: a % b,
-            "<<": lambda a, b: a << b,
-            ">>": lambda a, b: a >> b,
-            "&": lambda a, b: a & b,
-            "|": lambda a, b: a | b,
-            "^": lambda a, b: a ^ b,
-        }
-        if op in ops:
-            return ops[op](left, right)
+        if op == "+":
+            return left + right
+        if op == "-":
+            return left - right
+        if op == "*":
+            return left * right
+        if op == "/":
+            return left // right
+        if op == "%":
+            return left % right
+        if op == "<<":
+            return left << right
+        if op == ">>":
+            return left >> right
+        if op == "&":
+            return left & right
+        if op == "|":
+            return left | right
+        if op == "^":
+            return left ^ right
         raise ValueError(f"Unknown operator: {op}")
 
     # pylint: disable-next=too-many-return-statements
-    def _eval_dimension(self, node: c_ast.Node) -> Optional[Union[int, str]]:
+    def _eval_dimension(self, node: c_ast.Node) -> int | str | None:
         """Evaluate an array dimension expression."""
         if isinstance(node, c_ast.Constant):
             _, value = self._eval_constant(node)
             if value is not None:
                 return value
-            return node.value
+            return str(node.value)
         if isinstance(node, c_ast.ID):
-            name = node.name
+            name: str = node.name
             if name in self.constants:
                 # Return the expression (may be int or string)
                 const_val = self.constants[name]
@@ -546,7 +566,7 @@ class ASTConverter(c_ast.NodeVisitor):
         self.anon_counter += 1
         return f"_anon_{kind}_{self.anon_counter}"
 
-    def _get_location(self, node: c_ast.Node) -> Optional[SourceLocation]:
+    def _get_location(self, node: c_ast.Node) -> SourceLocation | None:
         """Get source location from a node."""
         if hasattr(node, "coord") and node.coord:
             return SourceLocation(
@@ -558,7 +578,36 @@ class ASTConverter(c_ast.NodeVisitor):
 
 
 class PycparserBackend:
-    """Parser backend using pycparser."""
+    """Parser backend using pycparser.
+
+    The default autopxd parser backend, using the pure-Python pycparser
+    library. This backend has no external dependencies but requires
+    preprocessed C code as input.
+
+    Properties
+    ----------
+    name : str
+        Returns ``"pycparser"``.
+    supports_macros : bool
+        Returns ``False`` - macros are consumed by the preprocessor.
+    supports_cpp : bool
+        Returns ``False`` - pycparser only supports C99.
+
+    Example
+    -------
+    ::
+
+        from autopxd.backends.pycparser_backend import PycparserBackend
+
+        backend = PycparserBackend()
+
+        # Parse preprocessed code
+        preprocessed = run_cpp("myheader.h")
+        header = backend.parse(preprocessed, "myheader.h")
+
+        for decl in header.declarations:
+            print(decl)
+    """
 
     @property
     def name(self) -> str:
@@ -576,22 +625,22 @@ class PycparserBackend:
         self,
         code: str,
         filename: str,
-        include_dirs: Optional[List[str]] = None,  # pylint: disable=unused-argument
-        extra_args: Optional[List[str]] = None,  # pylint: disable=unused-argument
+        include_dirs: list[str] | None = None,  # pylint: disable=unused-argument
+        extra_args: list[str] | None = None,  # pylint: disable=unused-argument
     ) -> Header:
         """Parse C code using pycparser.
 
-        Note: This method expects PREPROCESSED code. The preprocessing
-        step (running cpp/clang/cl.exe) should be done by the caller.
+        .. note::
 
-        Args:
-            code: Preprocessed C source code to parse
-            filename: Source filename for error messages
-            include_dirs: Not used (preprocessing done by caller)
-            extra_args: Not used (preprocessing done by caller)
+            This method expects **preprocessed** code. Run the C preprocessor
+            (``cpp``, ``clang -E``, or ``cl.exe /E``) before calling this method.
 
-        Returns:
-            Header containing parsed declarations
+        :param code: Preprocessed C source code to parse.
+        :param filename: Source filename for error messages and location tracking.
+        :param include_dirs: Not used (preprocessing done by caller).
+        :param extra_args: Not used (preprocessing done by caller).
+        :returns: :class:`~autopxd.ir.Header` containing parsed declarations.
+        :raises pycparser.plyparser.ParseError: If the code has syntax errors.
         """
         # pylint: disable=import-outside-toplevel
         from pycparser import (

@@ -16,7 +16,6 @@ from autopxd.ir import (
     Variable,
 )
 from autopxd.ir_writer import (
-    PxdWriter,
     write_pxd,
 )
 

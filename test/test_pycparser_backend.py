@@ -1,21 +1,15 @@
 # pylint: disable=attribute-defined-outside-init
 """Tests for the pycparser backend."""
 
-import pytest
-
 from autopxd.backends.pycparser_backend import (
-    ASTConverter,
     PycparserBackend,
 )
 from autopxd.ir import (
     Array,
     CType,
     Enum,
-    EnumValue,
-    Field,
     Function,
     FunctionPointer,
-    Parameter,
     Pointer,
     Struct,
     Typedef,

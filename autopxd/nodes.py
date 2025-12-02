@@ -2,16 +2,15 @@ from abc import (
     ABCMeta,
     abstractmethod,
 )
-from typing import (
+from collections.abc import (
     Iterable,
-    Union,
 )
 
 
 class PxdNode(metaclass=ABCMeta):
     indent: str = "    "
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "\n".join(self.lines())
 
     @abstractmethod
@@ -24,7 +23,7 @@ class IdentifierType(PxdNode):
     name: str
     type_name: str
 
-    def __init__(self, name, type_name):
+    def __init__(self, name: str | None, type_name: str) -> None:
         self.name = name or ""
         self.type_name = type_name
 
@@ -62,20 +61,20 @@ class Function(PxdNode):
 class Ptr(IdentifierType):
     __slots__ = ("node",) + IdentifierType.__slots__
 
-    node: PxdNode
+    node: IdentifierType | Function
 
-    def __init__(self, node: IdentifierType, quals: Iterable[str] = ()):
+    def __init__(self, node: IdentifierType | Function, quals: Iterable[str] = ()) -> None:
         self.node = node
         if isinstance(node, Function):
             type_name = node.return_type
         else:
-            type_name = self.node.type_name
+            type_name = node.type_name
         type_name = f"{type_name}*"
         # Cython supports const and volatile C type qualifiers
         for qual in ("const", "volatile"):
             if qual in quals:
                 type_name = f"{type_name} {qual}"
-        super().__init__(self.node.name, type_name)
+        super().__init__(node.name, type_name)
 
     def lines(self) -> list[str]:
         if isinstance(self.node, Function):
@@ -88,10 +87,10 @@ class Ptr(IdentifierType):
 class Array(IdentifierType):
     __slots__ = ("node", "dimensions")
 
-    node: PxdNode
-    dimensions: list[int]
+    node: IdentifierType
+    dimensions: list[int | str]
 
-    def __init__(self, node: PxdNode, dimensions: Union[None, list[int]] = None):
+    def __init__(self, node: IdentifierType, dimensions: None | list[int | str] = None) -> None:
         if dimensions is None:
             dimensions = [1]
         self.node = node
@@ -148,7 +147,7 @@ class Enum(PxdNode):
     items: list[str]
     statement: str
 
-    def __init__(self, name, items: list[str], statement="cdef"):
+    def __init__(self, name: str, items: list[str], statement: str = "cdef") -> None:
         self.name = name
         self.items = items
         self.statement = statement

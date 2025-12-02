@@ -22,7 +22,6 @@ from autopxd.ir import (
     Function,
     Struct,
     Typedef,
-    Variable,
 )
 from autopxd.ir_writer import (
     write_pxd,

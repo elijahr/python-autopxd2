@@ -3,28 +3,34 @@
 """libclang-based parser backend.
 
 This backend uses libclang (LLVM's C/C++ parser) to parse header files.
-It provides full C/C++ support and can extract #define macro values.
+It provides full C/C++ support including templates, namespaces, and classes.
 
-Requirements:
-- libclang must be installed (e.g., via `pip install libclang` or system package)
-- On some systems, you may need to set LIBCLANG_PATH environment variable
+Requirements
+------------
+* libclang must be installed (``pip install clang`` or system package)
+* On some systems, set ``LIBCLANG_PATH`` environment variable
 
-Advantages over pycparser:
-- Full C++ support
-- Handles complex preprocessor constructs
-- Uses the same parser as actual compilers
-- Better error messages
+Advantages over pycparser
+-------------------------
+* Full C++ support (classes, templates, namespaces)
+* Handles complex preprocessor constructs
+* Uses the same parser as production compilers
+* Better error messages with source locations
 
-Limitations:
-- Macro extraction is limited due to Python bindings constraints
+Limitations
+-----------
+* Macro extraction is limited due to Python bindings constraints
+* Requires external libclang installation
+
+Example
+-------
+::
+
+    from autopxd.backends.libclang_backend import LibclangBackend
+
+    backend = LibclangBackend()
+    header = backend.parse(code, "myheader.hpp", extra_args=["-std=c++17"])
 """
-
-from typing import (
-    Dict,
-    List,
-    Optional,
-    Union,
-)
 
 # Try to import clang - this may fail if not installed
 try:
@@ -37,12 +43,13 @@ try:
     CLANG_AVAILABLE = True
 except ImportError:
     CLANG_AVAILABLE = False
-    CursorKind = None  # type: ignore
-    TypeKind = None  # type: ignore
+    CursorKind = None
+    TypeKind = None
 
 from autopxd.ir import (
     Array,
     CType,
+    Declaration,
     Enum,
     EnumValue,
     Field,
@@ -64,13 +71,26 @@ if CLANG_AVAILABLE:
     )
 
     class ClangASTConverter:
-        """Converts libclang cursors to autopxd IR."""
+        """Converts libclang cursors to autopxd IR.
+
+        This class walks a libclang translation unit and produces the
+        equivalent autopxd IR declarations. It handles C and C++ constructs
+        including structs, unions, enums, typedefs, functions, classes, and variables.
+
+        :param filename: Source filename for filtering declarations.
+            Only declarations from this file are included (system headers excluded).
+
+        Note
+        ----
+        This class is internal to the libclang backend. Use
+        :class:`LibclangBackend` for the public API.
+        """
 
         def __init__(self, filename: str) -> None:
             self.filename = filename
-            self.declarations: List[Union[Enum, Struct, Function, Typedef, Variable]] = []
+            self.declarations: list[Declaration] = []
             # Track seen declarations to avoid duplicates
-            self._seen: Dict[str, bool] = {}
+            self._seen: dict[str, bool] = {}
 
         def convert(self, tu: "clang.cindex.TranslationUnit") -> Header:
             """Convert a libclang TranslationUnit to our IR Header."""
@@ -86,7 +106,7 @@ if CLANG_AVAILABLE:
             loc = cursor.location
             if loc.file is None:
                 return False
-            return loc.file.name == self.filename
+            return bool(loc.file.name == self.filename)
 
         def _process_cursor(self, cursor: "clang.cindex.Cursor") -> None:
             """Process a top-level cursor."""
@@ -123,7 +143,7 @@ if CLANG_AVAILABLE:
             if name:
                 self._seen[key] = True
 
-            fields: List[Field] = []
+            fields: list[Field] = []
             for child in cursor.get_children():
                 if child.kind == CursorKind.FIELD_DECL:
                     field = self._convert_field(child)
@@ -153,7 +173,7 @@ if CLANG_AVAILABLE:
             if name:
                 self._seen[key] = True
 
-            values: List[EnumValue] = []
+            values: list[EnumValue] = []
             for child in cursor.get_children():
                 if child.kind == CursorKind.ENUM_CONSTANT_DECL:
                     values.append(EnumValue(name=child.spelling, value=child.enum_value))
@@ -177,7 +197,7 @@ if CLANG_AVAILABLE:
             if not return_type:
                 return
 
-            parameters: List[Parameter] = []
+            parameters: list[Parameter] = []
             is_variadic = cursor.type.is_function_variadic()
 
             for arg in cursor.get_arguments():
@@ -240,7 +260,7 @@ if CLANG_AVAILABLE:
             var = Variable(name=name, type=var_type, location=self._get_location(cursor))
             self.declarations.append(var)
 
-        def _convert_field(self, cursor: "clang.cindex.Cursor") -> Optional[Field]:
+        def _convert_field(self, cursor: "clang.cindex.Cursor") -> Field | None:
             """Convert a field cursor to IR Field."""
             name = cursor.spelling
             if not name:
@@ -253,7 +273,7 @@ if CLANG_AVAILABLE:
             return Field(name=name, type=field_type)
 
         # pylint: disable=too-many-return-statements
-        def _convert_type(self, clang_type: "clang.cindex.Type") -> Optional[TypeExpr]:
+        def _convert_type(self, clang_type: "clang.cindex.Type") -> TypeExpr | None:
             """Convert a libclang Type to our IR type expression."""
             # Get canonical type for consistency
             kind = clang_type.kind
@@ -280,7 +300,7 @@ if CLANG_AVAILABLE:
                 if not element_type:
                     return None
 
-                size: Optional[Union[int, str]] = None
+                size: int | str | None = None
                 if kind == TypeKind.CONSTANTARRAY:
                     size = clang_type.element_count
                 # INCOMPLETEARRAY has no size (flexible array)
@@ -321,7 +341,7 @@ if CLANG_AVAILABLE:
             spelling = clang_type.spelling
 
             # Extract qualifiers
-            qualifiers: List[str] = []
+            qualifiers: list[str] = []
             if clang_type.is_const_qualified():
                 qualifiers.append("const")
             if clang_type.is_volatile_qualified():
@@ -334,13 +354,13 @@ if CLANG_AVAILABLE:
 
             return CType(name=base_type, qualifiers=qualifiers)
 
-        def _convert_function_type(self, clang_type: "clang.cindex.Type") -> Optional[FunctionPointer]:
+        def _convert_function_type(self, clang_type: "clang.cindex.Type") -> FunctionPointer | None:
             """Convert a function type to FunctionPointer."""
             result_type = self._convert_type(clang_type.get_result())
             if not result_type:
                 return None
 
-            parameters: List[Parameter] = []
+            parameters: list[Parameter] = []
             is_variadic = clang_type.is_function_variadic()
 
             for arg_type in clang_type.argument_types():
@@ -355,7 +375,7 @@ if CLANG_AVAILABLE:
                 is_variadic=is_variadic,
             )
 
-        def _get_location(self, cursor: "clang.cindex.Cursor") -> Optional[SourceLocation]:
+        def _get_location(self, cursor: "clang.cindex.Cursor") -> SourceLocation | None:
             """Get source location from a cursor."""
             loc = cursor.location
             if loc.file:
@@ -363,10 +383,38 @@ if CLANG_AVAILABLE:
             return None
 
     class LibclangBackend:
-        """Parser backend using libclang."""
+        """Parser backend using libclang.
+
+        Uses LLVM's libclang to parse C and C++ code. This backend supports
+        the full C++ language including templates, classes, and namespaces.
+
+        Properties
+        ----------
+        name : str
+            Returns ``"libclang"``.
+        supports_macros : bool
+            Returns ``False`` - macro extraction is limited in Python bindings.
+        supports_cpp : bool
+            Returns ``True`` - full C++ support.
+
+        Example
+        -------
+        ::
+
+            from autopxd.backends.libclang_backend import LibclangBackend
+
+            backend = LibclangBackend()
+
+            # Parse C++ code with specific standard
+            header = backend.parse(
+                code,
+                "myheader.hpp",
+                extra_args=["-std=c++17", "-DDEBUG=1"]
+            )
+        """
 
         def __init__(self) -> None:
-            self._index: Optional["clang.cindex.Index"] = None
+            self._index: clang.cindex.Index | None = None
 
         @property
         def name(self) -> str:
@@ -391,21 +439,33 @@ if CLANG_AVAILABLE:
             self,
             code: str,
             filename: str,
-            include_dirs: Optional[List[str]] = None,
-            extra_args: Optional[List[str]] = None,
+            include_dirs: list[str] | None = None,
+            extra_args: list[str] | None = None,
         ) -> Header:
             """Parse C/C++ code using libclang.
 
-            Args:
-                code: C/C++ source code to parse
-                filename: Source filename for error messages
-                include_dirs: Additional include directories
-                extra_args: Additional compiler arguments
+            Unlike the pycparser backend, this method handles raw (unpreprocessed)
+            code and performs preprocessing internally.
 
-            Returns:
-                Header containing parsed declarations
+            :param code: C/C++ source code to parse (raw, not preprocessed).
+            :param filename: Source filename for error messages and location tracking.
+            :param include_dirs: Additional include directories (converted to ``-I`` flags).
+            :param extra_args: Additional compiler arguments (e.g., ``["-std=c++17"]``).
+            :returns: :class:`~autopxd.ir.Header` containing parsed declarations.
+            :raises RuntimeError: If parsing fails with errors.
+
+            Example
+            -------
+            ::
+
+                header = backend.parse(
+                    code,
+                    "myheader.hpp",
+                    include_dirs=["/usr/local/include"],
+                    extra_args=["-std=c++17", "-DNDEBUG"]
+                )
             """
-            args: List[str] = []
+            args: list[str] = []
 
             # Add include directories
             if include_dirs:

@@ -22,10 +22,7 @@ Usage:
 """
 
 from typing import (
-    Dict,
-    List,
     Optional,
-    Type,
 )
 
 from autopxd.ir import (
@@ -34,11 +31,11 @@ from autopxd.ir import (
 
 # Registry of available backends
 # Backends are registered lazily to avoid import errors if dependencies are missing
-_BACKEND_REGISTRY: Dict[str, Type[ParserBackend]] = {}
+_BACKEND_REGISTRY: dict[str, type[ParserBackend]] = {}
 _DEFAULT_BACKEND: Optional[str] = None
 
 
-def register_backend(name: str, backend_class: Type[ParserBackend], is_default: bool = False) -> None:
+def register_backend(name: str, backend_class: type[ParserBackend], is_default: bool = False) -> None:
     """Register a parser backend.
 
     Args:
@@ -52,7 +49,7 @@ def register_backend(name: str, backend_class: Type[ParserBackend], is_default: 
         _DEFAULT_BACKEND = name
 
 
-def list_backends() -> List[str]:
+def list_backends() -> list[str]:
     """List names of all registered backends."""
     _ensure_backends_loaded()
     return list(_BACKEND_REGISTRY.keys())
