@@ -74,6 +74,7 @@ disable = [
   "too-many-branches",
   "consider-using-f-string",
   "unused-import",
+  "duplicate-code",
 ]
 
 [tool.pytest.ini_options]
