@@ -21,45 +21,45 @@ jobs:
             python-version: '3.13'
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 5
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v4
+      - uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install project & dependencies
-        shell: bash
-        run: pip install .[dev]
+      - name: Install dependencies
+        run: uv pip install --system -e .[test,lint]
+
+      - name: Type check
+        run: mypy autopxd/ --strict
 
       - name: Test
-        shell: bash
         run: pytest ./test
 
   test-windows:
     name: Test Windows
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [windows-latest]
-        python-version: ['3.13']
+    runs-on: windows-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 5
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v4
+      - uses: astral-sh/setup-uv@v4
         with:
-          python-version: ${{ matrix.python-version }}
+          enable-cache: true
 
-      - name: Install project & dependencies
-        shell: powershell
-        run: pip install '.[dev]'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install dependencies
+        run: uv pip install --system -e .[test,lint]
+
+      - name: Type check
+        run: mypy autopxd/ --strict
 
       - name: Test
-        shell: powershell
         run: pytest ./test
