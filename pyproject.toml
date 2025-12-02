@@ -29,13 +29,31 @@ classifiers = [
   "Programming Language :: C++",
 ]
 requires-python = ">=3.10"
-dependencies = ["Click", "pycparser"]
+dependencies = ["Click", "pycparser", "clang"]
 
 [project.optional-dependencies]
-dev = ["pytest", "cython", "pre-commit"]
+# Testing
+test = ["pytest", "cython"]
+
+# Linting and type checking
+lint = ["ruff", "mypy", "pre-commit"]
+
+# Documentation
+docs = [
+    "mkdocs>=1.5",
+    "mkdocs-material>=9.0",
+    "mkdocstrings[python]>=0.24",
+    "mike>=2.0",
+]
+
+# Development (all tools)
+dev = ["autopxd2[test,lint,docs]"]
 
 [project.scripts]
 autopxd = "autopxd:cli"
+
+[tool.setuptools.packages.find]
+include = ["autopxd", "autopxd.*"]
 
 [tool.setuptools.package-data]
 autopxd = [
@@ -85,8 +103,7 @@ known-first-party = ["autopxd"]
 
 [tool.mypy]
 python_version = "3.10"
-warn_return_any = true
-warn_unused_configs = true
+strict = true
 ignore_missing_imports = true
 exclude = ["build", "dist"]
 
