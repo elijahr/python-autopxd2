@@ -85,6 +85,31 @@ def is_backend_available(name: str) -> bool:
     return name in _BACKEND_REGISTRY
 
 
+def get_backend_info() -> list[dict[str, str | bool]]:
+    """Get information about all known backends.
+
+    :returns: List of dicts with name, available, default, and description.
+    """
+    _ensure_backends_loaded()
+
+    descriptions = {
+        "libclang": "Full C/C++ support via LLVM",
+        "pycparser": "Legacy C99 parser",
+    }
+
+    result: list[dict[str, str | bool]] = []
+    for name in ["libclang", "pycparser"]:  # Fixed order for display
+        result.append(
+            {
+                "name": name,
+                "available": name in _BACKEND_REGISTRY,
+                "default": name == _DEFAULT_BACKEND,
+                "description": descriptions.get(name, ""),
+            }
+        )
+    return result
+
+
 def get_backend(name: str | None = None) -> ParserBackend:
     """Get a parser backend instance.
 
