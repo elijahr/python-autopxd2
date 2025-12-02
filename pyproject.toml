@@ -24,20 +24,37 @@ classifiers = [
   "Programming Language :: C",
   "Programming Language :: C++",
 ]
-dependencies = ["Click", "pycparser"]
+dependencies = ["Click", "pycparser", "clang"]
 
 [project.optional-dependencies]
-dev = ["pytest", "cython", "pre-commit", "ruff", "mypy"]
+# Testing
+test = ["pytest", "cython"]
+
+# Linting and type checking
+lint = ["ruff", "mypy", "pre-commit"]
+
+# Documentation
 docs = [
     "mkdocs>=1.5",
     "mkdocs-material>=9.0",
     "mkdocstrings[python]>=0.24",
+    "mike>=2.0",
 ]
+
+# Optional backend
 libclang = ["clang"]
-all = ["autopxd2[dev,docs,libclang]"]
+
+# Development (all tools)
+dev = ["autopxd2[test,lint,docs]"]
+
+# Everything including optional backends
+all = ["autopxd2[dev,libclang]"]
 
 [project.scripts]
 autopxd = "autopxd:cli"
+
+[tool.setuptools.packages.find]
+include = ["autopxd", "autopxd.*"]
 
 [tool.setuptools.package-data]
 autopxd = [
@@ -116,7 +133,6 @@ ignore = [
     "SIM112", # Windows env vars need exact case for compatibility
     "UP007",  # Union vs | annotation - keep Union for compatibility
     "UP035",  # typing.Dict etc - keep for Python 3.9 compatibility
-    "UP038",  # isinstance(x, (A, B)) clearer than isinstance(x, A | B)
 ]
 
 [tool.ruff.lint.isort]
@@ -127,7 +143,6 @@ known-first-party = ["autopxd"]
 
 [tool.mypy]
 python_version = "3.10"
-warn_return_any = true
-warn_unused_configs = true
+strict = true
 ignore_missing_imports = true
 exclude = ["build", "dist"]
