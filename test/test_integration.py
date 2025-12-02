@@ -5,6 +5,8 @@ These tests verify that the new architecture produces correct output
 for various C constructs.
 """
 
+import pytest
+
 from autopxd.backends.pycparser_backend import (
     PycparserBackend,
 )
@@ -249,3 +251,212 @@ class TestIntegrationStdint:
         assert "from libc.stdint cimport" in result
         assert "uint32_t" in result
         assert "int64_t" in result
+
+
+# =============================================================================
+# Libclang Backend Integration Tests
+# =============================================================================
+
+# Try to import libclang - tests will be skipped if not available
+try:
+    import clang.cindex  # noqa: F401
+
+    LIBCLANG_AVAILABLE = True
+except ImportError:
+    LIBCLANG_AVAILABLE = False
+
+
+@pytest.mark.skipif(not LIBCLANG_AVAILABLE, reason="libclang not installed")
+class TestLibclangIntegrationBasic:
+    """Test basic C constructs through libclang → IR → writer pipeline."""
+
+    def setup_method(self):
+        from autopxd.backends.libclang_backend import (
+            LibclangBackend,
+        )
+
+        self.backend = LibclangBackend()
+
+    def _translate(self, code: str, filename: str = "test.h") -> str:
+        """Parse code and generate pxd output."""
+        header = self.backend.parse(code, filename)
+        return write_pxd(header)
+
+    def test_simple_function(self):
+        code = "int foo(void);"
+        result = self._translate(code)
+        assert 'cdef extern from "test.h":' in result
+        assert "int foo()" in result
+
+    def test_function_with_params(self):
+        code = "int add(int a, int b);"
+        result = self._translate(code)
+        assert "int add(int a, int b)" in result
+
+    def test_simple_struct(self):
+        code = """
+        struct Point {
+            int x;
+            int y;
+        };
+        """
+        result = self._translate(code)
+        assert "cdef struct Point:" in result
+        assert "int x" in result
+        assert "int y" in result
+
+    def test_simple_enum(self):
+        code = """
+        enum Color {
+            RED,
+            GREEN,
+            BLUE
+        };
+        """
+        result = self._translate(code)
+        assert "cpdef enum Color:" in result
+        assert "RED" in result
+        assert "GREEN" in result
+        assert "BLUE" in result
+
+    def test_global_variable(self):
+        code = "int count;"
+        result = self._translate(code)
+        assert "int count" in result
+
+    def test_typedef(self):
+        code = "typedef int myint;"
+        result = self._translate(code)
+        assert "ctypedef" in result
+        assert "myint" in result
+
+
+@pytest.mark.skipif(not LIBCLANG_AVAILABLE, reason="libclang not installed")
+class TestLibclangIntegrationComplex:
+    """Test complex C constructs through libclang pipeline."""
+
+    def setup_method(self):
+        from autopxd.backends.libclang_backend import (
+            LibclangBackend,
+        )
+
+        self.backend = LibclangBackend()
+
+    def _translate(self, code: str, filename: str = "test.h") -> str:
+        header = self.backend.parse(code, filename)
+        return write_pxd(header)
+
+    def test_variadic_function(self):
+        code = "int printf(const char* fmt, ...);"
+        result = self._translate(code)
+        assert "printf" in result
+        assert "..." in result
+
+    def test_union(self):
+        code = """
+        union Data {
+            int i;
+            float f;
+        };
+        """
+        result = self._translate(code)
+        assert "cdef union Data:" in result
+        assert "int i" in result
+        assert "float f" in result
+
+    def test_pointer_variable(self):
+        code = "int* ptr;"
+        result = self._translate(code)
+        assert "int*" in result
+        assert "ptr" in result
+
+    def test_array_variable(self):
+        code = "int arr[10];"
+        result = self._translate(code)
+        assert "int arr[10]" in result
+
+
+@pytest.mark.skipif(not LIBCLANG_AVAILABLE, reason="libclang not installed")
+class TestLibclangIntegrationCpp:
+    """Test C++ specific features through libclang pipeline."""
+
+    def setup_method(self):
+        from autopxd.backends.libclang_backend import (
+            LibclangBackend,
+        )
+
+        self.backend = LibclangBackend()
+
+    def _translate(self, code: str, filename: str = "test.hpp") -> str:
+        header = self.backend.parse(code, filename, extra_args=["-x", "c++"])
+        return write_pxd(header)
+
+    def test_cpp_class(self):
+        code = """
+        class Widget {
+        public:
+            int width;
+            int height;
+        };
+        """
+        result = self._translate(code)
+        # Classes are treated as structs
+        assert "Widget" in result
+        assert "int width" in result
+        assert "int height" in result
+
+    def test_cpp_function(self):
+        code = "int compute(int x, int y);"
+        result = self._translate(code)
+        assert "int compute(int x, int y)" in result
+
+
+@pytest.mark.skipif(not LIBCLANG_AVAILABLE, reason="libclang not installed")
+class TestBackendComparison:
+    """Test that both backends produce similar output for the same input."""
+
+    def setup_method(self):
+        from autopxd.backends.libclang_backend import (
+            LibclangBackend,
+        )
+
+        self.pycparser = PycparserBackend()
+        self.libclang = LibclangBackend()
+
+    def test_simple_struct_both_backends(self):
+        code = """
+        struct Point {
+            int x;
+            int y;
+        };
+        """
+        pycparser_result = write_pxd(self.pycparser.parse(code, "test.h"))
+        libclang_result = write_pxd(self.libclang.parse(code, "test.h"))
+
+        # Both should have the struct
+        assert "cdef struct Point:" in pycparser_result
+        assert "cdef struct Point:" in libclang_result
+        assert "int x" in pycparser_result
+        assert "int x" in libclang_result
+
+    def test_simple_function_both_backends(self):
+        code = "int add(int a, int b);"
+        pycparser_result = write_pxd(self.pycparser.parse(code, "test.h"))
+        libclang_result = write_pxd(self.libclang.parse(code, "test.h"))
+
+        # Both should have the function
+        assert "int add(int a, int b)" in pycparser_result
+        assert "int add(int a, int b)" in libclang_result
+
+    def test_enum_both_backends(self):
+        code = """
+        enum Color { RED, GREEN, BLUE };
+        """
+        pycparser_result = write_pxd(self.pycparser.parse(code, "test.h"))
+        libclang_result = write_pxd(self.libclang.parse(code, "test.h"))
+
+        # Both should have the enum
+        assert "cpdef enum Color:" in pycparser_result
+        assert "cpdef enum Color:" in libclang_result
+        assert "RED" in pycparser_result
+        assert "RED" in libclang_result
