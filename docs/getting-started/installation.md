@@ -8,18 +8,11 @@ Install autopxd2 from PyPI:
 pip install autopxd2
 ```
 
-This installs the core package with the pycparser backend, which works for most C headers.
+This installs the package with both the pycparser and libclang Python bindings. However, the libclang backend requires the system libclang library to be installed for full functionality.
 
-## With libclang Support
-
-For better C++ support and handling of complex headers, install with the libclang extra:
-
-```bash
-pip install autopxd2[libclang]
-```
-
-!!! note "System Requirements"
-    The libclang extra requires libclang to be installed on your system. See [libclang Installation](#libclang-installation) below.
+!!! note "Backend Selection"
+    By default, autopxd2 uses libclang if available, falling back to pycparser.
+    Use `autopxd --list-backends` to see which backends are available on your system.
 
 ## Development Installation
 
@@ -42,43 +35,41 @@ docker run --rm -v $(pwd):/work autopxd2 autopxd /work/myheader.h
 
 See [Docker Usage](docker.md) for more details.
 
-## libclang Installation
+## System libclang Installation
+
+The libclang Python bindings are included with autopxd2, but the system libclang library must be installed separately.
 
 ### macOS
 
 ```bash
-# Install via Homebrew
 brew install llvm
-
-# The clang Python package should find libclang automatically
-pip install clang
 ```
 
 ### Ubuntu/Debian
 
 ```bash
-# Install clang and libclang
-sudo apt-get install clang libclang-dev
-
-# Install Python bindings
-pip install clang
+sudo apt-get install libclang-dev
 ```
 
 ### Windows
 
 1. Install LLVM from [releases.llvm.org](https://releases.llvm.org/)
 2. Add LLVM to your PATH
-3. Install the Python bindings:
-   ```bash
-   pip install clang
-   ```
 
 ### Verifying Installation
 
 Check that autopxd2 can find libclang:
 
 ```bash
-python -c "from autopxd.backends import list_backends; print(list_backends())"
+autopxd --list-backends
 ```
 
-If libclang is installed correctly, you should see both `pycparser` and `libclang` in the output.
+If libclang is installed correctly, you should see:
+
+```
+Available backends:
+  libclang     Full C/C++ support via LLVM [available] (default)
+  pycparser    Legacy C99 parser [available]
+
+Default: libclang
+```
