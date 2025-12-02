@@ -3,11 +3,20 @@
 This package contains parser backend implementations that convert C/C++
 source code into the autopxd IR (Intermediate Representation).
 
-Available backends:
-- pycparser: Pure Python C99 parser (default, no external dependencies)
-- libclang: Clang-based parser (supports C++ and macros, requires clang)
+Available Backends
+------------------
+pycparser
+    Pure Python C99 parser. Default backend with no external dependencies.
+    Requires preprocessed input (CPP/clang -E output).
 
-Usage:
+libclang
+    LLVM clang-based parser with full C++ support. Requires libclang
+    installation (``pip install clang`` or system package).
+
+Example
+-------
+::
+
     from autopxd.backends import get_backend, list_backends
 
     # Get the default backend
@@ -21,10 +30,6 @@ Usage:
         print(name)
 """
 
-from typing import (
-    Optional,
-)
-
 from autopxd.ir import (
     ParserBackend,
 )
@@ -32,16 +37,19 @@ from autopxd.ir import (
 # Registry of available backends
 # Backends are registered lazily to avoid import errors if dependencies are missing
 _BACKEND_REGISTRY: dict[str, type[ParserBackend]] = {}
-_DEFAULT_BACKEND: Optional[str] = None
+_DEFAULT_BACKEND: str | None = None
 
 
 def register_backend(name: str, backend_class: type[ParserBackend], is_default: bool = False) -> None:
     """Register a parser backend.
 
-    Args:
-        name: Unique name for the backend (e.g., "pycparser", "libclang")
-        backend_class: Class implementing ParserBackend protocol
-        is_default: If True, this becomes the default backend
+    Called by backend modules during import to add themselves to the registry.
+    The first registered backend becomes the default unless ``is_default`` is
+    explicitly set on a later registration.
+
+    :param name: Unique name for the backend (e.g., ``"pycparser"``, ``"libclang"``).
+    :param backend_class: Class implementing the :class:`~autopxd.ir.ParserBackend` protocol.
+    :param is_default: If True, this becomes the default backend for :func:`get_backend`.
     """
     global _DEFAULT_BACKEND  # pylint: disable=global-statement
     _BACKEND_REGISTRY[name] = backend_class
@@ -50,22 +58,58 @@ def register_backend(name: str, backend_class: type[ParserBackend], is_default: 
 
 
 def list_backends() -> list[str]:
-    """List names of all registered backends."""
+    """List names of all registered backends.
+
+    :returns: List of backend names that can be passed to :func:`get_backend`.
+
+    Example
+    -------
+    ::
+
+        from autopxd.backends import list_backends
+
+        for name in list_backends():
+            print(f"Available: {name}")
+    """
     _ensure_backends_loaded()
     return list(_BACKEND_REGISTRY.keys())
 
 
-def get_backend(name: Optional[str] = None) -> ParserBackend:
+def is_backend_available(name: str) -> bool:
+    """Check if a backend is available for use.
+
+    :param name: Backend name to check.
+    :returns: True if the backend is registered and can be instantiated.
+    """
+    _ensure_backends_loaded()
+    return name in _BACKEND_REGISTRY
+
+
+def get_backend(name: str | None = None) -> ParserBackend:
     """Get a parser backend instance.
 
-    Args:
-        name: Backend name, or None for the default backend
+    Returns a new instance of the requested backend. If no name is provided,
+    returns the default backend (pycparser).
 
-    Returns:
-        Instance of the requested backend
+    :param name: Backend name (e.g., ``"pycparser"``, ``"libclang"``),
+        or None for the default backend.
+    :returns: New instance of the requested backend.
+    :raises ValueError: If the requested backend is not available.
 
-    Raises:
-        ValueError: If the requested backend is not available
+    Example
+    -------
+    ::
+
+        from autopxd.backends import get_backend
+
+        # Get default backend
+        backend = get_backend()
+
+        # Get libclang backend
+        clang = get_backend("libclang")
+
+        # Parse a header
+        header = backend.parse(code, "myheader.h")
     """
     _ensure_backends_loaded()
 
