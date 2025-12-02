@@ -17,12 +17,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          cache-dependency-glob: "**/pyproject.toml"
+
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
-        run: pip install -e .[dev]
+        run: uv pip install --system -e .[test,lint]
+
+      - name: Type check
+        run: mypy autopxd/ --strict
 
       - name: Test pycparser backend
         run: pytest ./test -m "not libclang"
@@ -40,6 +48,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          cache-dependency-glob: "**/pyproject.toml"
 
       - uses: actions/setup-python@v5
         with:
@@ -70,10 +83,15 @@ jobs:
           echo "Found LLVM version: $LLVM_VERSION, prefix: $LLVM_PREFIX"
 
       - name: Install dependencies
-        run: pip install -e .[dev]
+        run: uv pip install --system -e .[test,lint]
 
       - name: Install matching clang Python package
-        run: pip install "clang==${LLVM_MAJOR_VERSION}.*"
+        run: |
+          # Install clang package version matching system libclang
+          uv pip install --system "clang==${LLVM_MAJOR_VERSION}.*"
+
+      - name: Type check
+        run: mypy autopxd/ --strict
 
       - name: Test all backends
         run: pytest ./test
@@ -85,12 +103,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          cache-dependency-glob: "**/pyproject.toml"
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
 
       - name: Install dependencies
-        run: pip install -e .[dev]
+        run: uv pip install --system -e .[test,lint]
+
+      - name: Type check
+        run: mypy autopxd/ --strict
 
       - name: Test pycparser backend
         run: pytest ./test -m "not libclang"
