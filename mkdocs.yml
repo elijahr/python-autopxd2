@@ -4,6 +4,10 @@ site_url: https://elijahr.github.io/python-autopxd2/
 repo_url: https://github.com/elijahr/python-autopxd2
 repo_name: elijahr/python-autopxd2
 
+# Exclude planning documents from the build
+exclude_docs: |
+  plans/
+
 theme:
   name: material
   palette:
@@ -26,13 +30,19 @@ theme:
     - content.code.copy
     - content.code.annotate
 
+extra:
+  version:
+    provider: mike
+    default: latest
+
 plugins:
   - search
+  - mike
   - mkdocstrings:
       handlers:
         python:
           options:
-            docstring_style: google
+            docstring_style: sphinx
             show_source: true
             show_root_heading: true
             show_root_full_path: false
