@@ -18,8 +18,6 @@ from dataclasses import (
     field,
 )
 from typing import (
-    List,
-    Optional,
     Protocol,
     Union,
 )
@@ -35,7 +33,7 @@ class SourceLocation:
 
     file: str
     line: int
-    column: Optional[int] = None
+    column: int | None = None
 
 
 # =============================================================================
@@ -54,7 +52,7 @@ class CType:
     """
 
     name: str
-    qualifiers: List[str] = field(default_factory=list)
+    qualifiers: list[str] = field(default_factory=list)
 
     def __str__(self) -> str:
         if self.qualifiers:
@@ -72,8 +70,8 @@ class Pointer:
         int** -> Pointer(Pointer(CType("int")))
     """
 
-    pointee: Union[CType, "Pointer", "Array", "FunctionPointer"]
-    qualifiers: List[str] = field(default_factory=list)
+    pointee: CType | Pointer | Array | FunctionPointer
+    qualifiers: list[str] = field(default_factory=list)
 
     def __str__(self) -> str:
         quals = f"{' '.join(self.qualifiers)} " if self.qualifiers else ""
@@ -90,8 +88,8 @@ class Array:
         int[SIZE] -> Array(CType("int"), "SIZE")
     """
 
-    element_type: Union[CType, "Pointer", "Array", "FunctionPointer"]
-    size: Optional[Union[int, str]] = None  # None = flexible, str = expression
+    element_type: CType | Pointer | Array | FunctionPointer
+    size: int | str | None = None  # None = flexible, str = expression
 
     def __str__(self) -> str:
         size_str = str(self.size) if self.size is not None else ""
@@ -107,8 +105,8 @@ class Parameter:
         void* -> Parameter(None, Pointer(CType("void")))
     """
 
-    name: Optional[str]
-    type: Union[CType, Pointer, Array, "FunctionPointer"]
+    name: str | None
+    type: CType | Pointer | Array | FunctionPointer
 
     def __str__(self) -> str:
         if self.name:
@@ -125,8 +123,8 @@ class FunctionPointer:
         void (*)(int, char*) -> FunctionPointer(CType("void"), [Parameter(...), Parameter(...)])
     """
 
-    return_type: Union[CType, Pointer, Array, "FunctionPointer"]
-    parameters: List[Parameter] = field(default_factory=list)
+    return_type: CType | Pointer | Array | FunctionPointer
+    parameters: list[Parameter] = field(default_factory=list)
     is_variadic: bool = False
 
     def __str__(self) -> str:
@@ -167,7 +165,7 @@ class EnumValue:
     """
 
     name: str
-    value: Optional[Union[int, str]] = None  # None = auto, str = expression
+    value: int | str | None = None  # None = auto, str = expression
 
     def __str__(self) -> str:
         if self.value is not None:
@@ -184,9 +182,9 @@ class Enum:
         enum { ANONYMOUS_VALUE = 42 }  # name is None
     """
 
-    name: Optional[str]
-    values: List[EnumValue] = field(default_factory=list)
-    location: Optional[SourceLocation] = None
+    name: str | None
+    values: list[EnumValue] = field(default_factory=list)
+    location: SourceLocation | None = None
 
     def __str__(self) -> str:
         name_str = self.name or "(anonymous)"
@@ -202,10 +200,10 @@ class Struct:
         union Data { int i; float f; }
     """
 
-    name: Optional[str]
-    fields: List[Field] = field(default_factory=list)
+    name: str | None
+    fields: list[Field] = field(default_factory=list)
     is_union: bool = False
-    location: Optional[SourceLocation] = None
+    location: SourceLocation | None = None
 
     def __str__(self) -> str:
         kind = "union" if self.is_union else "struct"
@@ -224,9 +222,9 @@ class Function:
 
     name: str
     return_type: TypeExpr
-    parameters: List[Parameter] = field(default_factory=list)
+    parameters: list[Parameter] = field(default_factory=list)
     is_variadic: bool = False
-    location: Optional[SourceLocation] = None
+    location: SourceLocation | None = None
 
     def __str__(self) -> str:
         params = ", ".join(str(p) for p in self.parameters)
@@ -246,7 +244,7 @@ class Typedef:
 
     name: str
     underlying_type: TypeExpr
-    location: Optional[SourceLocation] = None
+    location: SourceLocation | None = None
 
     def __str__(self) -> str:
         return f"typedef {self.underlying_type} {self.name}"
@@ -263,7 +261,7 @@ class Variable:
 
     name: str
     type: TypeExpr
-    location: Optional[SourceLocation] = None
+    location: SourceLocation | None = None
 
     def __str__(self) -> str:
         return f"{self.type} {self.name}"
@@ -280,10 +278,10 @@ class Constant:
     """
 
     name: str
-    value: Optional[Union[int, float, str]] = None  # None if complex/unknown
-    type: Optional[CType] = None
+    value: int | float | str | None = None  # None if complex/unknown
+    type: CType | None = None
     is_macro: bool = False
-    location: Optional[SourceLocation] = None
+    location: SourceLocation | None = None
 
     def __str__(self) -> str:
         if self.is_macro:
@@ -305,7 +303,7 @@ class Header:
     """Parsed C/C++ header file."""
 
     path: str
-    declarations: List[Declaration] = field(default_factory=list)
+    declarations: list[Declaration] = field(default_factory=list)
 
     def __str__(self) -> str:
         return f"Header({self.path}, {len(self.declarations)} declarations)"
@@ -328,8 +326,8 @@ class ParserBackend(Protocol):  # pylint: disable=too-few-public-methods
         self,
         code: str,
         filename: str,
-        include_dirs: Optional[List[str]] = None,
-        extra_args: Optional[List[str]] = None,
+        include_dirs: list[str] | None = None,
+        extra_args: list[str] | None = None,
     ) -> Header:
         """Parse C/C++ code and return IR.
 

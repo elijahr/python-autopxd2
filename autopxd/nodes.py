@@ -2,11 +2,7 @@ from abc import (
     ABCMeta,
     abstractmethod,
 )
-from typing import (
-    Iterable,
-    List,
-    Union,
-)
+from collections.abc import Iterable
 
 
 class PxdNode(metaclass=ABCMeta):
@@ -16,7 +12,7 @@ class PxdNode(metaclass=ABCMeta):
         return "\n".join(self.lines())
 
     @abstractmethod
-    def lines(self) -> List[str]:
+    def lines(self) -> list[str]:
         pass
 
 
@@ -29,7 +25,7 @@ class IdentifierType(PxdNode):
         self.name = name or ""
         self.type_name = type_name
 
-    def lines(self) -> List[str]:
+    def lines(self) -> list[str]:
         if self.name:
             return [f"{self.type_name} {self.name}"]
         return [self.type_name]
@@ -40,9 +36,9 @@ class Function(PxdNode):
 
     return_type: str
     name: str
-    args: List[PxdNode]
+    args: list[PxdNode]
 
-    def __init__(self, return_type: str, name: str, args: List[PxdNode]):
+    def __init__(self, return_type: str, name: str, args: list[PxdNode]):
         self.return_type = return_type
         self.name = name
         self.args = args
@@ -56,7 +52,7 @@ class Function(PxdNode):
             arguments_list.append(lines[0])
         return ", ".join(arguments_list)
 
-    def lines(self) -> List[str]:
+    def lines(self) -> list[str]:
         return [f"{self.return_type} {self.name}({self.argstr()})"]
 
 
@@ -78,7 +74,7 @@ class Ptr(IdentifierType):
                 type_name = f"{type_name} {qual}"
         super().__init__(self.node.name, type_name)
 
-    def lines(self) -> List[str]:
+    def lines(self) -> list[str]:
         if isinstance(self.node, Function):
             f = self.node
             args = f.argstr()
@@ -90,9 +86,9 @@ class Array(IdentifierType):
     __slots__ = ("node", "dimensions")
 
     node: PxdNode
-    dimensions: List[int]
+    dimensions: list[int]
 
-    def __init__(self, node: PxdNode, dimensions: Union[None, List[int]] = None):
+    def __init__(self, node: PxdNode, dimensions: None | list[int] = None):
         if dimensions is None:
             dimensions = [1]
         self.node = node
@@ -112,7 +108,7 @@ class Type(PxdNode):
     def __init__(self, node: PxdNode):
         self.node = node
 
-    def lines(self) -> List[str]:
+    def lines(self) -> list[str]:
         lines = self.node.lines()
         lines[0] = "ctypedef " + lines[0]
         return lines
@@ -122,17 +118,17 @@ class Block(PxdNode):
     __slots__ = ("name", "fields", "kind", "statement")
 
     name: str
-    fields: List[PxdNode]
+    fields: list[PxdNode]
     kind: str
     statement: str
 
-    def __init__(self, name: str, fields: List[PxdNode], kind: str, statement: str = "cdef"):
+    def __init__(self, name: str, fields: list[PxdNode], kind: str, statement: str = "cdef"):
         self.name = name
         self.fields = fields
         self.kind = kind
         self.statement = statement
 
-    def lines(self) -> List[str]:
+    def lines(self) -> list[str]:
         rv = [f"{self.statement} {self.kind} {self.name}"]
         if self.fields:
             rv[0] += ":"
@@ -146,15 +142,15 @@ class Enum(PxdNode):
     __slots__ = ("name", "items", "statement")
 
     name: str
-    items: List[str]
+    items: list[str]
     statement: str
 
-    def __init__(self, name, items: List[str], statement="cdef"):
+    def __init__(self, name, items: list[str], statement="cdef"):
         self.name = name
         self.items = items
         self.statement = statement
 
-    def lines(self) -> List[str]:
+    def lines(self) -> list[str]:
         rv = []
         if self.name:
             rv.append(f"{self.statement} enum {self.name}:")

@@ -79,3 +79,48 @@ disable = [
 
 [tool.pytest.ini_options]
 testpaths = ["test"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # pyflakes
+    "I",      # isort
+    "B",      # flake8-bugbear
+    "C4",     # flake8-comprehensions
+    "UP",     # pyupgrade
+    "ARG",    # flake8-unused-arguments
+    "SIM",    # flake8-simplify
+]
+ignore = [
+    "E501",   # line too long (handled by formatter)
+    "ARG002", # unused arguments - common in method overrides
+    "B008",   # do not perform function calls in argument defaults
+    "C408",   # dict() vs {} is stylistic
+    "SIM102", # nested if sometimes more readable
+    "SIM103", # return condition directly - sometimes less clear
+    "SIM105", # try/except/pass clearer than contextlib.suppress for imports
+    "SIM108", # use ternary operator instead of if-else
+    "SIM110", # for loop with return sometimes clearer than any()
+    "SIM112", # Windows env vars need exact case for compatibility
+    "UP007",  # Union vs | annotation - keep Union for compatibility
+    "UP035",  # typing.Dict etc - keep for Python 3.9 compatibility
+    "UP038",  # isinstance(x, (A, B)) clearer than isinstance(x, A | B)
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["autopxd"]
+
+[tool.ruff.lint.per-file-ignores]
+"test/*" = ["ARG"]  # unused arguments common in tests
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+exclude = ["build", "dist"]

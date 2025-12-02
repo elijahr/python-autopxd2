@@ -29,7 +29,7 @@ def escape(name, include_C_name=False):
     """
     if name is not None and name in keywords:
         if include_C_name:
-            name = '{name}_ "{name}"'.format(name=name)
+            name = f'{name}_ "{name}"'
         else:
             name = name + "_"
     return name
@@ -341,10 +341,7 @@ class AutoPxd(c_ast.NodeVisitor, PxdNode):
 
     def child_of(self, node_type, index=None):
         if index is None:
-            for node in reversed(self.visit_stack):
-                if isinstance(node, node_type):
-                    return True
-            return False
+            return any(isinstance(node, node_type) for node in reversed(self.visit_stack))
         return isinstance(self.visit_stack[index], node_type)
 
     def append(self, node):

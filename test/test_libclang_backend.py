@@ -4,17 +4,14 @@
 import pytest
 
 from autopxd.backends.libclang_backend import (
-    ClangASTConverter,
     LibclangBackend,
 )
 from autopxd.ir import (
     Array,
     CType,
     Enum,
-    Field,
     Function,
     FunctionPointer,
-    Parameter,
     Pointer,
     Struct,
     Typedef,

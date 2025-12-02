@@ -7,13 +7,6 @@ It handles:
 - Proper Cython syntax for all declaration types
 """
 
-from typing import (
-    List,
-    Optional,
-    Set,
-    Union,
-)
-
 from autopxd.declarations import (
     STDINT_DECLARATIONS,
 )
@@ -21,7 +14,6 @@ from autopxd.ir import (
     Array,
     CType,
     Enum,
-    Field,
     Function,
     FunctionPointer,
     Header,
@@ -44,11 +36,11 @@ class PxdWriter:
 
     def __init__(self, header: Header) -> None:
         self.header = header
-        self.stdint_types: Set[str] = set()
+        self.stdint_types: set[str] = set()
 
     def write(self) -> str:
         """Convert IR Header to Cython .pxd string."""
-        lines: List[str] = []
+        lines: list[str] = []
 
         # Collect stdint types used
         self._collect_stdint_types()
@@ -81,7 +73,7 @@ class PxdWriter:
         for decl in self.header.declarations:
             self._collect_stdint_from_decl(decl)
 
-    def _collect_stdint_from_decl(self, decl: Union[Enum, Struct, Function, Typedef, Variable]) -> None:
+    def _collect_stdint_from_decl(self, decl: Enum | Struct | Function | Typedef | Variable) -> None:
         """Collect stdint types from a declaration."""
         if isinstance(decl, Struct):
             for field in decl.fields:
@@ -109,7 +101,7 @@ class PxdWriter:
             for param in type_expr.parameters:
                 self._collect_stdint_from_type(param.type)
 
-    def _write_declaration(self, decl: Union[Enum, Struct, Function, Typedef, Variable]) -> List[str]:
+    def _write_declaration(self, decl: Enum | Struct | Function | Typedef | Variable) -> list[str]:
         """Write a single declaration."""
         if isinstance(decl, Struct):
             return self._write_struct(decl)
@@ -123,7 +115,7 @@ class PxdWriter:
             return self._write_variable(decl)
         return []
 
-    def _write_struct(self, struct: Struct) -> List[str]:
+    def _write_struct(self, struct: Struct) -> list[str]:
         """Write a struct or union declaration."""
         kind = "union" if struct.is_union else "struct"
         name = self._escape_name(struct.name, include_c_name=True)
@@ -144,7 +136,7 @@ class PxdWriter:
 
         return lines
 
-    def _write_enum(self, enum: Enum) -> List[str]:
+    def _write_enum(self, enum: Enum) -> list[str]:
         """Write an enum declaration."""
         name = self._escape_name(enum.name, include_c_name=True)
 
@@ -163,7 +155,7 @@ class PxdWriter:
 
         return lines
 
-    def _write_function(self, func: Function) -> List[str]:
+    def _write_function(self, func: Function) -> list[str]:
         """Write a function declaration."""
         return_type = self._format_type(func.return_type)
         name = self._escape_name(func.name)
@@ -171,14 +163,14 @@ class PxdWriter:
 
         return [f"{return_type} {name}({params})"]
 
-    def _write_typedef(self, typedef: Typedef) -> List[str]:
+    def _write_typedef(self, typedef: Typedef) -> list[str]:
         """Write a typedef declaration."""
         underlying = self._format_type(typedef.underlying_type)
         name = self._escape_name(typedef.name)
 
         return [f"ctypedef {underlying} {name}"]
 
-    def _write_variable(self, var: Variable) -> List[str]:
+    def _write_variable(self, var: Variable) -> list[str]:
         """Write a variable declaration."""
         var_type = self._format_type(var.type)
         name = self._escape_name(var.name)
@@ -248,7 +240,7 @@ class PxdWriter:
         params = self._format_params(fp.parameters, fp.is_variadic)
         return f"{return_type} (*)({params})"
 
-    def _format_func_ptr_as_ptr(self, fp: FunctionPointer, ptr_quals: List[str]) -> str:
+    def _format_func_ptr_as_ptr(self, fp: FunctionPointer, ptr_quals: list[str]) -> str:
         """Format a pointer to function pointer."""
         return_type = self._format_type(fp.return_type)
         params = self._format_params(fp.parameters, fp.is_variadic)
@@ -260,7 +252,7 @@ class PxdWriter:
 
         return result
 
-    def _format_params(self, params: List[Parameter], is_variadic: bool) -> str:
+    def _format_params(self, params: list[Parameter], is_variadic: bool) -> str:
         """Format function parameters."""
         parts = []
         for param in params:
@@ -293,7 +285,7 @@ class PxdWriter:
             current = current.element_type
         return "".join(f"[{d}]" for d in dims)
 
-    def _escape_name(self, name: Optional[str], include_c_name: bool = False) -> str:
+    def _escape_name(self, name: str | None, include_c_name: bool = False) -> str:
         """Escape Python keywords by adding underscore suffix.
 
         If include_c_name is True, also add the original C name in quotes.

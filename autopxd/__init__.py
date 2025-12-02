@@ -241,7 +241,7 @@ def translate(code, hdrname, extra_cpp_args=None, whitelist=None, debug=False, r
 
 WHITELIST = []
 
-CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
+CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
 
 
 @click.command(
