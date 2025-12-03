@@ -257,16 +257,8 @@ class TestIntegrationStdint:
 # Libclang Backend Integration Tests
 # =============================================================================
 
-# Try to import libclang - tests will be skipped if not available
-try:
-    import clang.cindex  # noqa: F401
 
-    LIBCLANG_AVAILABLE = True
-except ImportError:
-    LIBCLANG_AVAILABLE = False
-
-
-@pytest.mark.skipif(not LIBCLANG_AVAILABLE, reason="libclang not installed")
+@pytest.mark.libclang
 class TestLibclangIntegrationBasic:
     """Test basic C constructs through libclang → IR → writer pipeline."""
 
@@ -331,7 +323,7 @@ class TestLibclangIntegrationBasic:
         assert "myint" in result
 
 
-@pytest.mark.skipif(not LIBCLANG_AVAILABLE, reason="libclang not installed")
+@pytest.mark.libclang
 class TestLibclangIntegrationComplex:
     """Test complex C constructs through libclang pipeline."""
 
@@ -376,7 +368,7 @@ class TestLibclangIntegrationComplex:
         assert "int arr[10]" in result
 
 
-@pytest.mark.skipif(not LIBCLANG_AVAILABLE, reason="libclang not installed")
+@pytest.mark.libclang
 class TestLibclangIntegrationCpp:
     """Test C++ specific features through libclang pipeline."""
 
@@ -411,7 +403,7 @@ class TestLibclangIntegrationCpp:
         assert "int compute(int x, int y)" in result
 
 
-@pytest.mark.skipif(not LIBCLANG_AVAILABLE, reason="libclang not installed")
+@pytest.mark.libclang
 class TestBackendComparison:
     """Test that both backends produce similar output for the same input."""
 

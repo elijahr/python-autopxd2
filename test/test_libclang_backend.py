@@ -1,4 +1,4 @@
-# pylint: disable=attribute-defined-outside-init,wrong-import-order
+# pylint: disable=attribute-defined-outside-init
 """Tests for the libclang backend."""
 
 import pytest
@@ -18,8 +18,8 @@ from autopxd.ir import (
     Variable,
 )
 
-# Skip all tests if libclang is not available
-pytest.importorskip("clang.cindex")
+# Mark all tests in this module as requiring libclang
+pytestmark = pytest.mark.libclang
 
 
 class TestLibclangBackendBasic:

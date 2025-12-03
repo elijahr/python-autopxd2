@@ -45,15 +45,6 @@ def preprocess_for_pycparser(code: str) -> str:
     return code
 
 
-# Try to import libclang
-try:
-    import clang.cindex  # noqa: F401
-
-    LIBCLANG_AVAILABLE = True
-except ImportError:
-    LIBCLANG_AVAILABLE = False
-
-
 class TestPycparserRealisticHeaders:
     """Test pycparser backend with realistic C headers."""
 
@@ -169,7 +160,7 @@ class TestPycparserRealisticHeaders:
         assert "msg_payload" in union_names
 
 
-@pytest.mark.skipif(not LIBCLANG_AVAILABLE, reason="libclang not installed")
+@pytest.mark.libclang
 class TestLibclangRealisticHeaders:
     """Test libclang backend with realistic C/C++ headers."""
 
@@ -248,7 +239,7 @@ class TestLibclangRealisticHeaders:
         assert len(distance_funcs) >= 1
 
 
-@pytest.mark.skipif(not LIBCLANG_AVAILABLE, reason="libclang not installed")
+@pytest.mark.libclang
 class TestBackendConsistency:
     """Test that both backends produce consistent results for C code."""
 

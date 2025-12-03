@@ -92,3 +92,6 @@ exclude = ["build", "dist"]
 
 [tool.pytest.ini_options]
 testpaths = ["test"]
+markers = [
+    "libclang: tests that require libclang to be installed",
+]
