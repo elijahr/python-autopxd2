@@ -20,6 +20,10 @@ It generates `.pxd` files automatically from `.h` files.
 pip install autopxd2
 ```
 
+This installs both parser backends. The libclang backend (with full C++ support) is used by default if the system libclang library is available; otherwise autopxd2 falls back to the pycparser backend (C99 only).
+
+See the [installation docs](https://elijahr.github.io/python-autopxd2/getting-started/installation/) for system libclang setup.
+
 ### Usage:
 
 ```shell
