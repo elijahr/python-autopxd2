@@ -20,10 +20,15 @@ classifiers = [
   "Topic :: Software Development :: Compilers",
   "Topic :: Software Development :: Code Generators",
   "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
   "Programming Language :: Cython",
   "Programming Language :: C",
   "Programming Language :: C++",
 ]
+requires-python = ">=3.10"
 dependencies = ["Click", "pycparser"]
 
 [project.optional-dependencies]
@@ -68,7 +73,7 @@ ignore = [
     "SIM110", # for loop with return sometimes clearer than any()
     "SIM112", # Windows env vars need exact case for compatibility
     "UP007",  # Union vs | annotation - keep Union for compatibility
-    "UP035",  # typing.Dict etc - keep for Python 3.9 compatibility
+    "UP035",  # typing.Dict etc - stylistic preference
     "UP038",  # isinstance(x, (A, B)) clearer than isinstance(x, A | B)
 ]
 
