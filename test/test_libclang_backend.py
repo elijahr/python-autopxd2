@@ -3,10 +3,14 @@
 
 import pytest
 
-from autopxd.backends.libclang_backend import (
+# Skip entire module if clang package is not available
+# This prevents import errors when running pycparser-only tests
+clang = pytest.importorskip("clang")
+
+from autopxd.backends.libclang_backend import (  # noqa: E402
     LibclangBackend,
 )
-from autopxd.ir import (
+from autopxd.ir import (  # noqa: E402
     Array,
     CType,
     Enum,

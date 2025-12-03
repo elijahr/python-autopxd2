@@ -47,10 +47,26 @@ jobs:
 
       - name: Install libclang (Ubuntu)
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y libclang-dev
+        run: |
+          sudo apt-get update && sudo apt-get install -y libclang-dev llvm
+          # Find libclang and add to library path for Python clang package
+          LLVM_LIB_DIR=$(llvm-config --libdir 2>/dev/null || echo "/usr/lib/llvm-14/lib")
+          echo "LD_LIBRARY_PATH=${LLVM_LIB_DIR}:${LD_LIBRARY_PATH}" >> $GITHUB_ENV
+          # Get LLVM major version for matching Python clang package
+          LLVM_VERSION=$(llvm-config --version 2>/dev/null | cut -d. -f1 || echo "14")
+          echo "LLVM_MAJOR_VERSION=${LLVM_VERSION}" >> $GITHUB_ENV
+          echo "Found LLVM version: $LLVM_VERSION, lib dir: $LLVM_LIB_DIR"
 
       - name: Install dependencies
-        run: pip install -e .[dev] clang
+        run: pip install -e .[dev]
+
+      - name: Install matching clang Python package (Ubuntu)
+        if: runner.os == 'Linux'
+        run: pip install "clang==${LLVM_MAJOR_VERSION}.*"
+
+      - name: Install clang Python package (macOS)
+        if: runner.os == 'macOS'
+        run: pip install clang
 
       - name: Test all backends
         run: pytest ./test
