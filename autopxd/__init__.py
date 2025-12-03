@@ -7,7 +7,6 @@ import tempfile
 from importlib.metadata import (
     version as get_version,
 )
-from importlib.resources.abc import Traversable
 from typing import (
     IO,
 )
@@ -137,10 +136,10 @@ def _preprocess_msvc(code: str, extra_cpp_args: list[str] | None, debug: bool) -
 def preprocess(code: str, extra_cpp_args: list[str] | None = None, debug: bool = False) -> str:
     if extra_cpp_args is None:
         extra_cpp_args = []
-    includes: list[Traversable] = []
+    includes: list[str] = []
     if platform.system() == "Darwin":
         cmd = ["clang", "-E"]
-        includes.append(DARWIN_HEADERS_DIR)
+        includes.append(str(DARWIN_HEADERS_DIR))
     elif platform.system() == "Windows":
         # Since Windows may not have GCC installed, we check for a cpp command
         # first and if it does not run, then use our MSVC implementation
@@ -152,7 +151,7 @@ def preprocess(code: str, extra_cpp_args: list[str] | None = None, debug: bool =
             cmd = ["cpp"]
     else:
         cmd = ["cpp"]
-    includes.append(BUILTIN_HEADERS_DIR)
+    includes.append(str(BUILTIN_HEADERS_DIR))
     cmd += (
         [f"-I{inc}" for inc in includes]
         + [
