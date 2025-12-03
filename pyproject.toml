@@ -111,4 +111,6 @@ exclude = ["build", "dist"]
 testpaths = ["test"]
 markers = [
     "libclang: tests that require libclang to be installed",
+    "requires_cpp: tests that require C++ support (libclang only)",
+    "requires_macros: tests that require macro support (pycparser only)",
 ]
