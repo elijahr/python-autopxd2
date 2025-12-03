@@ -3,7 +3,7 @@
 
 import pytest
 
-# Skip entire module if clang package is not available
+# Skip entire module if clang2 package is not available
 # This prevents import errors when running pycparser-only tests
 clang = pytest.importorskip("clang")
 

@@ -62,10 +62,10 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update && sudo apt-get install -y libclang-dev llvm
-          # Find libclang and add to library path for Python clang package
+          # Find libclang and add to library path for Python clang2 bindings
           LLVM_LIB_DIR=$(llvm-config --libdir 2>/dev/null || echo "/usr/lib/llvm-14/lib")
           echo "LD_LIBRARY_PATH=${LLVM_LIB_DIR}:${LD_LIBRARY_PATH}" >> $GITHUB_ENV
-          # Get LLVM major version for matching Python clang package
+          # Get LLVM major version for matching Python clang2 package
           LLVM_VERSION=$(llvm-config --version 2>/dev/null | cut -d. -f1 || echo "14")
           echo "LLVM_MAJOR_VERSION=${LLVM_VERSION}" >> $GITHUB_ENV
           echo "Found LLVM version: $LLVM_VERSION, lib dir: $LLVM_LIB_DIR"
@@ -73,11 +73,11 @@ jobs:
       - name: Install libclang (macOS)
         if: runner.os == 'macOS'
         run: |
-          # Install LLVM 19 (latest stable with matching Python clang package)
+          # Install LLVM 19 (clang2 supports 16-21)
           brew install llvm@19
           LLVM_PREFIX=$(brew --prefix llvm@19)
           echo "DYLD_LIBRARY_PATH=${LLVM_PREFIX}/lib:${DYLD_LIBRARY_PATH}" >> $GITHUB_ENV
-          # Get LLVM major version for matching Python clang package
+          # Get LLVM major version for matching Python clang2 package
           LLVM_VERSION=$("${LLVM_PREFIX}/bin/llvm-config" --version | cut -d. -f1)
           echo "LLVM_MAJOR_VERSION=${LLVM_VERSION}" >> $GITHUB_ENV
           echo "Found LLVM version: $LLVM_VERSION, prefix: $LLVM_PREFIX"
@@ -85,10 +85,10 @@ jobs:
       - name: Install dependencies
         run: uv pip install --system -e .[test,lint]
 
-      - name: Install matching clang Python package
+      - name: Install matching clang2 Python package
         run: |
-          # Install clang package version matching system libclang
-          uv pip install --system "clang==${LLVM_MAJOR_VERSION}.*"
+          # Install clang2 package version matching system libclang
+          uv pip install --system "clang2==${LLVM_MAJOR_VERSION}.*"
 
       - name: Type check
         run: mypy autopxd/ --strict

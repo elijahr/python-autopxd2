@@ -10,8 +10,8 @@ pycparser
     Requires preprocessed input (CPP/clang -E output).
 
 libclang
-    LLVM clang-based parser with full C++ support. Requires libclang
-    installation (``pip install clang`` or system package).
+    LLVM clang-based parser with full C++ support. Requires system
+    libclang library and matching ``clang2`` Python package.
 
 Example
 -------

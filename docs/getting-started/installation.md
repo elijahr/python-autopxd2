@@ -44,17 +44,17 @@ See [Docker Usage](docker.md) for more details.
 The libclang backend requires both:
 
 1. The system libclang library
-2. The Python `clang` package (included with autopxd2)
+2. The Python `clang2` package (included with autopxd2)
 
 !!! important "Version Matching Required"
-    The Python `clang` package provides the official LLVM project bindings and **must match your system's libclang version**. For example, if you have LLVM 18 installed, you need `clang==18.*`.
+    The Python `clang2` package provides libclang bindings and **must match your system's libclang version**. For example, if you have LLVM 18 installed, you need `clang2==18.*`.
 
     ```bash
     # Check your LLVM version
     llvm-config --version  # e.g., 18.1.3
 
     # Install matching Python package
-    pip install "clang==18.*"
+    pip install "clang2==18.*"
     ```
 
 ### macOS
@@ -62,9 +62,9 @@ The libclang backend requires both:
 ```bash
 brew install llvm
 
-# Install matching Python clang package
+# Install matching Python clang2 package
 LLVM_VERSION=$($(brew --prefix llvm)/bin/llvm-config --version | cut -d. -f1)
-pip install "clang==${LLVM_VERSION}.*"
+pip install "clang2==${LLVM_VERSION}.*"
 ```
 
 ### Ubuntu/Debian
@@ -72,16 +72,16 @@ pip install "clang==${LLVM_VERSION}.*"
 ```bash
 sudo apt-get install libclang-dev llvm
 
-# Install matching Python clang package
+# Install matching Python clang2 package
 LLVM_VERSION=$(llvm-config --version | cut -d. -f1)
-pip install "clang==${LLVM_VERSION}.*"
+pip install "clang2==${LLVM_VERSION}.*"
 ```
 
 ### Windows
 
 1. Install LLVM from [releases.llvm.org](https://releases.llvm.org/)
 2. Add LLVM to your PATH
-3. Install matching Python clang package: `pip install "clang==<version>.*"`
+3. Install matching Python clang2 package: `pip install "clang2==<version>.*"`
 
 ### Verifying Installation
 

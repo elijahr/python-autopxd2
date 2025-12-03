@@ -8,8 +8,8 @@ It provides full C/C++ support including templates, namespaces, and classes.
 Requirements
 ------------
 * System libclang library must be installed
-* Python clang bindings version must match system libclang version
-  (these are official LLVM bindings, e.g., ``clang==18.*`` for LLVM 18)
+* Python clang2 bindings version must match system libclang version
+  (e.g., ``clang2==18.*`` for LLVM 18)
 
 If system libclang is not available, autopxd2 automatically falls back
 to the pycparser backend (C99 only).
@@ -68,7 +68,7 @@ from autopxd.ir import (
 def is_system_libclang_available() -> bool:
     """Check if the system libclang library is available.
 
-    The Python clang package is always installed, but it requires the
+    The Python clang2 package is always installed, but it requires the
     system libclang shared library (libclang.so/dylib) to function.
     This checks if that library can be loaded.
 
