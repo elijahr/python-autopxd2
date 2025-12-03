@@ -1,14 +1,21 @@
 """Shared pytest fixtures for autopxd tests."""
 
+import re
+
 import pytest
 
 from autopxd.backends import get_backend, is_backend_available
 
 
 def _was_backend_explicitly_requested(request: pytest.FixtureRequest, backend_name: str) -> bool:
-    """Check if user ran pytest -m libclang or similar."""
-    markers = request.config.option.markexpr
-    return backend_name in (markers or "")
+    """Check if user ran pytest -m libclang or similar (positive request, not negation)."""
+    markers = request.config.option.markexpr or ""
+    if not markers:
+        return False
+    # Match backend name as a word, but not preceded by "not "
+    # This distinguishes -m "libclang" (positive) from -m "not libclang" (negative)
+    positive_pattern = rf"(?<!not )\b{re.escape(backend_name)}\b"
+    return bool(re.search(positive_pattern, markers))
 
 
 @pytest.fixture(params=["pycparser", "libclang"])
