@@ -5,14 +5,36 @@ name: Test
 on: [push, pull_request]
 
 jobs:
-  test-unix:
-    name: Test Unix (${{ matrix.os }}, py${{ matrix.python-version }})
+  test-pycparser:
+    name: Test pycparser (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         include:
           - os: ubuntu-latest
             python-version: '3.10'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: pip install -e .[dev]
+
+      - name: Test pycparser backend
+        run: pytest ./test -k "not libclang" --ignore=test/test_libclang_backend.py
+
+  test-libclang:
+    name: Test libclang (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            python-version: '3.13'
           - os: macos-latest
             python-version: '3.13'
 
@@ -23,28 +45,29 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install dependencies
-        run: pip install -e .[dev]
+      - name: Install libclang (Ubuntu)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libclang-dev
 
-      - name: Test
+      - name: Install dependencies
+        run: pip install -e .[dev] clang
+
+      - name: Test all backends
         run: pytest ./test
 
   test-windows:
-    name: Test Windows (py${{ matrix.python-version }})
+    name: Test Windows (pycparser)
     runs-on: windows-latest
-    strategy:
-      matrix:
-        python-version: ['3.13']
 
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: '3.13'
 
       - name: Install dependencies
         run: pip install -e .[dev]
 
-      - name: Test
-        run: pytest ./test
+      - name: Test pycparser backend
+        run: pytest ./test -k "not libclang" --ignore=test/test_libclang_backend.py
