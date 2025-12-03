@@ -7,9 +7,14 @@ import tempfile
 from importlib.metadata import (
     version as get_version,
 )
+from importlib.resources.abc import Traversable
+from typing import (
+    IO,
+)
 
 import click
 from pycparser import (
+    c_ast,
     c_parser,
 )
 
@@ -25,7 +30,7 @@ from .writer import (
 __version__ = get_version("autopxd2")
 
 
-def ensure_binary(s, encoding="utf-8", errors="strict"):
+def ensure_binary(s: str | bytes, encoding: str = "utf-8", errors: str = "strict") -> bytes:
     """Coerce **s** to bytes.
 
     - `str` -> encoded to `bytes`
@@ -38,7 +43,7 @@ def ensure_binary(s, encoding="utf-8", errors="strict"):
     raise TypeError(f"not expecting type '{type(s)}'")
 
 
-def _find_cl():
+def _find_cl() -> str:
     """Use vswhere.exe to locate the Microsoft C compiler."""
     host_platform = {
         "X86": "X86",
@@ -51,6 +56,8 @@ def _find_cl():
         "ARM64": "arm64",
     }.get(platform.machine(), "x86")
     program_files = os.getenv("ProgramFiles(x86)") or os.getenv("ProgramFiles")
+    if program_files is None:
+        raise RuntimeError("Cannot find ProgramFiles directory")
 
     if build_platform in ("x86", "x64"):
         # Note the `x86.x64` here not related to cross compilation, but just
@@ -84,7 +91,7 @@ def _find_cl():
     return rf"{install_dir}\VC\Tools\MSVC\{default_version}\bin\Host{host_platform}\{build_platform}\cl.exe"
 
 
-def _preprocess_msvc(code, extra_cpp_args, debug):
+def _preprocess_msvc(code: str, extra_cpp_args: list[str] | None, debug: bool) -> str:
     fd, source_file = tempfile.mkstemp(suffix=".c")
     os.close(fd)
     with open(source_file, "wb") as f:
@@ -114,7 +121,7 @@ def _preprocess_msvc(code, extra_cpp_args, debug):
 
     # Normalise the paths in #line pragmas so that they are correctly matched
     # later on
-    def fix_path(match):
+    def fix_path(match: re.Match[str]) -> str:
         file = match.group(1).replace("\\\\", "\\")
         if file == source_file:
             file = "<stdin>"
@@ -127,10 +134,10 @@ def _preprocess_msvc(code, extra_cpp_args, debug):
     return res
 
 
-def preprocess(code, extra_cpp_args=None, debug=False):
+def preprocess(code: str, extra_cpp_args: list[str] | None = None, debug: bool = False) -> str:
     if extra_cpp_args is None:
         extra_cpp_args = []
-    includes = []
+    includes: list[Traversable] = []
     if platform.system() == "Darwin":
         cmd = ["clang", "-E"]
         includes.append(DARWIN_HEADERS_DIR)
@@ -176,7 +183,13 @@ def preprocess(code, extra_cpp_args=None, debug=False):
     return res.replace("\r\n", "\n")
 
 
-def parse(code, extra_cpp_args=None, whitelist=None, debug=False, regex=None):
+def parse(
+    code: str,
+    extra_cpp_args: list[str] | None = None,
+    whitelist: list[str] | None = None,
+    debug: bool = False,
+    regex: list[str] | None = None,
+) -> c_ast.FileAST:
     if extra_cpp_args is None:
         extra_cpp_args = []
     if regex is None:
@@ -195,7 +208,7 @@ def parse(code, extra_cpp_args=None, whitelist=None, debug=False, regex=None):
         preprocessed = re.sub(search, replace, preprocessed)
 
     ast = parser.parse(preprocessed)
-    decls = []
+    decls: list[c_ast.Node] = []
     for decl in ast.ext:
         if not hasattr(decl, "name") or decl.name not in IGNORE_DECLARATIONS:
             if not whitelist or os.path.normpath(decl.coord.file) in whitelist:
@@ -204,7 +217,14 @@ def parse(code, extra_cpp_args=None, whitelist=None, debug=False, regex=None):
     return ast
 
 
-def translate(code, hdrname, extra_cpp_args=None, whitelist=None, debug=False, regex=None):
+def translate(
+    code: str,
+    hdrname: str,
+    extra_cpp_args: list[str] | None = None,
+    whitelist: list[str] | None = None,
+    debug: bool = False,
+    regex: list[str] | None = None,
+) -> str:
     """
     to generate pxd mappings for only certain files, populate the whitelist parameter
     with the filenames (including relative path):
@@ -239,9 +259,9 @@ def translate(code, hdrname, extra_cpp_args=None, whitelist=None, debug=False, r
     return pxd_string
 
 
-WHITELIST = []
+WHITELIST: list[str] = []
 
-CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
+CONTEXT_SETTINGS: dict[str, list[str]] = dict(help_option_names=["-h", "--help"])
 
 
 @click.command(
@@ -285,14 +305,14 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     default=sys.stdout,
 )
 def cli(
-    version,
-    infile,
-    outfile,
-    include_dir,
-    regex,
-    compiler_directive,
-    debug,
-):
+    version: bool,
+    infile: IO[str],
+    outfile: IO[str],
+    include_dir: tuple[str, ...],
+    regex: tuple[str, ...],
+    compiler_directive: tuple[str, ...],
+    debug: bool,
+) -> None:
     if version:
         print(__version__)
         return
@@ -301,4 +321,4 @@ def cli(
     for directory in include_dir:
         extra_cpp_args += [f"-I{directory}"]
 
-    outfile.write(translate(infile.read(), infile.name, extra_cpp_args, debug=debug, regex=regex))
+    outfile.write(translate(infile.read(), infile.name, extra_cpp_args, debug=debug, regex=list(regex)))
