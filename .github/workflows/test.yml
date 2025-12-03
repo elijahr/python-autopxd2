@@ -60,9 +60,9 @@ jobs:
       - name: Install libclang (macOS)
         if: runner.os == 'macOS'
         run: |
-          brew install llvm
-          # Get LLVM paths from homebrew
-          LLVM_PREFIX=$(brew --prefix llvm)
+          # Install LLVM 19 (latest stable with matching Python clang package)
+          brew install llvm@19
+          LLVM_PREFIX=$(brew --prefix llvm@19)
           echo "DYLD_LIBRARY_PATH=${LLVM_PREFIX}/lib:${DYLD_LIBRARY_PATH}" >> $GITHUB_ENV
           # Get LLVM major version for matching Python clang package
           LLVM_VERSION=$("${LLVM_PREFIX}/bin/llvm-config" --version | cut -d. -f1)
