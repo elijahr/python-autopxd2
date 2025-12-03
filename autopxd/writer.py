@@ -29,7 +29,7 @@ def escape(name, include_C_name=False):
     """
     if name is not None and name in keywords:
         if include_C_name:
-            name = '{name}_ "{name}"'.format(name=name)
+            name = f'{name}_ "{name}"'
         else:
             name = name + "_"
     return name
