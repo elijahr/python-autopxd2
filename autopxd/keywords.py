@@ -84,7 +84,7 @@ cython_keywords = [
 C_keywords = [
     "auto",
     "break",
-    " case",
+    "case",
     "char",
     "const",
     "continue",
@@ -95,7 +95,8 @@ C_keywords = [
     "enum",
     "extern",
     "float",
-    "for goto",
+    "for",
+    "goto",
     "if",
     "int",
     "long",

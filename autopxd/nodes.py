@@ -2,21 +2,19 @@ from abc import (
     ABCMeta,
     abstractmethod,
 )
-from typing import (
+from collections.abc import (
     Iterable,
-    List,
-    Union,
 )
 
 
 class PxdNode(metaclass=ABCMeta):
     indent: str = "    "
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "\n".join(self.lines())
 
     @abstractmethod
-    def lines(self) -> List[str]:
+    def lines(self) -> list[str]:
         pass
 
 
@@ -25,11 +23,11 @@ class IdentifierType(PxdNode):
     name: str
     type_name: str
 
-    def __init__(self, name, type_name):
+    def __init__(self, name: str | None, type_name: str) -> None:
         self.name = name or ""
         self.type_name = type_name
 
-    def lines(self) -> List[str]:
+    def lines(self) -> list[str]:
         if self.name:
             return [f"{self.type_name} {self.name}"]
         return [self.type_name]
@@ -40,9 +38,9 @@ class Function(PxdNode):
 
     return_type: str
     name: str
-    args: List[PxdNode]
+    args: list[PxdNode]
 
-    def __init__(self, return_type: str, name: str, args: List[PxdNode]):
+    def __init__(self, return_type: str, name: str, args: list[PxdNode]):
         self.return_type = return_type
         self.name = name
         self.args = args
@@ -51,33 +49,34 @@ class Function(PxdNode):
         arguments_list = []
         for arg in self.args:
             lines = arg.lines()
-            assert len(lines) == 1
+            if len(lines) != 1:
+                raise RuntimeError(f"Expected 1 line for function argument, got {len(lines)}")
             arguments_list.append(lines[0])
         return ", ".join(arguments_list)
 
-    def lines(self) -> List[str]:
+    def lines(self) -> list[str]:
         return [f"{self.return_type} {self.name}({self.argstr()})"]
 
 
 class Ptr(IdentifierType):
     __slots__ = ("node",) + IdentifierType.__slots__
 
-    node: PxdNode
+    node: IdentifierType | Function
 
-    def __init__(self, node: IdentifierType, quals: Iterable[str] = ()):
+    def __init__(self, node: IdentifierType | Function, quals: Iterable[str] = ()) -> None:
         self.node = node
         if isinstance(node, Function):
             type_name = node.return_type
         else:
-            type_name = self.node.type_name
+            type_name = node.type_name
         type_name = f"{type_name}*"
         # Cython supports const and volatile C type qualifiers
         for qual in ("const", "volatile"):
             if qual in quals:
                 type_name = f"{type_name} {qual}"
-        super().__init__(self.node.name, type_name)
+        super().__init__(node.name, type_name)
 
-    def lines(self) -> List[str]:
+    def lines(self) -> list[str]:
         if isinstance(self.node, Function):
             f = self.node
             args = f.argstr()
@@ -88,10 +87,10 @@ class Ptr(IdentifierType):
 class Array(IdentifierType):
     __slots__ = ("node", "dimensions")
 
-    node: PxdNode
-    dimensions: List[int]
+    node: IdentifierType
+    dimensions: list[int | str]
 
-    def __init__(self, node: PxdNode, dimensions: Union[None, List[int]] = None):
+    def __init__(self, node: IdentifierType, dimensions: None | list[int | str] = None) -> None:
         if dimensions is None:
             dimensions = [1]
         self.node = node
@@ -111,7 +110,7 @@ class Type(PxdNode):
     def __init__(self, node: PxdNode):
         self.node = node
 
-    def lines(self) -> List[str]:
+    def lines(self) -> list[str]:
         lines = self.node.lines()
         lines[0] = "ctypedef " + lines[0]
         return lines
@@ -121,17 +120,17 @@ class Block(PxdNode):
     __slots__ = ("name", "fields", "kind", "statement")
 
     name: str
-    fields: List[PxdNode]
+    fields: list[PxdNode]
     kind: str
     statement: str
 
-    def __init__(self, name: str, fields: List[PxdNode], kind: str, statement: str = "cdef"):
+    def __init__(self, name: str, fields: list[PxdNode], kind: str, statement: str = "cdef"):
         self.name = name
         self.fields = fields
         self.kind = kind
         self.statement = statement
 
-    def lines(self) -> List[str]:
+    def lines(self) -> list[str]:
         rv = [f"{self.statement} {self.kind} {self.name}"]
         if self.fields:
             rv[0] += ":"
@@ -145,15 +144,15 @@ class Enum(PxdNode):
     __slots__ = ("name", "items", "statement")
 
     name: str
-    items: List[str]
+    items: list[str]
     statement: str
 
-    def __init__(self, name, items: List[str], statement="cdef"):
+    def __init__(self, name: str, items: list[str], statement: str = "cdef") -> None:
         self.name = name
         self.items = items
         self.statement = statement
 
-    def lines(self) -> List[str]:
+    def lines(self) -> list[str]:
         rv = []
         if self.name:
             rv.append(f"{self.statement} enum {self.name}:")
