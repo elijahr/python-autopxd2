@@ -57,15 +57,35 @@ jobs:
 
       - name: Smoke test Docker image
         run: |
+          set -e
+
           # Test help command
           docker run --rm autopxd2:test autopxd --help
 
-          # Test with a simple header
+          # Test pycparser backend with C header
           echo 'int add(int a, int b);' > /tmp/test.h
-          docker run --rm -v /tmp:/work autopxd2:test autopxd /work/test.h
+          OUTPUT=$(docker run --rm -v /tmp:/work autopxd2:test autopxd /work/test.h)
+          echo "$OUTPUT"
+          echo "$OUTPUT" | grep -q 'cdef extern from'
+          echo "$OUTPUT" | grep -q 'int add(int a, int b)'
+          echo "✓ pycparser backend works"
 
-          # Test libclang backend
-          docker run --rm -v /tmp:/work autopxd2:test autopxd --backend libclang /work/test.h
+          # Test libclang backend with C++ header
+          cat > /tmp/test.hpp << 'HEADER'
+          class Widget {
+          public:
+              int width;
+              int height;
+              void resize(int w, int h);
+          };
+          HEADER
+          OUTPUT=$(docker run --rm -v /tmp:/work autopxd2:test autopxd --backend libclang /work/test.hpp)
+          echo "$OUTPUT"
+          echo "$OUTPUT" | grep -q 'cdef extern from'
+          echo "$OUTPUT" | grep -q 'cdef cppclass Widget'
+          echo "$OUTPUT" | grep -q 'int width'
+          echo "$OUTPUT" | grep -q 'void resize(int w, int h)'
+          echo "✓ libclang backend works with C++"
 
       - name: Push Docker image
         if: github.event_name != 'pull_request'

@@ -370,6 +370,7 @@ class Enum:
 
     :param name: The enum tag name, or None for anonymous enums.
     :param values: List of enumeration constants.
+    :param is_typedef: True if this enum came from a typedef declaration.
     :param location: Source location for error reporting.
 
     Examples
@@ -389,6 +390,7 @@ class Enum:
 
     name: Optional[str]
     values: list[EnumValue] = field(default_factory=list)
+    is_typedef: bool = False
     location: Optional[SourceLocation] = None
 
     def __str__(self) -> str:
@@ -406,6 +408,7 @@ class Struct:
     :param name: The struct/union tag name, or None for anonymous types.
     :param fields: List of member fields.
     :param is_union: True for unions, False for structs.
+    :param is_typedef: True if this came from a typedef declaration.
     :param location: Source location for error reporting.
 
     Examples
@@ -432,6 +435,7 @@ class Struct:
     name: Optional[str]
     fields: list[Field] = field(default_factory=list)
     is_union: bool = False
+    is_typedef: bool = False
     location: Optional[SourceLocation] = None
 
     def __str__(self) -> str:

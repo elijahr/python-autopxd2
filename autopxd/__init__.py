@@ -1,10 +1,6 @@
+import fnmatch
 import json
-import os
-import platform
-import re
-import subprocess
 import sys
-import tempfile
 from importlib.metadata import (
     version as get_version,
 )
@@ -13,257 +9,105 @@ from typing import (
 )
 
 import click
-from pycparser import (
-    c_ast,
-    c_parser,
-)
 
 from .backends import (
+    get_backend,
     get_backend_info,
+    get_default_backend,
     is_backend_available,
 )
-from .declarations import (
-    BUILTIN_HEADERS_DIR,
-    DARWIN_HEADERS_DIR,
-    IGNORE_DECLARATIONS,
+from .ir import (
+    Declaration,
 )
-from .writer import (
-    AutoPxd,
+from .ir_writer import (
+    write_pxd,
 )
 
 __version__ = get_version("autopxd2")
 
 
-def ensure_binary(s: str | bytes, encoding: str = "utf-8", errors: str = "strict") -> bytes:
-    """Coerce **s** to bytes.
+def _debug_print(msg: str) -> None:
+    """Print debug message to stderr."""
+    print(f"[autopxd] {msg}", file=sys.stderr)
 
-    - `str` -> encoded to `bytes`
-    - `bytes` -> `bytes`
+
+def _filter_by_whitelist(
+    declarations: list[Declaration],
+    whitelist: list[str],
+) -> list[Declaration]:
+    """Filter declarations to only those from whitelisted files.
+
+    Uses fnmatch for pattern matching, supporting glob patterns like:
+    - "myheader.h" - exact match
+    - "*.h" - all .h files
+    - "include/*.h" - all .h files in include/
+
+    Declarations without location info are excluded when whitelist is active.
     """
-    if isinstance(s, str):
-        return s.encode(encoding, errors)
-    if isinstance(s, bytes):
-        return s
-    raise TypeError(f"not expecting type '{type(s)}'")
-
-
-def _find_cl() -> str:
-    """Use vswhere.exe to locate the Microsoft C compiler."""
-    host_platform = {
-        "X86": "X86",
-        "AMD64": "X64",
-        "ARM64": "ARM64",
-    }.get(platform.machine(), "X86")
-    build_platform = {
-        "X86": "x86",
-        "AMD64": "x64",
-        "ARM64": "arm64",
-    }.get(platform.machine(), "x86")
-    program_files = os.getenv("ProgramFiles(x86)") or os.getenv("ProgramFiles")
-    if program_files is None:
-        raise RuntimeError("Cannot find ProgramFiles directory")
-
-    if build_platform in ("x86", "x64"):
-        # Note the `x86.x64` here not related to cross compilation, but just
-        # poor naming of something which should have been called `x86_or_x64`.
-        require = "Microsoft.VisualStudio.Component.VC.Tools.x86.x64"
-    elif build_platform == "arm64":
-        require = "Microsoft.VisualStudio.Component.VC.Tools.ARM64"
-    else:
-        raise RuntimeError(f"Unsupported build platform: {build_platform}")
-
-    cmd = [
-        os.path.join(program_files, r"Microsoft Visual Studio\Installer\vswhere.exe"),
-        "-prerelease",
-        "-latest",
-        "-products",
-        "*",
-        "-requires",
-        require,
-        "-property",
-        "installationPath",
-        "-utf8",
-    ]
-    try:
-        install_dir = subprocess.check_output(cmd, encoding="utf-8").strip()
-    except subprocess.CalledProcessError as ex:
-        raise RuntimeError("No suitable compiler available") from ex
-
-    with open(rf"{install_dir}\VC\Auxiliary\Build\Microsoft.VCToolsVersion.default.txt", encoding="ascii") as fd:
-        default_version = fd.read().strip()
-
-    return rf"{install_dir}\VC\Tools\MSVC\{default_version}\bin\Host{host_platform}\{build_platform}\cl.exe"
-
-
-def _preprocess_msvc(code: str, extra_cpp_args: list[str] | None, debug: bool) -> str:
-    fd, source_file = tempfile.mkstemp(suffix=".c")
-    os.close(fd)
-    with open(source_file, "wb") as f:
-        f.write(ensure_binary(code))
-
-    try:
-        cmd = [
-            _find_cl(),
-            "/E",
-            "/X",
-            "/utf-8",
-            "/D__attribute__(x)=",
-            "/D__extension__=",
-            "/D__inline=",
-            "/D__asm=",
-            f"/I{BUILTIN_HEADERS_DIR}",
-            *(extra_cpp_args or []),
-            source_file,
-        ]
-        with subprocess.Popen(cmd, stdout=subprocess.PIPE) as proc:
-            stdout, _ = proc.communicate()
-            result = stdout.decode("utf-8").splitlines()
-            if proc.returncode:
-                raise RuntimeError("Invoking C preprocessor failed")
-    finally:
-        os.unlink(source_file)
-
-    # Normalise the paths in #line pragmas so that they are correctly matched
-    # later on
-    def fix_path(match: re.Match[str]) -> str:
-        file = match.group(1).replace("\\\\", "\\")
-        if file == source_file:
-            file = "<stdin>"
-        return f'"{file}"'
-
-    res = "\n".join(re.sub(r'"(.+?)"', fix_path, line) for line in result)
-
-    if debug:
-        sys.stderr.write(res)
-    return res
-
-
-def preprocess(code: str, extra_cpp_args: list[str] | None = None, debug: bool = False) -> str:
-    if extra_cpp_args is None:
-        extra_cpp_args = []
-    includes: list[str] = []
-    if platform.system() == "Darwin":
-        cmd = ["clang", "-E"]
-        includes.append(str(DARWIN_HEADERS_DIR))
-    elif platform.system() == "Windows":
-        # Since Windows may not have GCC installed, we check for a cpp command
-        # first and if it does not run, then use our MSVC implementation
-        try:
-            subprocess.check_call(["cpp", "--version"])
-        except (OSError, subprocess.CalledProcessError):
-            return _preprocess_msvc(code, extra_cpp_args, debug)
-        else:
-            cmd = ["cpp"]
-    else:
-        cmd = ["cpp"]
-    includes.append(str(BUILTIN_HEADERS_DIR))
-    cmd += (
-        [f"-I{inc}" for inc in includes]
-        + [
-            "-nostdinc",
-            "-iquote",
-        ]
-        + [f"-I{inc}" for inc in includes]
-        + [
-            "-D__attribute__(x)=",
-            "-D__extension__=",
-            "-D__inline=",
-            "-D__asm=",
-        ]
-        + extra_cpp_args
-        + ["-"]
-    )
-    with subprocess.Popen(
-        cmd,
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-    ) as proc:
-        stdout, _ = proc.communicate(input=ensure_binary(code))
-        if proc.returncode:
-            raise RuntimeError(f"Invoking C preprocessor failed. extra_cpp_args: {extra_cpp_args}")
-    res = stdout.decode("utf-8")
-    if debug:
-        sys.stderr.write(res)
-    return res.replace("\r\n", "\n")
-
-
-def parse(
-    code: str,
-    extra_cpp_args: list[str] | None = None,
-    whitelist: list[str] | None = None,
-    debug: bool = False,
-    regex: list[str] | None = None,
-) -> c_ast.FileAST:
-    if extra_cpp_args is None:
-        extra_cpp_args = []
-    if regex is None:
-        regex = []
-    preprocessed = preprocess(code, extra_cpp_args=extra_cpp_args, debug=debug)
-    parser = c_parser.CParser()
-
-    for r in regex:
-        if not (r[0] == "s" and r[-1] == "g" and r[1] == r[-2]):
-            raise ValueError(f'Only search/replace is allowed: "s/.../.../g", got: {r!r}')
-        delimiter = r[1]
-        if r.count(delimiter) != 3:
-            raise ValueError(f'Malformed regex. Only search/replace is allowed: "s/.../.../g", got: {r!r}')
-        _, search, replace, _ = r.split(delimiter)
-
-        preprocessed = re.sub(search, replace, preprocessed)
-
-    ast = parser.parse(preprocessed)
-    decls: list[c_ast.Node] = []
-    for decl in ast.ext:
-        if not hasattr(decl, "name") or decl.name not in IGNORE_DECLARATIONS:
-            if not whitelist or os.path.normpath(decl.coord.file) in whitelist:
-                decls.append(decl)
-    ast.ext = decls
-    return ast
+    result = []
+    for decl in declarations:
+        if decl.location is None:
+            continue
+        for pattern in whitelist:
+            if fnmatch.fnmatch(decl.location.file, pattern):
+                result.append(decl)
+                break
+    return result
 
 
 def translate(
     code: str,
     hdrname: str,
-    extra_cpp_args: list[str] | None = None,
+    backend: str = "auto",
+    extra_args: list[str] | None = None,
     whitelist: list[str] | None = None,
     debug: bool = False,
-    regex: list[str] | None = None,
 ) -> str:
+    """Generate Cython .pxd from C/C++ header code.
+
+    Args:
+        code: C/C++ header source code.
+        hdrname: Header filename (used in cdef extern from).
+        backend: Backend name ("auto", "pycparser", "libclang").
+        extra_args: Extra arguments passed to backend (e.g., ["-I/usr/include"]).
+        whitelist: Only include declarations from files matching these patterns.
+            Supports fnmatch patterns like "*.h", "include/*.h".
+        debug: Print debug info to stderr.
+
+    Returns:
+        Cython .pxd file contents.
     """
-    to generate pxd mappings for only certain files, populate the whitelist parameter
-    with the filenames (including relative path):
-    whitelist = ['/usr/include/baz.h', 'include/tux.h']
+    # Resolve backend
+    if backend == "auto":
+        backend_name = get_default_backend()
+    else:
+        backend_name = backend
 
-    if the input file is a file that we want in the whitelist, i.e. `whitelist = [hdrname]`,
-    the following extra step is required:
-    extra_cpp_args += [hdrname]
-    """
-    if extra_cpp_args is None:
-        extra_cpp_args = []
-    if regex is None:
-        regex = []
-    extra_incdir = os.path.dirname(hdrname)
-    if extra_incdir:
-        extra_cpp_args += [f"-I{extra_incdir}"]
-    p = AutoPxd(hdrname)
-    p.visit(
-        parse(
-            code,
-            extra_cpp_args=extra_cpp_args,
-            whitelist=whitelist,
-            debug=debug,
-            regex=regex,
-        )
-    )
-    pxd_string = ""
-    if p.stdint_declarations:
-        cimports = ", ".join(p.stdint_declarations)
-        pxd_string += f"from libc.stdint cimport {cimports}\n\n"
-    pxd_string += str(p)
-    return pxd_string
+    if debug:
+        _debug_print(f"Backend: {backend_name}")
+        _debug_print(f"Parsing: {hdrname}")
 
+    # Parse with backend
+    backend_obj = get_backend(backend_name)
+    header = backend_obj.parse(code, hdrname, extra_args=extra_args or [])
 
-WHITELIST: list[str] = []
+    if debug:
+        _debug_print(f"Found {len(header.declarations)} declarations")
+
+    # Apply whitelist filter
+    if whitelist:
+        header.declarations = _filter_by_whitelist(header.declarations, whitelist)
+        if debug:
+            _debug_print(f"After whitelist: {len(header.declarations)} declarations")
+
+    if debug:
+        for decl in header.declarations:
+            name = getattr(decl, "name", None) or "(anonymous)"
+            _debug_print(f"  {type(decl).__name__}: {name}")
+
+    # Generate pxd
+    return write_pxd(header)
+
 
 CONTEXT_SETTINGS: dict[str, list[str]] = dict(help_option_names=["-h", "--help"])
 
@@ -382,12 +226,6 @@ def validate_libclang_options(
     help="Allow the C preprocessor to search for files in <dir>.",
 )
 @click.option(
-    "--regex",
-    "-R",
-    multiple=True,
-    help="Apply sed-style search/replace (s/.../.../g) after preprocessor",
-)
-@click.option(
     "--compiler-directive",
     "-D",
     multiple=True,
@@ -462,7 +300,6 @@ def cli(
     infile: IO[str],
     outfile: IO[str],
     include_dir: tuple[str, ...],
-    regex: tuple[str, ...],
     compiler_directive: tuple[str, ...],
     debug: bool,
     list_backends: bool,
@@ -492,19 +329,28 @@ def cli(
     resolved_backend = resolve_backend(backend, cpp, quiet)
     validate_libclang_options(resolved_backend, std, clang_arg)
 
-    extra_cpp_args = [f"-D{directive}" for directive in compiler_directive]
+    # Build extra_args list from CLI options
+    extra_args: list[str] = []
+    for directive in compiler_directive:
+        extra_args.append(f"-D{directive}")
     for directory in include_dir:
-        extra_cpp_args += [f"-I{directory}"]
+        extra_args.append(f"-I{directory}")
+    # Add --std if specified
+    if std:
+        extra_args.append(f"-std={std}")
+    # Add any extra clang args
+    for arg in clang_arg:
+        extra_args.append(arg)
 
     whitelist_list = list(whitelist) if whitelist else None
 
     outfile.write(
         translate(
-            infile.read(),
-            infile.name,
-            extra_cpp_args,
+            code=infile.read(),
+            hdrname=infile.name,
+            backend=resolved_backend,
+            extra_args=extra_args if extra_args else None,
             whitelist=whitelist_list,
             debug=debug,
-            regex=list(regex),
         )
     )

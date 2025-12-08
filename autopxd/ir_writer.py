@@ -84,6 +84,11 @@ class PxdWriter:
     def __init__(self, header: Header) -> None:
         self.header = header
         self.stdint_types: set[str] = set()
+        # Track declared struct/union/enum names for type reference cleanup
+        self.known_structs: set[str] = set()
+        self.known_unions: set[str] = set()
+        self.known_enums: set[str] = set()
+        self._collect_known_types()
 
     def write(self) -> str:
         """Convert IR Header to Cython ``.pxd`` string.
@@ -103,13 +108,13 @@ class PxdWriter:
 
         # Add extern block
         lines.append(f'cdef extern from "{self.header.path}":')
-        lines.append("")
 
         # Add declarations
         if not self.header.declarations:
             lines.append(f"{self.INDENT}pass")
             lines.append("")
         else:
+            lines.append("")
             for decl in self.header.declarations:
                 decl_lines = self._write_declaration(decl)
                 for line in decl_lines:
@@ -117,6 +122,24 @@ class PxdWriter:
                 lines.append("")
 
         return "\n".join(lines)
+
+    def _collect_known_types(self) -> None:
+        """Collect all declared struct/union/enum names for type resolution."""
+        for decl in self.header.declarations:
+            if isinstance(decl, Struct):
+                if decl.name:
+                    if decl.is_union:
+                        self.known_unions.add(decl.name)
+                    else:
+                        self.known_structs.add(decl.name)
+            elif isinstance(decl, Enum):
+                if decl.name:
+                    self.known_enums.add(decl.name)
+            elif isinstance(decl, Typedef):
+                # Typedefs also create type names
+                if decl.name:
+                    # Track typedef names - these can be used without prefix
+                    self.known_structs.add(decl.name)
 
     def _collect_stdint_types(self) -> None:
         """Collect all stdint types used in declarations."""
@@ -172,19 +195,23 @@ class PxdWriter:
         kind = "union" if struct.is_union else "struct"
         name = self._escape_name(struct.name, include_c_name=True)
 
-        lines = [f"cdef {kind} {name}:"]
+        # typedef'd structs/unions use ctypedef, plain declarations use cdef
+        keyword = "ctypedef" if struct.is_typedef else "cdef"
 
-        if struct.fields:
-            for field in struct.fields:
-                field_type = self._format_type(field.type)
-                field_name = self._escape_name(field.name)
-                # Add array dimensions to name if this is an array type
-                if isinstance(field.type, Array):
-                    dims = self._format_array_dims(field.type)
-                    field_name = f"{field_name}{dims}"
-                lines.append(f"{self.INDENT}{field_type} {field_name}")
-        else:
-            lines.append(f"{self.INDENT}pass")
+        # If struct has no fields, it's a forward declaration
+        if not struct.fields:
+            return [f"{keyword} {kind} {name}"]
+
+        lines = [f"{keyword} {kind} {name}:"]
+
+        for field in struct.fields:
+            field_type = self._format_type(field.type)
+            field_name = self._escape_name(field.name, include_c_name=True)
+            # Add array dimensions to name if this is an array type
+            if isinstance(field.type, Array):
+                dims = self._format_array_dims(field.type)
+                field_name = f"{field_name}{dims}"
+            lines.append(f"{self.INDENT}{field_type} {field_name}")
 
         return lines
 
@@ -192,11 +219,12 @@ class PxdWriter:
         """Write an enum declaration."""
         name = self._escape_name(enum.name, include_c_name=True)
 
-        # Use cpdef for named enums (makes them accessible from Python)
+        # typedef'd enums use ctypedef, plain enum declarations use cpdef
+        keyword = "ctypedef" if enum.is_typedef else "cpdef"
         if enum.name:
-            lines = [f"cpdef enum {name}:"]
+            lines = [f"{keyword} enum {name}:"]
         else:
-            lines = ["cpdef enum:"]
+            lines = [f"{keyword} enum:"]
 
         if enum.values:
             for val in enum.values:
@@ -210,22 +238,39 @@ class PxdWriter:
     def _write_function(self, func: Function) -> list[str]:
         """Write a function declaration."""
         return_type = self._format_type(func.return_type)
-        name = self._escape_name(func.name)
+        name = self._escape_name(func.name, include_c_name=True)
         params = self._format_params(func.parameters, func.is_variadic)
 
         return [f"{return_type} {name}({params})"]
 
     def _write_typedef(self, typedef: Typedef) -> list[str]:
         """Write a typedef declaration."""
-        underlying = self._format_type(typedef.underlying_type)
-        name = self._escape_name(typedef.name)
+        name = self._escape_name(typedef.name, include_c_name=True)
 
+        # Special handling for function pointer typedefs
+        # Cython syntax: ctypedef return_type (*name)(params)
+        if isinstance(typedef.underlying_type, Pointer):
+            if isinstance(typedef.underlying_type.pointee, FunctionPointer):
+                return self._write_func_ptr_typedef(name, typedef.underlying_type.pointee)
+        if isinstance(typedef.underlying_type, FunctionPointer):
+            return self._write_func_ptr_typedef(name, typedef.underlying_type)
+
+        underlying = self._format_type(typedef.underlying_type)
         return [f"ctypedef {underlying} {name}"]
+
+    def _write_func_ptr_typedef(self, name: str, fp: FunctionPointer) -> list[str]:
+        """Write a function pointer typedef.
+
+        Cython syntax: ctypedef return_type (*name)(params)
+        """
+        return_type = self._format_type(fp.return_type)
+        params = self._format_params(fp.parameters, fp.is_variadic)
+        return [f"ctypedef {return_type} (*{name})({params})"]
 
     def _write_variable(self, var: Variable) -> list[str]:
         """Write a variable declaration."""
         var_type = self._format_type(var.type)
-        name = self._escape_name(var.name)
+        name = self._escape_name(var.name, include_c_name=True)
 
         # Add array dimensions to name if this is an array type
         if isinstance(var.type, Array):
@@ -262,15 +307,44 @@ class PxdWriter:
         return "void"
 
     def _format_ctype(self, ctype: CType) -> str:
-        """Format a CType."""
+        """Format a CType.
+
+        Strips 'struct ', 'union ', 'enum ' prefixes when the type is already
+        declared in the header, since Cython references them by name only.
+        Also de-duplicates qualifiers that may already be in the type name.
+        """
+        name = ctype.name
+
+        # Strip struct/union/enum prefix if the type is already declared
+        if name.startswith("struct "):
+            struct_name = name[7:]  # len("struct ") = 7
+            if struct_name in self.known_structs:
+                name = struct_name
+        elif name.startswith("union "):
+            union_name = name[6:]  # len("union ") = 6
+            if union_name in self.known_unions:
+                name = union_name
+        elif name.startswith("enum "):
+            enum_name = name[5:]  # len("enum ") = 5
+            if enum_name in self.known_enums:
+                name = enum_name
+
         # Escape keywords in type names
-        parts = ctype.name.split()
+        parts = name.split()
         escaped_parts = [self._escape_name(p) for p in parts]
         name = " ".join(escaped_parts)
 
         if ctype.qualifiers:
-            quals = " ".join(ctype.qualifiers)
-            return f"{quals} {name}"
+            # De-duplicate qualifiers that are already in the type name
+            # e.g., if name is "const char" and qualifiers contains "const",
+            # we don't want to produce "const const char"
+            new_quals = []
+            for q in ctype.qualifiers:
+                if q not in parts:
+                    new_quals.append(q)
+            if new_quals:
+                quals = " ".join(new_quals)
+                return f"{quals} {name}"
         return name
 
     def _format_pointer(self, ptr: Pointer) -> str:

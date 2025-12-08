@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **BREAKING**: Rewrote `translate()` function to use new IR-based backend system
+- **BREAKING**: Removed `--regex` CLI option (was broken/unused)
+- **BREAKING**: Removed legacy `parse()` and `preprocess()` functions from public API
+- `translate()` now accepts `backend` parameter to select pycparser or libclang
+- Renamed `extra_cpp_args` parameter to `extra_args` in `translate()`
+
+### Added
+- Full CLI integration with backend system (`--backend` option now works)
+- Whitelist filtering for declarations by source file
+- Support for anonymous enums in struct fields
+- Support for anonymous struct/union variables
+- Recursive function pointer parameter extraction
+- Source location tracking for all declaration types
+
+### Removed
+- `autopxd/writer.py` - Legacy pycparser AST visitor (replaced by IR system)
+- `autopxd/nodes.py` - Legacy node types (replaced by IR types)
+- `parse()` function from public API
+- `preprocess()` function from public API
+
+### Fixed
+- CLI `--backend` option now correctly routes to selected backend
+- Anonymous nested struct/union extraction with proper synthetic names
+- Function pointer typedef syntax in Cython output
+- Keyword escaping with C name aliases for all declaration types
+- `ctypedef` vs `cdef`/`cpdef` handling for typedef'd types
+- Self-typedef patterns (`typedef struct X X;`) no longer produce duplicates
+- Struct/union/enum prefix stripping for known types
+- Const qualifier deduplication
+
 ## [2.5.0] - 2024-12-01
 
 ### Changed

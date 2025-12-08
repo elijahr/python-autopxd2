@@ -53,6 +53,14 @@ cdef extern from "xnvme_opts.test":
         const char* async_ "async"
         const char* admin
         uint32_t nsid
+        uint32_t rdonly
+        uint32_t wronly
+        uint32_t rdwr
+        uint32_t create
+        uint32_t truncate
+        uint32_t direct
+        uint32_t _rsvd
+        uint32_t oflags
         uint32_t create_mode
         uint8_t poll_io
         uint8_t poll_sq
@@ -65,11 +73,3 @@ cdef extern from "xnvme_opts.test":
         const char* core_mask
         const char* adrfam
         uint32_t spdk_fabrics
-        uint32_t oflags
-        uint32_t rdonly
-        uint32_t wronly
-        uint32_t rdwr
-        uint32_t create
-        uint32_t truncate
-        uint32_t direct
-        uint32_t _rsvd

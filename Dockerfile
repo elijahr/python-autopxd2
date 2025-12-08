@@ -18,22 +18,29 @@
 
 FROM python:3.12-slim
 
-# Install system dependencies including clang and libclang
+# Install system dependencies including clang, libclang, and cpp (C preprocessor)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     clang \
     libclang-dev \
     llvm-dev \
+    cpp \
     && rm -rf /var/lib/apt/lists/*
 
-# Set LIBCLANG_PATH for the Python clang2 bindings
-ENV LIBCLANG_PATH=/usr/lib/llvm-16/lib
+# Find LLVM version and configure library path
+RUN LLVM_VERSION=$(ls /usr/lib/ | grep -oP 'llvm-\K\d+' | head -1) \
+    && echo "Found LLVM version: $LLVM_VERSION" \
+    && ln -s /usr/lib/llvm-${LLVM_VERSION}/lib/libclang.so /usr/lib/libclang.so \
+    && echo "/usr/lib/llvm-${LLVM_VERSION}/lib" > /etc/ld.so.conf.d/llvm.conf \
+    && ldconfig
 
 # Install autopxd2 with libclang support
 COPY . /app
 WORKDIR /app
 
-RUN pip install --no-cache-dir -e . && \
-    pip install --no-cache-dir clang2==16.*
+# Detect LLVM version and install matching clang2 package
+RUN LLVM_VERSION=$(ls /usr/lib/ | grep -oP 'llvm-\K\d+' | head -1) \
+    && pip install --no-cache-dir -e . \
+    && pip install --no-cache-dir "clang2==${LLVM_VERSION}.*"
 
 # Set working directory for volume mounts
 WORKDIR /work

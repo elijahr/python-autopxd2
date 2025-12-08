@@ -151,6 +151,31 @@ def get_backend(name: str | None = None) -> ParserBackend:
     return _BACKEND_REGISTRY[name]()
 
 
+def get_default_backend() -> str:
+    """Get the name of the default backend.
+
+    Returns the name of the currently configured default backend.
+    If libclang is available, it is preferred; otherwise pycparser is used.
+
+    :returns: Backend name (e.g., "pycparser" or "libclang").
+    :raises ValueError: If no backends are available.
+
+    Example
+    -------
+    ::
+
+        from autopxd.backends import get_default_backend
+
+        default = get_default_backend()
+        print(f"Default backend: {default}")
+    """
+    _ensure_backends_loaded()
+
+    if _DEFAULT_BACKEND is None:
+        raise ValueError("No backends available")
+    return _DEFAULT_BACKEND
+
+
 def _ensure_backends_loaded() -> None:
     """Lazily load backend modules to populate the registry."""
     global _BACKENDS_LOADED  # pylint: disable=global-statement
