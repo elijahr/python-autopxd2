@@ -1,20 +1,25 @@
-# python-autopxd2
+# autopxd2
 
-A friendly fork of autopxd https://github.com/tarruda/python-autopxd
+Automatically generate Cython `.pxd` declaration files from C/C++ header files.
 
-It generates `.pxd` files automatically from `.h` files.
-
-#### Tested against:
-
-- Python 3.10
-- Python 3.11
-- Python 3.12
-- Python 3.13
-
+[![PyPI version](https://badge.fury.io/py/autopxd2.svg)](https://pypi.org/project/autopxd2/)
+[![Python versions](https://img.shields.io/pypi/pyversions/autopxd2.svg)](https://pypi.org/project/autopxd2/)
 [![Test](https://github.com/elijahr/python-autopxd2/actions/workflows/test.yml/badge.svg)](https://github.com/elijahr/python-autopxd2/actions/workflows/test.yml)
-[![Lint](https://github.com/elijahr/python-autopxd2/actions/workflows/lint.yml/badge.svg)](https://github.com/elijahr/python-autopxd2/actions/workflows/lint.yml)
+[![Documentation](https://github.com/elijahr/python-autopxd2/actions/workflows/docs.yml/badge.svg)](https://elijahr.github.io/python-autopxd2/)
+[![License](https://img.shields.io/github/license/elijahr/python-autopxd2.svg)](https://github.com/elijahr/python-autopxd2/blob/master/LICENSE)
 
-### Installation:
+## Overview
+
+autopxd2 parses C header files and generates Cython `.pxd` files, enabling you to call C libraries from Cython without manually writing declarations.
+
+**Key features:**
+
+- Generates complete `.pxd` files from C headers
+- Handles structs, unions, enums, typedefs, and function declarations
+- Cross-platform support (Linux, macOS, Windows)
+- Multiple parser backends (pycparser, libclang)
+
+## Installation
 
 ```shell
 pip install autopxd2
@@ -24,100 +29,61 @@ This installs both parser backends. The libclang backend (with full C++ support)
 
 See the [installation docs](https://elijahr.github.io/python-autopxd2/getting-started/installation/) for system libclang setup.
 
-### Usage:
+## Quick Start
 
 ```shell
-Usage: autopxd [OPTIONS] [INFILE] [OUTFILE]
+# Generate a .pxd file from a C header
+autopxd myheader.h myheader.pxd
 
-  Generate a Cython pxd file from a C header file.
+# Include additional directories
+autopxd -I /usr/include myheader.h myheader.pxd
 
-Options:
-  -v, --version                   Print program version and exit.
-  -I, --include-dir <dir>         Allow the C preprocessor to search for files
-                                  in <dir>.
-
-  -D, --compiler-directive <directive>
-                                  Additional directives for the C compiler.
-  --debug / --no-debug            Dump preprocessor output to stderr.
-  -h, --help                      Show this message and exit.
+# Read from stdin, write to stdout
+cat myheader.h | autopxd > myheader.pxd
 ```
 
-### Contributing:
+## Usage
 
-Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, code quality standards, and the release process.
+```
+autopxd [OPTIONS] [INFILE] [OUTFILE]
 
-### Release History:
+Options:
+  -v, --version                  Print program version and exit.
+  -b, --backend <name>           Parser backend: auto (default), libclang, pycparser.
+  --list-backends                Show available backends and exit.
+  --json                         JSON output (for --list-backends).
+  -x, --cpp                      Parse as C++ (requires libclang).
+  --std <standard>               Language standard (e.g., c11, c++17).
+  -I, --include-dir <dir>        Add directory to preprocessor search path.
+  -D, --compiler-directive <d>   Pass directive to the C preprocessor.
+  -R, --regex <pattern>          Apply sed-style substitution (s/.../.../g).
+  -w, --whitelist <file>         Only generate from specified files.
+  --clang-arg <arg>              Pass argument to libclang.
+  -q, --quiet                    Suppress warnings.
+  --debug / --no-debug           Dump preprocessor output to stderr.
+  -h, --help                     Show this message and exit.
+```
 
-#### v2.5.0 - 2024-12-01
+## Documentation
 
-- Greatly improve time taken by `vswhere.exe` to find `cl.exe` on Windows [#55](https://github.com/elijahr/python-autopxd2/pull/55)
-- Refactor installation to use only pyproject.toml. [#53](https://github.com/elijahr/python-autopxd2/pull/53)
-- Update linting to use pre-commit [#53](https://github.com/elijahr/python-autopxd2/pull/53)
-- Add contribution guidelines [#53](https://github.com/elijahr/python-autopxd2/pull/53)
-- Improve handling of non-literal-as-value in enum parsing [#52](https://github.com/elijahr/python-autopxd2/pull/52)
-- Fix parsing crash when using binary operation in enum [#51](https://github.com/elijahr/python-autopxd2/pull/51)
-- Fix use configuration of `vswhere.exe` to find `cl.exe` on Windows [#49](https://github.com/elijahr/python-autopxd2/pull/49)
+Full documentation is available at [elijahr.github.io/python-autopxd2](https://elijahr.github.io/python-autopxd2/).
 
-#### v2.4.0 - 2024-09-10
+## Docker
 
-- Add: Support for Python 3.12 from Michael Milton [#45](https://github.com/elijahr/python-autopxd2/pull/45)
-- Add: Support for char and binary expression in enum from Poiuzy & Emmanuel Leblond [#47](https://github.com/elijahr/python-autopxd2/pull/47)
-- Release now also provide a Wheel on Pypi from Emmanuel Leblond #[#46](https://github.com/elijahr/python-autopxd2/pull/46)
+A Docker image is available for environments where installing dependencies is difficult:
 
-#### v2.3.0 - 2023-01-08
+```shell
+docker run --rm -v $(pwd):/work ghcr.io/elijahr/autopxd2 myheader.h myheader.pxd
+```
 
-- Add: Support for const & volatile qualifiers from Emmanuel Leblond [#42](https://github.com/elijahr/python-autopxd2/pull/42)
+## Contributing
 
-#### v2.2.3 - 2022-10-04
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
 
-- Move to https://github.com/elijahr/python-autopxd2
+## License
 
-#### v2.2.0 - 2022-08-03
+MIT License. See [LICENSE](LICENSE) for details.
 
-- Add: Microsoft Visual C++ support from Steve Dower [#40](https://github.com/elijahr/python-autopxd2/pull/40)
+## Acknowledgments
 
-#### v2.1.1 - 2022-05-24
-
-- Add: `--regex` for arbitrary conversions
-- Fix: Various other fixes and improvements from Mads Ynddal in [#38](https://github.com/elijahr/python-autopxd2/pull/38)
-
-#### v2.0.4 - 2021-11-23
-
-- Fix: Windows CRLF issue ([#24](https://github.com/elijahr/python-autopxd2/pull/24))
-
-#### v2.0.3 - 2021-10-08
-
-- Fix: remove unnecessary `importlib_resources` from `install_requires`
-
-#### v2.0.2 - 2021-10-07
-
-- Migrate to [`setup.cfg`](https://docs.python.org/3/distutils/configfile.html)
-
-#### v2.0.1 - 2021-10-06
-
-- Add: `--compiler-directive` option to pass along to the compiler
-- Add: some type annotations (`nodes.py`)
-- Deprecation: Drop support for Python 2
-- Add: linting, format with black
-- Add: Migrate from Travis CI to Github Actions
-
-#### v1.1.0 - 2020-01-03
-
-- Add: Support for macOS
-
-### Roadmap:
-
-- Refactoring of the code **DONE**
-- Adding tests for PEP8 **DONE**
-- Uploading to PyPi **DONE**
-- Check that the generated code is correct by comparing it to the libc in Cython
-- More tests
-- Merge it into Cython so that the `.pxd` files aren't necessary anymore? Maybe.
-
-#### Please raise an issue if the generated code isn't correct.
-
-It's difficult to catch all the corner cases.
-
-### Stub Headers:
-
-To prevent generating Cython code for `#include <foo>` system headers, python-autopxd2 uses stubbed headers located in `autopxd/stubs/`. See [CONTRIBUTING.md](CONTRIBUTING.md) for instructions on regenerating them.
+This project is a fork of [python-autopxd](https://github.com/tarruda/python-autopxd) by Thiago de Arruda.
