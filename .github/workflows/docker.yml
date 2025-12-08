@@ -46,11 +46,33 @@ jobs:
             type=semver,pattern={{major}}
             type=sha,prefix=
 
-      - name: Build and push Docker image
+      - name: Build Docker image
         uses: docker/build-push-action@v6
         with:
           context: .
-          push: ${{ github.event_name != 'pull_request' }}
+          load: true
+          tags: autopxd2:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Smoke test Docker image
+        run: |
+          # Test help command
+          docker run --rm autopxd2:test autopxd --help
+
+          # Test with a simple header
+          echo 'int add(int a, int b);' > /tmp/test.h
+          docker run --rm -v /tmp:/work autopxd2:test autopxd /work/test.h
+
+          # Test libclang backend
+          docker run --rm -v /tmp:/work autopxd2:test autopxd --backend libclang /work/test.h
+
+      - name: Push Docker image
+        if: github.event_name != 'pull_request'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
