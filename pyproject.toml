@@ -110,7 +110,6 @@ exclude = ["build", "dist"]
 [tool.pytest.ini_options]
 testpaths = ["test"]
 markers = [
-    "libclang: tests that require libclang to be installed",
-    "requires_cpp: tests that require C++ support (libclang only)",
-    "requires_macros: tests that require macro support (pycparser only)",
+    "pycparser: tests/parameterizations using the pycparser backend",
+    "libclang: tests/parameterizations using the libclang backend (includes C++ tests)",
 ]

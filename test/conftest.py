@@ -1,53 +1,28 @@
 """Shared pytest fixtures for autopxd tests."""
 
-import re
-
 import pytest
 
 from autopxd.backends import get_backend, is_backend_available
 
 
-def _was_backend_explicitly_requested(request: pytest.FixtureRequest, backend_name: str) -> bool:
-    """Check if user ran pytest -m libclang or similar (positive request, not negation)."""
-    markers = request.config.option.markexpr or ""
-    if not markers:
-        return False
-    # Match backend name as a word, but not preceded by "not "
-    # This distinguishes -m "libclang" (positive) from -m "not libclang" (negative)
-    positive_pattern = rf"(?<!not )\b{re.escape(backend_name)}\b"
-    return bool(re.search(positive_pattern, markers))
-
-
-@pytest.fixture(params=["pycparser", "libclang"])
+@pytest.fixture(
+    params=[
+        pytest.param("pycparser", marks=pytest.mark.pycparser),
+        pytest.param("libclang", marks=pytest.mark.libclang),
+    ]
+)
 def backend(request: pytest.FixtureRequest):
     """Parameterized fixture providing each available backend.
 
-    Behavior:
-    - Auto-skips backends that aren't available (graceful degradation)
-    - Fails loudly if a backend is explicitly requested but unavailable
-    - Skips tests marked requires_cpp if backend doesn't support C++
-    - Skips tests marked requires_macros if backend doesn't support macros
+    Each parameter is marked with its backend name, so you can filter:
+        pytest -m "not libclang"      # exclude libclang parameterizations
+        pytest -m "not pycparser"     # exclude pycparser parameterizations
+
+    Fails if a backend is not available.
     """
     name: str = request.param
-    available = is_backend_available(name)
-    explicitly_requested = _was_backend_explicitly_requested(request, name)
 
-    if not available:
-        if explicitly_requested:
-            pytest.fail(f"{name} backend explicitly requested but not available")
-        else:
-            pytest.skip(f"{name} backend not available")
+    if not is_backend_available(name):
+        pytest.fail(f"{name} backend not available - use pytest -m 'not {name}' to exclude")
 
-    instance = get_backend(name)
-
-    # Skip if test requires C++ but backend doesn't support it
-    if request.node.get_closest_marker("requires_cpp"):
-        if not instance.supports_cpp:
-            pytest.skip(f"{name} does not support C++")
-
-    # Skip if test requires macros but backend doesn't support it
-    if request.node.get_closest_marker("requires_macros"):
-        if not instance.supports_macros:
-            pytest.skip(f"{name} does not support macros")
-
-    return instance
+    return get_backend(name)

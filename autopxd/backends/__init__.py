@@ -38,6 +38,7 @@ from autopxd.ir import (
 # Backends are registered lazily to avoid import errors if dependencies are missing
 _BACKEND_REGISTRY: dict[str, type[ParserBackend]] = {}
 _DEFAULT_BACKEND: str | None = None
+_BACKENDS_LOADED: bool = False  # Track if we've tried to load all backends
 
 
 def register_backend(name: str, backend_class: type[ParserBackend], is_default: bool = False) -> None:
@@ -152,8 +153,12 @@ def get_backend(name: str | None = None) -> ParserBackend:
 
 def _ensure_backends_loaded() -> None:
     """Lazily load backend modules to populate the registry."""
-    if _BACKEND_REGISTRY:
-        return  # Already loaded
+    global _BACKENDS_LOADED  # pylint: disable=global-statement
+
+    if _BACKENDS_LOADED:
+        return  # Already tried to load all backends
+
+    _BACKENDS_LOADED = True
 
     # pylint: disable=import-outside-toplevel
     # Lazy imports are intentional to avoid import errors if dependencies are missing

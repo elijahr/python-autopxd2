@@ -33,7 +33,7 @@ jobs:
         run: mypy autopxd/ --strict
 
       - name: Test pycparser backend
-        run: pytest ./test -m "not libclang and not requires_cpp"
+        run: pytest ./test -m "not libclang"
 
   test-libclang:
     name: Test libclang (${{ matrix.os }})
@@ -119,4 +119,4 @@ jobs:
         run: mypy autopxd/ --strict
 
       - name: Test pycparser backend
-        run: pytest ./test -m "not libclang and not requires_cpp"
+        run: pytest ./test -m "not libclang"

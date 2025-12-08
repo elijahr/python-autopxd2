@@ -60,23 +60,30 @@ class TestRealisticCHeaders:
         assert "cdef extern from" in pxd
 
 
-@pytest.mark.requires_cpp
+@pytest.mark.libclang
 class TestRealisticCppHeaders:
     """Test C++ headers (libclang only)."""
 
+    @pytest.fixture
+    def libclang_backend(self):
+        """Provide libclang backend for C++ tests."""
+        from autopxd.backends import get_backend
+
+        return get_backend("libclang")
+
     @pytest.mark.parametrize("fixture_name", list(CPP_FIXTURES.keys()))
-    def test_parse_cpp_fixture(self, backend, fixture_name):
+    def test_parse_cpp_fixture(self, libclang_backend, fixture_name):
         """Test that backend can parse C++ headers."""
         code = CPP_FIXTURES[fixture_name]
-        header = backend.parse(code, f"{fixture_name}.hpp", extra_args=["-x", "c++"])
+        header = libclang_backend.parse(code, f"{fixture_name}.hpp", extra_args=["-x", "c++"])
 
         assert len(header.declarations) > 0
 
     @pytest.mark.parametrize("fixture_name", list(CPP_FIXTURES.keys()))
-    def test_generate_pxd_cpp_fixture(self, backend, fixture_name):
+    def test_generate_pxd_cpp_fixture(self, libclang_backend, fixture_name):
         """Test pxd generation from C++ headers."""
         code = CPP_FIXTURES[fixture_name]
-        header = backend.parse(code, f"{fixture_name}.hpp", extra_args=["-x", "c++"])
+        header = libclang_backend.parse(code, f"{fixture_name}.hpp", extra_args=["-x", "c++"])
         pxd = write_pxd(header)
 
         assert len(pxd) > 0
