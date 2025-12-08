@@ -4,6 +4,8 @@ Contributions are welcome! This document covers development setup, code quality 
 
 ## Development Setup
 
+We recommend using [uv](https://github.com/astral-sh/uv) for fast dependency management.
+
 1. Clone the repository:
 
    ```shell
@@ -11,34 +13,53 @@ Contributions are welcome! This document covers development setup, code quality 
    cd python-autopxd2
    ```
 
-2. Create a virtual environment and install in development mode:
+2. Create a virtual environment and install dependencies:
 
    ```shell
-   python -m venv .venv
+   # Using uv (recommended)
+   uv venv
    source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-   pip install -e '.[dev]'
+   uv pip install -e '.[test,lint,docs]'
+
+   # Or using pip
+   python -m venv .venv
+   source .venv/bin/activate
+   pip install -e '.[test,lint,docs]'
    ```
 
 3. Install pre-commit hooks:
 
    ```shell
-   pip install pre-commit
    pre-commit install
    ```
 
 ## Code Quality
 
-We use pre-commit to enforce code quality. The following tools run automatically on commit:
+We use pre-commit with [ruff](https://github.com/astral-sh/ruff) for linting and formatting. The following checks run automatically on commit:
 
-- **black** - Code formatting
-- **isort** - Import sorting
-- **autopep8** - PEP8 compliance
-- **pylint** - Static analysis
+- **ruff** - Linting (replaces flake8, pylint, isort, etc.)
+- **ruff-format** - Code formatting (replaces black)
 
 To run all checks manually:
 
 ```shell
 pre-commit run --all-files
+```
+
+Or run ruff directly:
+
+```shell
+ruff check autopxd       # Lint
+ruff check --fix autopxd # Lint and auto-fix
+ruff format autopxd      # Format
+```
+
+## Type Checking
+
+We use mypy with strict mode:
+
+```shell
+mypy autopxd/ --strict
 ```
 
 ## Running Tests
@@ -47,10 +68,23 @@ pre-commit run --all-files
 pytest
 ```
 
-Or run as a module:
+Or with verbose output:
 
 ```shell
-python -m pytest
+pytest -v
+```
+
+## Building Documentation
+
+```shell
+# Serve docs locally with live reload
+uv run mkdocs serve
+
+# Or without uv
+mkdocs serve
+
+# Build static site
+mkdocs build
 ```
 
 ## Submitting Changes
@@ -85,12 +119,12 @@ This section is for project maintainers who can publish releases.
    version = "X.Y.Z"
    ```
 
-2. Update `README.md` release history with changes
+2. Update `CHANGELOG.md` with the release notes
 
 3. Commit and push to master:
 
    ```shell
-   git add pyproject.toml README.md
+   git add pyproject.toml CHANGELOG.md
    git commit -m "Bump to vX.Y.Z"
    git push origin master
    ```
@@ -101,7 +135,7 @@ This section is for project maintainers who can publish releases.
 2. Click **Draft a new release**
 3. Create a new tag: `vX.Y.Z`
 4. Set the release title: `vX.Y.Z`
-5. Add release notes (can copy from README)
+5. Add release notes (can copy from CHANGELOG.md)
 6. Click **Publish release**
 
 This triggers the publish workflow automatically.

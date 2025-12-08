@@ -1,3 +1,4 @@
+import json
 import os
 import platform
 import re
@@ -7,12 +8,20 @@ import tempfile
 from importlib.metadata import (
     version as get_version,
 )
+from typing import (
+    IO,
+)
 
 import click
 from pycparser import (
+    c_ast,
     c_parser,
 )
 
+from .backends import (
+    get_backend_info,
+    is_backend_available,
+)
 from .declarations import (
     BUILTIN_HEADERS_DIR,
     DARWIN_HEADERS_DIR,
@@ -25,7 +34,7 @@ from .writer import (
 __version__ = get_version("autopxd2")
 
 
-def ensure_binary(s, encoding="utf-8", errors="strict"):
+def ensure_binary(s: str | bytes, encoding: str = "utf-8", errors: str = "strict") -> bytes:
     """Coerce **s** to bytes.
 
     - `str` -> encoded to `bytes`
@@ -38,7 +47,7 @@ def ensure_binary(s, encoding="utf-8", errors="strict"):
     raise TypeError(f"not expecting type '{type(s)}'")
 
 
-def _find_cl():
+def _find_cl() -> str:
     """Use vswhere.exe to locate the Microsoft C compiler."""
     host_platform = {
         "X86": "X86",
@@ -51,6 +60,8 @@ def _find_cl():
         "ARM64": "arm64",
     }.get(platform.machine(), "x86")
     program_files = os.getenv("ProgramFiles(x86)") or os.getenv("ProgramFiles")
+    if program_files is None:
+        raise RuntimeError("Cannot find ProgramFiles directory")
 
     if build_platform in ("x86", "x64"):
         # Note the `x86.x64` here not related to cross compilation, but just
@@ -84,7 +95,7 @@ def _find_cl():
     return rf"{install_dir}\VC\Tools\MSVC\{default_version}\bin\Host{host_platform}\{build_platform}\cl.exe"
 
 
-def _preprocess_msvc(code, extra_cpp_args, debug):
+def _preprocess_msvc(code: str, extra_cpp_args: list[str] | None, debug: bool) -> str:
     fd, source_file = tempfile.mkstemp(suffix=".c")
     os.close(fd)
     with open(source_file, "wb") as f:
@@ -114,7 +125,7 @@ def _preprocess_msvc(code, extra_cpp_args, debug):
 
     # Normalise the paths in #line pragmas so that they are correctly matched
     # later on
-    def fix_path(match):
+    def fix_path(match: re.Match[str]) -> str:
         file = match.group(1).replace("\\\\", "\\")
         if file == source_file:
             file = "<stdin>"
@@ -127,13 +138,13 @@ def _preprocess_msvc(code, extra_cpp_args, debug):
     return res
 
 
-def preprocess(code, extra_cpp_args=None, debug=False):
+def preprocess(code: str, extra_cpp_args: list[str] | None = None, debug: bool = False) -> str:
     if extra_cpp_args is None:
         extra_cpp_args = []
-    includes = []
+    includes: list[str] = []
     if platform.system() == "Darwin":
         cmd = ["clang", "-E"]
-        includes.append(DARWIN_HEADERS_DIR)
+        includes.append(str(DARWIN_HEADERS_DIR))
     elif platform.system() == "Windows":
         # Since Windows may not have GCC installed, we check for a cpp command
         # first and if it does not run, then use our MSVC implementation
@@ -145,7 +156,7 @@ def preprocess(code, extra_cpp_args=None, debug=False):
             cmd = ["cpp"]
     else:
         cmd = ["cpp"]
-    includes.append(BUILTIN_HEADERS_DIR)
+    includes.append(str(BUILTIN_HEADERS_DIR))
     cmd += (
         [f"-I{inc}" for inc in includes]
         + [
@@ -176,7 +187,13 @@ def preprocess(code, extra_cpp_args=None, debug=False):
     return res.replace("\r\n", "\n")
 
 
-def parse(code, extra_cpp_args=None, whitelist=None, debug=False, regex=None):
+def parse(
+    code: str,
+    extra_cpp_args: list[str] | None = None,
+    whitelist: list[str] | None = None,
+    debug: bool = False,
+    regex: list[str] | None = None,
+) -> c_ast.FileAST:
     if extra_cpp_args is None:
         extra_cpp_args = []
     if regex is None:
@@ -195,7 +212,7 @@ def parse(code, extra_cpp_args=None, whitelist=None, debug=False, regex=None):
         preprocessed = re.sub(search, replace, preprocessed)
 
     ast = parser.parse(preprocessed)
-    decls = []
+    decls: list[c_ast.Node] = []
     for decl in ast.ext:
         if not hasattr(decl, "name") or decl.name not in IGNORE_DECLARATIONS:
             if not whitelist or os.path.normpath(decl.coord.file) in whitelist:
@@ -204,7 +221,14 @@ def parse(code, extra_cpp_args=None, whitelist=None, debug=False, regex=None):
     return ast
 
 
-def translate(code, hdrname, extra_cpp_args=None, whitelist=None, debug=False, regex=None):
+def translate(
+    code: str,
+    hdrname: str,
+    extra_cpp_args: list[str] | None = None,
+    whitelist: list[str] | None = None,
+    debug: bool = False,
+    regex: list[str] | None = None,
+) -> str:
     """
     to generate pxd mappings for only certain files, populate the whitelist parameter
     with the filenames (including relative path):
@@ -239,9 +263,110 @@ def translate(code, hdrname, extra_cpp_args=None, whitelist=None, debug=False, r
     return pxd_string
 
 
-WHITELIST = []
+WHITELIST: list[str] = []
 
-CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
+CONTEXT_SETTINGS: dict[str, list[str]] = dict(help_option_names=["-h", "--help"])
+
+
+def _print_backends_human() -> None:
+    """Print backend info in human-readable format."""
+    info = get_backend_info()
+    print("Available backends:")
+    for backend in info:
+        status = "[available]" if backend["available"] else "[not available]"
+        default_marker = " (default)" if backend["default"] else ""
+        print(f"  {backend['name']:12} {backend['description']} {status}{default_marker}")
+
+    # Find default
+    default = next((b["name"] for b in info if b["default"]), "none")
+    print(f"\nDefault: {default}")
+
+
+def _print_backends_json() -> None:
+    """Print backend info in JSON format."""
+    info = get_backend_info()
+    output = {"backends": info}
+    print(json.dumps(output))
+
+
+DOCKER_DOCS_URL = "https://elijahr.github.io/python-autopxd2/getting-started/docker/"
+
+FALLBACK_WARNING = f"""Warning: libclang not available, falling back to pycparser (legacy).
+Limitations: No C++ support, limited preprocessor handling, may fail on complex headers.
+To fix: Install LLVM/Clang (e.g., apt install libclang-dev, brew install llvm)
+Or use Docker: {DOCKER_DOCS_URL}
+"""
+
+LIBCLANG_REQUIRED_ERROR = f"""Error: libclang backend required but not available.
+Install LLVM/Clang (e.g., apt install libclang-dev, brew install llvm)
+Or use Docker: {DOCKER_DOCS_URL}
+"""
+
+
+def resolve_backend(
+    backend: str,
+    cpp: bool,
+    quiet: bool,
+) -> str:
+    """Resolve which backend to use based on options.
+
+    :param backend: Backend option value (auto, libclang, pycparser).
+    :param cpp: Whether --cpp was specified.
+    :param quiet: Whether to suppress warnings.
+    :returns: Resolved backend name.
+    :raises SystemExit: If required backend is unavailable.
+    """
+    # --cpp implies libclang
+    if cpp:
+        if not is_backend_available("libclang"):
+            click.echo(LIBCLANG_REQUIRED_ERROR, err=True)
+            raise SystemExit(1)
+        return "libclang"
+
+    # Explicit backend selection
+    if backend == "libclang":
+        if not is_backend_available("libclang"):
+            click.echo(LIBCLANG_REQUIRED_ERROR, err=True)
+            raise SystemExit(1)
+        return "libclang"
+
+    if backend == "pycparser":
+        return "pycparser"
+
+    # Auto mode
+    if is_backend_available("libclang"):
+        return "libclang"
+
+    # Fallback to pycparser with warning
+    if not quiet:
+        click.echo(FALLBACK_WARNING, err=True)
+    return "pycparser"
+
+
+def validate_libclang_options(
+    resolved_backend: str,
+    std: str | None,
+    clang_arg: tuple[str, ...],
+) -> None:
+    """Validate that libclang-only options aren't used with pycparser.
+
+    :raises SystemExit: If validation fails.
+    """
+    if resolved_backend != "libclang":
+        if std:
+            click.echo(
+                f"Error: --std requires libclang backend (got {resolved_backend}).\n"
+                "Install LLVM/Clang or remove --std option.",
+                err=True,
+            )
+            raise SystemExit(1)
+        if clang_arg:
+            click.echo(
+                f"Error: --clang-arg requires libclang backend (got {resolved_backend}).\n"
+                "Install LLVM/Clang or remove --clang-arg option.",
+                err=True,
+            )
+            raise SystemExit(1)
 
 
 @click.command(
@@ -274,6 +399,54 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     default=False,
     help="Dump preprocessor output to stderr.",
 )
+@click.option(
+    "--list-backends",
+    is_flag=True,
+    help="Show available backends and exit.",
+)
+@click.option(
+    "--json",
+    "json_output",
+    is_flag=True,
+    help="Output in JSON format (for --list-backends).",
+)
+@click.option(
+    "--backend",
+    "-b",
+    type=click.Choice(["auto", "libclang", "pycparser"], case_sensitive=False),
+    default="auto",
+    help="Parser backend: auto (default), libclang, pycparser.",
+)
+@click.option(
+    "--quiet",
+    "-q",
+    is_flag=True,
+    help="Suppress warnings.",
+)
+@click.option(
+    "--cpp",
+    "-x",
+    is_flag=True,
+    help="Parse as C++ (requires libclang backend).",
+)
+@click.option(
+    "--std",
+    metavar="<standard>",
+    help="Language standard (e.g., c11, c++17). Requires libclang.",
+)
+@click.option(
+    "--clang-arg",
+    multiple=True,
+    metavar="<arg>",
+    help="Pass argument to libclang (can be repeated).",
+)
+@click.option(
+    "--whitelist",
+    "-w",
+    multiple=True,
+    metavar="<file>",
+    help="Only generate declarations from specified files.",
+)
 @click.argument(
     "infile",
     type=click.File("r"),
@@ -285,20 +458,53 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     default=sys.stdout,
 )
 def cli(
-    version,
-    infile,
-    outfile,
-    include_dir,
-    regex,
-    compiler_directive,
-    debug,
-):
+    version: bool,
+    infile: IO[str],
+    outfile: IO[str],
+    include_dir: tuple[str, ...],
+    regex: tuple[str, ...],
+    compiler_directive: tuple[str, ...],
+    debug: bool,
+    list_backends: bool,
+    json_output: bool,
+    backend: str,
+    quiet: bool,
+    cpp: bool,
+    std: str | None,
+    clang_arg: tuple[str, ...],
+    whitelist: tuple[str, ...],
+) -> None:
     if version:
         print(__version__)
         return
+
+    if json_output and not list_backends:
+        click.echo("Error: --json requires --list-backends", err=True)
+        raise SystemExit(1)
+
+    if list_backends:
+        if json_output:
+            _print_backends_json()
+        else:
+            _print_backends_human()
+        return
+
+    resolved_backend = resolve_backend(backend, cpp, quiet)
+    validate_libclang_options(resolved_backend, std, clang_arg)
 
     extra_cpp_args = [f"-D{directive}" for directive in compiler_directive]
     for directory in include_dir:
         extra_cpp_args += [f"-I{directory}"]
 
-    outfile.write(translate(infile.read(), infile.name, extra_cpp_args, debug=debug, regex=regex))
+    whitelist_list = list(whitelist) if whitelist else None
+
+    outfile.write(
+        translate(
+            infile.read(),
+            infile.name,
+            extra_cpp_args,
+            whitelist=whitelist_list,
+            debug=debug,
+            regex=list(regex),
+        )
+    )

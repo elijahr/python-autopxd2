@@ -1,0 +1,175 @@
+"""Parser backends for autopxd.
+
+This package contains parser backend implementations that convert C/C++
+source code into the autopxd IR (Intermediate Representation).
+
+Available Backends
+------------------
+pycparser
+    Pure Python C99 parser. Default backend with no external dependencies.
+    Requires preprocessed input (CPP/clang -E output).
+
+libclang
+    LLVM clang-based parser with full C++ support. Requires system
+    libclang library and matching ``clang2`` Python package.
+
+Example
+-------
+::
+
+    from autopxd.backends import get_backend, list_backends
+
+    # Get the default backend
+    backend = get_backend()
+
+    # Get a specific backend
+    backend = get_backend("libclang")
+
+    # List available backends
+    for name in list_backends():
+        print(name)
+"""
+
+from autopxd.ir import (
+    ParserBackend,
+)
+
+# Registry of available backends
+# Backends are registered lazily to avoid import errors if dependencies are missing
+_BACKEND_REGISTRY: dict[str, type[ParserBackend]] = {}
+_DEFAULT_BACKEND: str | None = None
+
+
+def register_backend(name: str, backend_class: type[ParserBackend], is_default: bool = False) -> None:
+    """Register a parser backend.
+
+    Called by backend modules during import to add themselves to the registry.
+    The first registered backend becomes the default unless ``is_default`` is
+    explicitly set on a later registration.
+
+    :param name: Unique name for the backend (e.g., ``"pycparser"``, ``"libclang"``).
+    :param backend_class: Class implementing the :class:`~autopxd.ir.ParserBackend` protocol.
+    :param is_default: If True, this becomes the default backend for :func:`get_backend`.
+    """
+    global _DEFAULT_BACKEND  # pylint: disable=global-statement
+    _BACKEND_REGISTRY[name] = backend_class
+    if is_default or _DEFAULT_BACKEND is None:
+        _DEFAULT_BACKEND = name
+
+
+def list_backends() -> list[str]:
+    """List names of all registered backends.
+
+    :returns: List of backend names that can be passed to :func:`get_backend`.
+
+    Example
+    -------
+    ::
+
+        from autopxd.backends import list_backends
+
+        for name in list_backends():
+            print(f"Available: {name}")
+    """
+    _ensure_backends_loaded()
+    return list(_BACKEND_REGISTRY.keys())
+
+
+def is_backend_available(name: str) -> bool:
+    """Check if a backend is available for use.
+
+    :param name: Backend name to check.
+    :returns: True if the backend is registered and can be instantiated.
+    """
+    _ensure_backends_loaded()
+    return name in _BACKEND_REGISTRY
+
+
+def get_backend_info() -> list[dict[str, str | bool]]:
+    """Get information about all known backends.
+
+    :returns: List of dicts with name, available, default, and description.
+    """
+    _ensure_backends_loaded()
+
+    descriptions = {
+        "libclang": "Full C/C++ support via LLVM",
+        "pycparser": "Legacy C99 parser",
+    }
+
+    result: list[dict[str, str | bool]] = []
+    for name in ["libclang", "pycparser"]:  # Fixed order for display
+        result.append(
+            {
+                "name": name,
+                "available": name in _BACKEND_REGISTRY,
+                "default": name == _DEFAULT_BACKEND,
+                "description": descriptions.get(name, ""),
+            }
+        )
+    return result
+
+
+def get_backend(name: str | None = None) -> ParserBackend:
+    """Get a parser backend instance.
+
+    Returns a new instance of the requested backend. If no name is provided,
+    returns the default backend (pycparser).
+
+    :param name: Backend name (e.g., ``"pycparser"``, ``"libclang"``),
+        or None for the default backend.
+    :returns: New instance of the requested backend.
+    :raises ValueError: If the requested backend is not available.
+
+    Example
+    -------
+    ::
+
+        from autopxd.backends import get_backend
+
+        # Get default backend
+        backend = get_backend()
+
+        # Get libclang backend
+        clang = get_backend("libclang")
+
+        # Parse a header
+        header = backend.parse(code, "myheader.h")
+    """
+    _ensure_backends_loaded()
+
+    if name is None:
+        if _DEFAULT_BACKEND is None:
+            raise ValueError("No backends available")
+        name = _DEFAULT_BACKEND
+
+    if name not in _BACKEND_REGISTRY:
+        available = ", ".join(_BACKEND_REGISTRY.keys()) or "(none)"
+        raise ValueError(f"Unknown backend: {name!r}. Available: {available}")
+
+    return _BACKEND_REGISTRY[name]()
+
+
+def _ensure_backends_loaded() -> None:
+    """Lazily load backend modules to populate the registry."""
+    if _BACKEND_REGISTRY:
+        return  # Already loaded
+
+    # pylint: disable=import-outside-toplevel
+    # Lazy imports are intentional to avoid import errors if dependencies are missing
+
+    # Try to import pycparser backend (should always work)
+    try:
+        from autopxd.backends import (  # noqa: F401
+            pycparser_backend,
+        )
+    except ImportError:
+        pass
+
+    # Try to import libclang backend (may fail if clang not installed)
+    try:
+        from autopxd.backends import (  # noqa: F401
+            libclang_backend,
+        )
+    except ImportError:
+        pass
