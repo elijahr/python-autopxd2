@@ -109,5 +109,4 @@ docs/plans/
 *.pyc
 .idea
 /node_modules
-test/real_headers/
 logs/

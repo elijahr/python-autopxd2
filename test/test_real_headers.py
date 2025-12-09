@@ -224,10 +224,6 @@ class TestCppHeaders:
         assert "cdef extern from" in pxd
 
 
-@pytest.mark.skipif(
-    not os.path.isdir(REAL_HEADERS_DIR),
-    reason="real_headers directory not present (local development only)",
-)
 class TestHeaderDiscovery:
     """Tests for discovering and validating real headers."""
 
