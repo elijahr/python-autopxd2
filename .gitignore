@@ -110,3 +110,4 @@ docs/plans/
 .idea
 /node_modules
 test/real_headers/
+logs/

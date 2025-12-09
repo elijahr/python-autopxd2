@@ -872,8 +872,9 @@ class ASTConverter(c_ast.NodeVisitor):  # type: ignore[misc]
                 # Record this constant for array dimension references
                 self.constants[enum_name] = value_str
 
-                # Store the value (as int if known, else as string expression)
-                if last_value is not None and offset_from_expr == 0:
+                # Store the value (as int if known numeric, else as string expression)
+                # For simple literals (including auto-incremented ones), use int
+                if last_value is not None and is_simple:
                     values.append(EnumValue(name=enum_name, value=last_value))
                 else:
                     values.append(EnumValue(name=enum_name, value=value_str))

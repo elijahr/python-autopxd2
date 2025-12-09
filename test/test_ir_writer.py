@@ -224,7 +224,7 @@ class TestFunctionPointers:
             ],
         )
         result = write_pxd(header)
-        assert "ctypedef int (*)(int) callback" in result
+        assert "ctypedef int (*callback)(int)" in result
 
 
 class TestKeywordEscaping:
@@ -359,16 +359,19 @@ class TestComplexCases:
         )
         result = write_pxd(header)
         assert "cdef struct Point:" in result
-        assert "struct Point get_point()" in result
+        # struct prefix is stripped because Point is a known type
+        assert "Point get_point()" in result
 
     def test_empty_struct(self):
+        """Empty struct is a forward declaration (no colon, no pass)."""
         header = Header(
             "test.h",
             [Struct("Empty", [])],
         )
         result = write_pxd(header)
-        assert "cdef struct Empty:" in result
-        assert "pass" in result
+        # Empty struct = forward declaration (no colon)
+        assert "cdef struct Empty" in result
+        assert "cdef struct Empty:" not in result
 
     def test_anonymous_enum(self):
         header = Header(
