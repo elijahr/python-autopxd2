@@ -38,14 +38,14 @@ autopxd myheader.h myheader.pxd
 # Include additional directories
 autopxd -I /usr/include myheader.h myheader.pxd
 
-# Read from stdin, write to stdout
-cat myheader.h | autopxd > myheader.pxd
+# Write to stdout (omit output file)
+autopxd myheader.h > myheader.pxd
 ```
 
 ## Usage
 
 ```
-autopxd [OPTIONS] [INFILE] [OUTFILE]
+autopxd [OPTIONS] INFILE [OUTFILE]
 
 Options:
   -v, --version                  Print program version and exit.

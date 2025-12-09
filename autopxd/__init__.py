@@ -175,6 +175,15 @@ def resolve_backend(
     :returns: Resolved backend name.
     :raises SystemExit: If required backend is unavailable.
     """
+    # Check for conflicting options: --backend pycparser --cpp
+    if cpp and backend == "pycparser":
+        click.echo(
+            "Error: --cpp requires libclang backend (pycparser does not support C++).\n"
+            "Remove --backend pycparser or --cpp.",
+            err=True,
+        )
+        raise SystemExit(1)
+
     # --cpp implies libclang
     if cpp:
         if not is_backend_available("libclang"):
@@ -303,7 +312,7 @@ def validate_libclang_options(
 @click.argument(
     "infile",
     type=click.File("r"),
-    default=sys.stdin,
+    required=False,
 )
 @click.argument(
     "outfile",
@@ -312,7 +321,7 @@ def validate_libclang_options(
 )
 def cli(
     version: bool,
-    infile: IO[str],
+    infile: IO[str] | None,
     outfile: IO[str],
     include_dir: tuple[str, ...],
     compiler_directive: tuple[str, ...],
@@ -340,6 +349,11 @@ def cli(
         else:
             _print_backends_human()
         return
+
+    # Require infile for translation
+    if infile is None:
+        click.echo("Error: Missing argument 'INFILE'.", err=True)
+        raise SystemExit(2)
 
     resolved_backend = resolve_backend(backend, cpp, quiet)
     validate_libclang_options(resolved_backend, std, clang_arg)

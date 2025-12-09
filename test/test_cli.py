@@ -1,11 +1,24 @@
 """Tests for CLI functionality."""
 
 import json
+import os
+import tempfile
 
+import pytest
 from click.testing import CliRunner
 
 from autopxd import cli
 from autopxd.backends import get_backend_info, is_backend_available
+
+
+@pytest.fixture
+def simple_header_file():
+    """Create a temporary file with simple C code."""
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".h", delete=False, encoding="utf-8") as f:
+        f.write("int x;")
+        f.flush()
+        yield f.name
+    os.unlink(f.name)
 
 
 class TestBackendAvailability:
@@ -90,10 +103,10 @@ class TestListBackendsJson:
             assert "available" in backend
             assert "default" in backend
 
-    def test_json_without_list_backends_errors(self) -> None:
+    def test_json_without_list_backends_errors(self, simple_header_file) -> None:
         """--json without --list-backends should error."""
         runner = CliRunner()
-        result = runner.invoke(cli, ["--json"], input="int x;")
+        result = runner.invoke(cli, ["--json", simple_header_file])
         assert result.exit_code != 0
         assert "--json requires --list-backends" in result.output
 
@@ -101,145 +114,144 @@ class TestListBackendsJson:
 class TestBackendOption:
     """Tests for --backend option."""
 
-    def test_backend_pycparser_accepted(self) -> None:
+    def test_backend_pycparser_accepted(self, simple_header_file) -> None:
         """--backend pycparser should be accepted."""
         runner = CliRunner()
-        # Use stdin with simple header
-        result = runner.invoke(cli, ["--backend", "pycparser"], input="int x;")
+        result = runner.invoke(cli, ["--backend", "pycparser", simple_header_file])
         # Should not error on unknown option
         assert "No such option" not in result.output
 
-    def test_backend_auto_accepted(self) -> None:
+    def test_backend_auto_accepted(self, simple_header_file) -> None:
         """--backend auto should be accepted."""
         runner = CliRunner()
-        result = runner.invoke(cli, ["--backend", "auto"], input="int x;")
+        result = runner.invoke(cli, ["--backend", "auto", simple_header_file])
         assert "No such option" not in result.output
 
-    def test_backend_invalid_rejected(self) -> None:
+    def test_backend_invalid_rejected(self, simple_header_file) -> None:
         """--backend with invalid value should error."""
         runner = CliRunner()
-        result = runner.invoke(cli, ["--backend", "invalid"], input="int x;")
+        result = runner.invoke(cli, ["--backend", "invalid", simple_header_file])
         assert result.exit_code != 0
 
 
 class TestQuietOption:
     """Tests for --quiet option."""
 
-    def test_quiet_accepted(self) -> None:
+    def test_quiet_accepted(self, simple_header_file) -> None:
         """--quiet should be accepted."""
         runner = CliRunner()
-        result = runner.invoke(cli, ["--quiet"], input="int x;")
+        result = runner.invoke(cli, ["--quiet", simple_header_file])
         assert "No such option" not in result.output
 
-    def test_quiet_short_form(self) -> None:
+    def test_quiet_short_form(self, simple_header_file) -> None:
         """-q should work as short form."""
         runner = CliRunner()
-        result = runner.invoke(cli, ["-q"], input="int x;")
+        result = runner.invoke(cli, ["-q", simple_header_file])
         assert "No such option" not in result.output
 
 
 class TestCppOption:
     """Tests for --cpp option."""
 
-    def test_cpp_accepted(self) -> None:
+    def test_cpp_accepted(self, simple_header_file) -> None:
         """--cpp should be accepted."""
         runner = CliRunner()
-        result = runner.invoke(cli, ["--cpp"], input="int x;")
+        result = runner.invoke(cli, ["--cpp", simple_header_file])
         assert "No such option" not in result.output
 
-    def test_cpp_short_form(self) -> None:
+    def test_cpp_short_form(self, simple_header_file) -> None:
         """-x should work as short form."""
         runner = CliRunner()
-        result = runner.invoke(cli, ["-x"], input="int x;")
+        result = runner.invoke(cli, ["-x", simple_header_file])
         assert "No such option" not in result.output
 
 
 class TestStdOption:
     """Tests for --std option."""
 
-    def test_std_accepted(self) -> None:
+    def test_std_accepted(self, simple_header_file) -> None:
         """--std should be accepted."""
         runner = CliRunner()
-        result = runner.invoke(cli, ["--std", "c11"], input="int x;")
+        result = runner.invoke(cli, ["--std", "c11", simple_header_file])
         assert "No such option" not in result.output
 
-    def test_std_cpp17_accepted(self) -> None:
+    def test_std_cpp17_accepted(self, simple_header_file) -> None:
         """--std c++17 should be accepted."""
         runner = CliRunner()
-        result = runner.invoke(cli, ["--std", "c++17"], input="int x;")
+        result = runner.invoke(cli, ["--std", "c++17", simple_header_file])
         assert "No such option" not in result.output
 
 
 class TestClangArgOption:
     """Tests for --clang-arg option."""
 
-    def test_clang_arg_accepted(self) -> None:
+    def test_clang_arg_accepted(self, simple_header_file) -> None:
         """--clang-arg should be accepted."""
         runner = CliRunner()
-        result = runner.invoke(cli, ["--clang-arg", "-DFOO=1"], input="int x;")
+        result = runner.invoke(cli, ["--clang-arg", "-DFOO=1", simple_header_file])
         assert "No such option" not in result.output
 
-    def test_clang_arg_multiple(self) -> None:
+    def test_clang_arg_multiple(self, simple_header_file) -> None:
         """--clang-arg can be specified multiple times."""
         runner = CliRunner()
-        result = runner.invoke(cli, ["--clang-arg", "-DFOO", "--clang-arg", "-DBAR"], input="int x;")
+        result = runner.invoke(cli, ["--clang-arg", "-DFOO", "--clang-arg", "-DBAR", simple_header_file])
         assert "No such option" not in result.output
 
 
 class TestWhitelistOption:
     """Tests for --whitelist option."""
 
-    def test_whitelist_accepted(self) -> None:
+    def test_whitelist_accepted(self, simple_header_file) -> None:
         """--whitelist should be accepted."""
         runner = CliRunner()
-        result = runner.invoke(cli, ["--whitelist", "foo.h"], input="int x;")
+        result = runner.invoke(cli, ["--whitelist", "foo.h", simple_header_file])
         assert "No such option" not in result.output
 
-    def test_whitelist_short_form(self) -> None:
+    def test_whitelist_short_form(self, simple_header_file) -> None:
         """-w should work as short form."""
         runner = CliRunner()
-        result = runner.invoke(cli, ["-w", "foo.h"], input="int x;")
+        result = runner.invoke(cli, ["-w", "foo.h", simple_header_file])
         assert "No such option" not in result.output
 
-    def test_whitelist_multiple(self) -> None:
+    def test_whitelist_multiple(self, simple_header_file) -> None:
         """--whitelist can be specified multiple times."""
         runner = CliRunner()
-        result = runner.invoke(cli, ["-w", "foo.h", "-w", "bar.h"], input="int x;")
+        result = runner.invoke(cli, ["-w", "foo.h", "-w", "bar.h", simple_header_file])
         assert "No such option" not in result.output
 
 
 class TestBackendResolution:
     """Tests for backend resolution logic."""
 
-    def test_explicit_pycparser_no_warning(self) -> None:
+    def test_explicit_pycparser_no_warning(self, simple_header_file) -> None:
         """--backend pycparser should not show fallback warning."""
         runner = CliRunner()
-        result = runner.invoke(cli, ["--backend", "pycparser"], input="int x;")
+        result = runner.invoke(cli, ["--backend", "pycparser", simple_header_file])
         assert "falling back to pycparser" not in result.output
 
 
 class TestLibclangOnlyOptions:
     """Tests for options that require libclang."""
 
-    def test_std_with_pycparser_errors(self) -> None:
+    def test_std_with_pycparser_errors(self, simple_header_file) -> None:
         """--std with pycparser backend should error."""
         runner = CliRunner()
-        result = runner.invoke(cli, ["--backend", "pycparser", "--std", "c11"], input="int x;")
+        result = runner.invoke(cli, ["--backend", "pycparser", "--std", "c11", simple_header_file])
         assert result.exit_code != 0
         assert "--std requires libclang" in result.output
 
-    def test_clang_arg_with_pycparser_errors(self) -> None:
+    def test_clang_arg_with_pycparser_errors(self, simple_header_file) -> None:
         """--clang-arg with pycparser backend should error."""
         runner = CliRunner()
-        result = runner.invoke(cli, ["--backend", "pycparser", "--clang-arg", "-DFOO"], input="int x;")
+        result = runner.invoke(cli, ["--backend", "pycparser", "--clang-arg", "-DFOO", simple_header_file])
         assert result.exit_code != 0
         assert "--clang-arg requires libclang" in result.output
 
-    def test_cpp_without_libclang_errors(self) -> None:
+    def test_cpp_without_libclang_errors(self, simple_header_file) -> None:
         """--cpp without libclang should error."""
         runner = CliRunner()
         # Force libclang unavailable by using pycparser backend
-        result = runner.invoke(cli, ["--backend", "pycparser", "--cpp"], input="int x;")
+        result = runner.invoke(cli, ["--backend", "pycparser", "--cpp", simple_header_file])
         assert result.exit_code != 0
 
 
@@ -287,3 +299,112 @@ class TestEndToEnd:
             with open("out.pxd") as f:
                 output = f.read()
             assert "Foo" in output
+
+    def test_missing_infile_errors(self) -> None:
+        """Missing infile argument should error."""
+        runner = CliRunner()
+        result = runner.invoke(cli, ["--backend", "pycparser"])
+        assert result.exit_code != 0
+        assert "Missing argument" in result.output
+
+    def test_output_to_file(self) -> None:
+        """Output written to explicit outfile."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            with open("test.h", "w") as f:
+                f.write("int foo;")
+            result = runner.invoke(cli, ["--backend", "pycparser", "test.h", "out.pxd"])
+            assert result.exit_code == 0
+            with open("out.pxd") as f:
+                output = f.read()
+            assert "cdef extern" in output or "int foo" in output
+
+    def test_enum_output(self) -> None:
+        """Enum should be properly parsed."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            with open("test.h", "w") as f:
+                f.write("enum Color { RED, GREEN, BLUE };")
+            result = runner.invoke(cli, ["--backend", "pycparser", "test.h", "out.pxd"])
+            assert result.exit_code == 0
+            with open("out.pxd") as f:
+                output = f.read()
+            assert "Color" in output
+            assert "RED" in output
+
+    def test_function_output(self) -> None:
+        """Function should be properly parsed."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            with open("test.h", "w") as f:
+                f.write("int add(int a, int b);")
+            result = runner.invoke(cli, ["--backend", "pycparser", "test.h", "out.pxd"])
+            assert result.exit_code == 0
+            with open("out.pxd") as f:
+                output = f.read()
+            assert "int add(int a, int b)" in output
+
+    def test_typedef_output(self) -> None:
+        """Typedef should be properly parsed."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            with open("test.h", "w") as f:
+                f.write("typedef unsigned int uint;")
+            result = runner.invoke(cli, ["--backend", "pycparser", "test.h", "out.pxd"])
+            assert result.exit_code == 0
+            with open("out.pxd") as f:
+                output = f.read()
+            assert "ctypedef" in output
+            assert "uint" in output
+
+
+@pytest.mark.libclang
+class TestLibclangEndToEnd:
+    """End-to-end CLI tests using libclang backend."""
+
+    def test_libclang_simple_header(self) -> None:
+        """libclang backend should parse simple header."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            with open("test.h", "w") as f:
+                f.write("int foo;")
+            result = runner.invoke(cli, ["--backend", "libclang", "test.h", "out.pxd"])
+            assert result.exit_code == 0
+            with open("out.pxd") as f:
+                output = f.read()
+            assert "int foo" in output
+
+    def test_libclang_struct(self) -> None:
+        """libclang backend should parse struct."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            with open("test.h", "w") as f:
+                f.write("struct Point { int x; int y; };")
+            result = runner.invoke(cli, ["--backend", "libclang", "test.h", "out.pxd"])
+            assert result.exit_code == 0
+            with open("out.pxd") as f:
+                output = f.read()
+            assert "Point" in output
+
+    def test_libclang_cpp_class(self) -> None:
+        """libclang with --cpp should parse C++ class."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            with open("test.hpp", "w") as f:
+                f.write("class Foo { public: int x; };")
+            result = runner.invoke(cli, ["--cpp", "test.hpp", "out.pxd"])
+            assert result.exit_code == 0
+            with open("out.pxd") as f:
+                output = f.read()
+            assert "Foo" in output
+
+    def test_auto_backend_uses_libclang(self) -> None:
+        """--backend auto should use libclang when available."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            with open("test.h", "w") as f:
+                f.write("int bar;")
+            result = runner.invoke(cli, ["--backend", "auto", "test.h", "out.pxd"])
+            assert result.exit_code == 0
+            # Should not show pycparser fallback warning
+            assert "falling back to pycparser" not in result.output
