@@ -1,5 +1,6 @@
 import fnmatch
 import json
+import os
 import sys
 from importlib.metadata import (
     version as get_version,
@@ -43,15 +44,29 @@ def _filter_by_whitelist(
     - "include/*.h" - all .h files in include/
 
     Declarations without location info are excluded when whitelist is active.
+
+    Path normalization is applied for cross-platform compatibility:
+    - Paths are normalized with os.path.normpath
+    - On Windows, case-insensitive comparison is used
     """
     result = []
+    # Normalize whitelist patterns
+    normalized_whitelist = [os.path.normpath(p) for p in whitelist]
+
     for decl in declarations:
         if decl.location is None:
             continue
-        for pattern in whitelist:
-            if fnmatch.fnmatch(decl.location.file, pattern):
-                result.append(decl)
-                break
+        decl_file = os.path.normpath(decl.location.file)
+        for pattern in normalized_whitelist:
+            # On Windows, use case-insensitive matching
+            if sys.platform == "win32":
+                if fnmatch.fnmatch(decl_file.lower(), pattern.lower()):
+                    result.append(decl)
+                    break
+            else:
+                if fnmatch.fnmatch(decl_file, pattern):
+                    result.append(decl)
+                    break
     return result
 
 
