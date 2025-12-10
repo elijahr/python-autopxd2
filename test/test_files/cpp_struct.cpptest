@@ -1,0 +1,21 @@
+struct Point {
+    int x;
+    int y;
+};
+
+struct Rectangle {
+    Point top_left;
+    Point bottom_right;
+};
+
+---
+
+cdef extern from "cpp_struct.cpptest":
+
+    cdef struct Point:
+        int x
+        int y
+
+    cdef struct Rectangle:
+        Point top_left
+        Point bottom_right

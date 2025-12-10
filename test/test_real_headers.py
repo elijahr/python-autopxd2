@@ -192,6 +192,65 @@ class TestJanssonHeader:
         assert 'cdef extern from "jansson.h":' in pxd
 
 
+class TestSimpleCHeader:
+    """Test parsing simple_c.h with pycparser backend."""
+
+    @pytest.fixture
+    def simple_c_header(self):
+        """Parse simple_c.h with pycparser and return the IR."""
+        from autopxd.backends import get_backend
+
+        c_path = os.path.join(REAL_HEADERS_DIR, "simple_c.h")
+        if not os.path.exists(c_path):
+            pytest.skip("simple_c.h not found in test/real_headers/")
+
+        with open(c_path, encoding="utf-8") as f:
+            code = f.read()
+
+        backend = get_backend("pycparser")
+        return backend.parse(code, "simple_c.h")
+
+    def test_parses_without_error(self, simple_c_header):
+        """Verify simple_c.h parses successfully."""
+        assert simple_c_header is not None
+        assert len(simple_c_header.declarations) > 0
+
+    def test_pxd_matches_expected(self, simple_c_header):
+        """Verify generated pxd matches expected output."""
+        expected_path = os.path.join(REAL_HEADERS_DIR, "simple_c.expected.pxd")
+        if not os.path.exists(expected_path):
+            pytest.skip("simple_c.expected.pxd not found")
+
+        with open(expected_path, encoding="utf-8") as f:
+            expected = f.read()
+
+        actual = write_pxd(simple_c_header)
+        assert actual == expected, f"\nEXPECTED:\n{expected}\n\nACTUAL:\n{actual}"
+
+    def test_finds_enums(self, simple_c_header):
+        """Verify we find both enums."""
+        enums = [d for d in simple_c_header.declarations if isinstance(d, Enum)]
+        enum_names = {e.name for e in enums}
+        assert "ErrorCode" in enum_names
+        assert "LogLevel" in enum_names
+
+    def test_finds_structs(self, simple_c_header):
+        """Verify we find all structs."""
+        structs = [d for d in simple_c_header.declarations if isinstance(d, Struct)]
+        struct_names = {s.name for s in structs}
+        assert "Point" in struct_names
+        assert "Size" in struct_names
+        assert "Buffer" in struct_names
+
+    def test_finds_functions(self, simple_c_header):
+        """Verify we find key functions."""
+        functions = [d for d in simple_c_header.declarations if isinstance(d, Function)]
+        func_names = {f.name for f in functions}
+        assert "point_create" in func_names
+        assert "buffer_new" in func_names
+        assert "log_printf" in func_names
+
+
 class TestCppHeaders:
     """Test parsing C++ headers."""
 
@@ -222,6 +281,34 @@ class TestCppHeaders:
         pxd = write_pxd(simple_cpp_header)
         assert len(pxd) > 0
         assert "cdef extern from" in pxd
+
+    def test_pxd_matches_expected(self, simple_cpp_header):
+        """Verify generated pxd matches expected output."""
+        expected_path = os.path.join(REAL_HEADERS_DIR, "simple_cpp.expected.pxd")
+        if not os.path.exists(expected_path):
+            pytest.skip("simple_cpp.expected.pxd not found")
+
+        with open(expected_path, encoding="utf-8") as f:
+            expected = f.read()
+
+        actual = write_pxd(simple_cpp_header)
+        assert actual == expected, f"\nEXPECTED:\n{expected}\n\nACTUAL:\n{actual}"
+
+    def test_cpp_class_is_cppclass(self, simple_cpp_header):
+        """Verify C++ classes use cppclass in output."""
+        pxd = write_pxd(simple_cpp_header)
+        assert "cdef cppclass Widget:" in pxd
+
+    def test_cpp_struct_is_struct(self, simple_cpp_header):
+        """Verify C++ structs use struct (not cppclass) in output."""
+        pxd = write_pxd(simple_cpp_header)
+        assert "cdef struct Point:" in pxd
+
+    def test_cpp_methods_included(self, simple_cpp_header):
+        """Verify C++ class methods are included in output."""
+        pxd = write_pxd(simple_cpp_header)
+        assert "void resize(int w, int h)" in pxd
+        assert "bool isValid()" in pxd
 
 
 class TestHeaderDiscovery:

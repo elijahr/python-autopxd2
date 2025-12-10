@@ -1,0 +1,13 @@
+class Widget {
+public:
+    int width;
+    int height;
+};
+
+---
+
+cdef extern from "cpp_class_basic.cpptest":
+
+    cdef cppclass Widget:
+        int width
+        int height

@@ -191,15 +191,20 @@ class PxdWriter:
         return []
 
     def _write_struct(self, struct: Struct) -> list[str]:
-        """Write a struct or union declaration."""
-        kind = "union" if struct.is_union else "struct"
+        """Write a struct, union, or cppclass declaration."""
+        if struct.is_cppclass:
+            kind = "cppclass"
+        elif struct.is_union:
+            kind = "union"
+        else:
+            kind = "struct"
         name = self._escape_name(struct.name, include_c_name=True)
 
         # typedef'd structs/unions use ctypedef, plain declarations use cdef
         keyword = "ctypedef" if struct.is_typedef else "cdef"
 
-        # If struct has no fields, it's a forward declaration
-        if not struct.fields:
+        # If struct has no fields and no methods, it's a forward declaration
+        if not struct.fields and not struct.methods:
             return [f"{keyword} {kind} {name}"]
 
         lines = [f"{keyword} {kind} {name}:"]
@@ -212,6 +217,12 @@ class PxdWriter:
                 dims = self._format_array_dims(field.type)
                 field_name = f"{field_name}{dims}"
             lines.append(f"{self.INDENT}{field_type} {field_name}")
+
+        # Add methods for cppclass
+        for method in struct.methods:
+            method_lines = self._write_function(method)
+            for line in method_lines:
+                lines.append(f"{self.INDENT}{line}")
 
         return lines
 

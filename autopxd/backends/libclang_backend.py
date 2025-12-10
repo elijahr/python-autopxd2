@@ -137,35 +137,50 @@ class ClangASTConverter:
         elif kind == CursorKind.VAR_DECL:
             self._process_variable(cursor)
         elif kind == CursorKind.CLASS_DECL:
-            # C++ class - treat as struct for now
-            self._process_struct(cursor, is_union=False)
+            # C++ class - uses cppclass in Cython
+            self._process_struct(cursor, is_union=False, is_cppclass=True)
 
-    def _process_struct(self, cursor: "clang.cindex.Cursor", is_union: bool) -> None:
-        """Process a struct/union declaration."""
+    def _process_struct(self, cursor: "clang.cindex.Cursor", is_union: bool, is_cppclass: bool = False) -> None:
+        """Process a struct/union/class declaration."""
         name = cursor.spelling or None
 
         # Skip forward declarations
         if not cursor.is_definition():
             return
 
+        # Determine the key prefix for deduplication
+        if is_cppclass:
+            key_prefix = "class"
+        elif is_union:
+            key_prefix = "union"
+        else:
+            key_prefix = "struct"
+
         # Skip if already processed
-        key = f"{'union' if is_union else 'struct'}:{name}"
+        key = f"{key_prefix}:{name}"
         if name and key in self._seen:
             return
         if name:
             self._seen[key] = True
 
         fields: list[Field] = []
+        methods: list[Function] = []
         for child in cursor.get_children():
             if child.kind == CursorKind.FIELD_DECL:
                 field = self._convert_field(child)
                 if field:
                     fields.append(field)
+            elif child.kind == CursorKind.CXX_METHOD and is_cppclass:
+                method = self._convert_method(child)
+                if method:
+                    methods.append(method)
 
         struct = Struct(
             name=name,
             fields=fields,
+            methods=methods,
             is_union=is_union,
+            is_cppclass=is_cppclass,
             location=self._get_location(cursor),
         )
         self.declarations.append(struct)
@@ -228,6 +243,35 @@ class ClangASTConverter:
             location=self._get_location(cursor),
         )
         self.declarations.append(func)
+
+    def _convert_method(self, cursor: "clang.cindex.Cursor") -> Function | None:
+        """Convert a C++ method to a Function IR node."""
+        name = cursor.spelling
+        if not name:
+            return None
+
+        return_type = self._convert_type(cursor.result_type)
+        if not return_type:
+            return None
+
+        parameters: list[Parameter] = []
+        is_variadic = cursor.type.is_function_variadic()
+
+        for arg in cursor.get_arguments():
+            param_type = self._convert_type(arg.type)
+            if param_type:
+                # Skip void parameter
+                if isinstance(param_type, CType) and param_type.name == "void":
+                    continue
+                parameters.append(Parameter(name=arg.spelling or None, type=param_type))
+
+        return Function(
+            name=name,
+            return_type=return_type,
+            parameters=parameters,
+            is_variadic=is_variadic,
+            location=self._get_location(cursor),
+        )
 
     def _process_typedef(self, cursor: "clang.cindex.Cursor") -> None:
         """Process a typedef declaration."""

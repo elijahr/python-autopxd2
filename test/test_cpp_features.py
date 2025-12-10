@@ -7,6 +7,7 @@ from autopxd.ir import (
     Function,
     Struct,
 )
+from autopxd.ir_writer import write_pxd
 
 # These tests require libclang - exclude with: pytest -m "not libclang"
 pytestmark = pytest.mark.libclang
@@ -21,7 +22,8 @@ def libclang_backend():
 class TestCppClasses:
     """Test C++ class parsing."""
 
-    def test_cpp_class(self, libclang_backend):
+    def test_cpp_class_is_cppclass(self, libclang_backend):
+        """C++ classes should have is_cppclass=True."""
         code = """
         class Widget {
         public:
@@ -30,14 +32,69 @@ class TestCppClasses:
         };
         """
         header = libclang_backend.parse(code, "test.hpp", extra_args=["-x", "c++"])
-        # Classes are treated as structs
         assert len(header.declarations) == 1
         struct = header.declarations[0]
         assert isinstance(struct, Struct)
         assert struct.name == "Widget"
+        assert struct.is_cppclass is True
+        assert struct.is_union is False
+
+    def test_cpp_class_with_methods(self, libclang_backend):
+        """C++ class methods should be extracted."""
+        code = """
+        class Widget {
+        public:
+            int width;
+            int height;
+            void resize(int w, int h);
+        };
+        """
+        header = libclang_backend.parse(code, "test.hpp", extra_args=["-x", "c++"])
+        assert len(header.declarations) == 1
+        struct = header.declarations[0]
+        assert isinstance(struct, Struct)
+        assert struct.is_cppclass is True
+        assert len(struct.fields) == 2
+        assert len(struct.methods) == 1
+        method = struct.methods[0]
+        assert method.name == "resize"
+        assert len(method.parameters) == 2
+
+    def test_cpp_class_generates_cppclass_pxd(self, libclang_backend):
+        """Generated pxd should use 'cppclass' for C++ classes."""
+        code = """
+        class Widget {
+        public:
+            int width;
+            int height;
+            void resize(int w, int h);
+        };
+        """
+        header = libclang_backend.parse(code, "test.hpp", extra_args=["-x", "c++"])
+        pxd = write_pxd(header)
+        assert "cdef cppclass Widget:" in pxd
+        assert "int width" in pxd
+        assert "int height" in pxd
+        assert "void resize(int w, int h)" in pxd
+
+    def test_cpp_struct_is_not_cppclass(self, libclang_backend):
+        """C++ structs should NOT have is_cppclass=True (they're just structs)."""
+        code = """
+        struct Point {
+            int x;
+            int y;
+        };
+        """
+        header = libclang_backend.parse(code, "test.hpp", extra_args=["-x", "c++"])
+        assert len(header.declarations) == 1
+        struct = header.declarations[0]
+        assert isinstance(struct, Struct)
+        assert struct.name == "Point"
+        assert struct.is_cppclass is False
+        assert struct.is_union is False
 
     def test_cpp_namespace_function(self, libclang_backend):
-        # For now, we only handle top-level declarations
+        """Top-level C++ functions should be parsed."""
         code = """
         int global_func(int x);
         """

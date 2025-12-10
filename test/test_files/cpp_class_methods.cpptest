@@ -1,0 +1,17 @@
+class Calculator {
+public:
+    int value;
+    void reset();
+    int add(int x);
+    int multiply(int a, int b);
+};
+
+---
+
+cdef extern from "cpp_class_methods.cpptest":
+
+    cdef cppclass Calculator:
+        int value
+        void reset()
+        int add(int x)
+        int multiply(int a, int b)

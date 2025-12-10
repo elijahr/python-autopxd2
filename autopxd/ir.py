@@ -407,7 +407,9 @@ class Struct:
 
     :param name: The struct/union tag name, or None for anonymous types.
     :param fields: List of member fields.
+    :param methods: List of methods (for C++ classes only).
     :param is_union: True for unions, False for structs.
+    :param is_cppclass: True for C++ classes (uses ``cppclass`` in Cython).
     :param is_typedef: True if this came from a typedef declaration.
     :param location: Source location for error reporting.
 
@@ -427,6 +429,17 @@ class Struct:
             Field("f", CType("float")),
         ], is_union=True)
 
+    C++ class with method::
+
+        widget = Struct("Widget", [
+            Field("width", CType("int")),
+        ], methods=[
+            Function("resize", CType("void"), [
+                Parameter("w", CType("int")),
+                Parameter("h", CType("int")),
+            ])
+        ], is_cppclass=True)
+
     Anonymous struct::
 
         anon = Struct(None, [Field("value", CType("int"))])
@@ -434,12 +447,19 @@ class Struct:
 
     name: Optional[str]
     fields: list[Field] = field(default_factory=list)
+    methods: list[Function] = field(default_factory=list)
     is_union: bool = False
+    is_cppclass: bool = False
     is_typedef: bool = False
     location: Optional[SourceLocation] = None
 
     def __str__(self) -> str:
-        kind = "union" if self.is_union else "struct"
+        if self.is_cppclass:
+            kind = "cppclass"
+        elif self.is_union:
+            kind = "union"
+        else:
+            kind = "struct"
         name_str = self.name or "(anonymous)"
         return f"{kind} {name_str}"
 

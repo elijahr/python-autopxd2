@@ -1,0 +1,28 @@
+struct Point {
+    int x;
+    int y;
+};
+
+class Shape {
+public:
+    int id;
+    Point origin;
+    void move(int dx, int dy);
+};
+
+int distance(Point a, Point b);
+
+---
+
+cdef extern from "cpp_mixed.cpptest":
+
+    cdef struct Point:
+        int x
+        int y
+
+    cdef cppclass Shape:
+        int id
+        Point origin
+        void move(int dx, int dy)
+
+    int distance(Point a, Point b)
