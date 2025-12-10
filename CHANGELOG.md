@@ -7,28 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.0] - 2024-12-10
+
 ### Changed
 - **BREAKING**: Rewrote `translate()` function to use new IR-based backend system
 - **BREAKING**: Removed `--regex` CLI option (was broken/unused)
 - **BREAKING**: Removed legacy `parse()` and `preprocess()` functions from public API
+- **BREAKING**: Removed stdin support, file input now required
 - `translate()` now accepts `backend` parameter to select pycparser or libclang
 - Renamed `extra_cpp_args` parameter to `extra_args` in `translate()`
+- Docker CI now runs full test suite instead of smoke tests
 
 ### Added
 - Full CLI integration with backend system (`--backend` option now works)
+- C++ class support with `cppclass` output (libclang backend)
+- C++ class method extraction (libclang backend)
 - Whitelist filtering for declarations by source file
 - Support for anonymous enums in struct fields
 - Support for anonymous struct/union variables
 - Recursive function pointer parameter extraction
 - Source location tracking for all declaration types
+- Comprehensive C++ test coverage with `.cpptest` files
+- Expected pxd output verification for real headers
 
 ### Removed
 - `autopxd/writer.py` - Legacy pycparser AST visitor (replaced by IR system)
 - `autopxd/nodes.py` - Legacy node types (replaced by IR types)
 - `parse()` function from public API
 - `preprocess()` function from public API
+- stdin input support (use file input instead)
 
 ### Fixed
+- C++ classes now correctly output `cdef cppclass` instead of `cdef struct`
 - CLI `--backend` option now correctly routes to selected backend
 - Anonymous nested struct/union extraction with proper synthetic names
 - Function pointer typedef syntax in Cython output
@@ -37,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Self-typedef patterns (`typedef struct X X;`) no longer produce duplicates
 - Struct/union/enum prefix stripping for known types
 - Const qualifier deduplication
+- Windows path normalization in whitelist filtering
 
 ## [2.5.0] - 2024-12-01
 
@@ -114,7 +125,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - macOS support
 
-[Unreleased]: https://github.com/elijahr/python-autopxd2/compare/v2.5.0...HEAD
+[Unreleased]: https://github.com/elijahr/python-autopxd2/compare/v3.0.0...HEAD
+[3.0.0]: https://github.com/elijahr/python-autopxd2/compare/v2.5.0...v3.0.0
 [2.5.0]: https://github.com/elijahr/python-autopxd2/compare/v2.4.0...v2.5.0
 [2.4.0]: https://github.com/elijahr/python-autopxd2/compare/v2.3.0...v2.4.0
 [2.3.0]: https://github.com/elijahr/python-autopxd2/compare/v2.2.3...v2.3.0
