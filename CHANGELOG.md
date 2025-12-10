@@ -7,47 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [3.0.0] - 2024-12-10
-
-### Changed
-- **BREAKING**: Rewrote `translate()` function to use new IR-based backend system
-- **BREAKING**: Removed `--regex` CLI option (was broken/unused)
-- **BREAKING**: Removed legacy `parse()` and `preprocess()` functions from public API
-- **BREAKING**: Removed stdin support, file input now required
-- `translate()` now accepts `backend` parameter to select pycparser or libclang
-- Renamed `extra_cpp_args` parameter to `extra_args` in `translate()`
-- Docker CI now runs full test suite instead of smoke tests
+## [3.0.0] - 2025-12-10
 
 ### Added
-- Full CLI integration with backend system (`--backend` option now works)
-- C++ class support with `cppclass` output (libclang backend)
-- C++ class method extraction (libclang backend)
-- Whitelist filtering for declarations by source file
-- Support for anonymous enums in struct fields
-- Support for anonymous struct/union variables
-- Recursive function pointer parameter extraction
-- Source location tracking for all declaration types
-- Comprehensive C++ test coverage with `.cpptest` files
-- Expected pxd output verification for real headers
+- **libclang backend** - New parser backend with full C++ support including classes, methods, templates, and namespaces. Auto-selected when libclang is available, with fallback to pycparser for systems without it.
+- **C++ support** - Parse C++ headers with `--cpp` flag or `.hpp`/`.cpp` extensions. Generates proper `cdef cppclass` declarations with methods.
+- **New CLI options**:
+  - `--backend` / `-b` - Select parser backend (`auto`, `libclang`, `pycparser`)
+  - `--cpp` / `-x` - Parse as C++ (requires libclang)
+  - `--std` - Language standard (e.g., `c11`, `c++17`)
+  - `--clang-arg` - Pass additional arguments to libclang
+  - `--whitelist` / `-w` - Only generate declarations from specified files
+  - `--quiet` / `-q` - Suppress warnings
+  - `--list-backends` - Show available backends
+  - `--json` - JSON output for `--list-backends`
+- **Docker image** - Official multi-platform image (amd64/arm64) with libclang pre-installed at `ghcr.io/elijahr/python-autopxd2`
+- **Documentation** - New documentation site with user guide, API reference, and contributing guide
+
+### Changed
+- **Complete rewrite** of the parsing and code generation system using an intermediate representation (IR)
+- `translate()` function signature: `extra_cpp_args` renamed to `extra_args`, new `backend` parameter added
 
 ### Removed
-- `autopxd/writer.py` - Legacy pycparser AST visitor (replaced by IR system)
-- `autopxd/nodes.py` - Legacy node types (replaced by IR types)
-- `parse()` function from public API
-- `preprocess()` function from public API
-- stdin input support (use file input instead)
-
-### Fixed
-- C++ classes now correctly output `cdef cppclass` instead of `cdef struct`
-- CLI `--backend` option now correctly routes to selected backend
-- Anonymous nested struct/union extraction with proper synthetic names
-- Function pointer typedef syntax in Cython output
-- Keyword escaping with C name aliases for all declaration types
-- `ctypedef` vs `cdef`/`cpdef` handling for typedef'd types
-- Self-typedef patterns (`typedef struct X X;`) no longer produce duplicates
-- Struct/union/enum prefix stripping for known types
-- Const qualifier deduplication
-- Windows path normalization in whitelist filtering
+- **`--regex` / `-R` option** - Removed from CLI
+- **stdin input** - File path argument is now required
+- `parse()` and `preprocess()` functions from public API
+- Legacy `autopxd/writer.py` and `autopxd/nodes.py` modules
 
 ## [2.5.0] - 2024-12-01
 
