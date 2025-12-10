@@ -1,0 +1,3078 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Automatically generate Cython pxd files from C/C++ headers">
+      
+      
+      
+        <link rel="canonical" href="https://elijahr.github.io/python-autopxd2/3.0.0/api/backends/">
+      
+      
+        <link rel="prev" href="../ir/">
+      
+      
+        <link rel="next" href="../../contributing/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.0">
+    
+    
+      
+        <title>Backends - autopxd2</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.618322db.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#backends" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="autopxd2" class="md-header__button md-logo" aria-label="autopxd2" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            autopxd2
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Backends
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="purple"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/elijahr/python-autopxd2" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    elijahr/python-autopxd2
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="autopxd2" class="md-nav__button md-logo" aria-label="autopxd2" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    autopxd2
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/elijahr/python-autopxd2" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    elijahr/python-autopxd2
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/docker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docker Usage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    User Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/backends/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Parser Backends
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/cpp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    C++ Support
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ir/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    IR Module
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backends
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backends
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#backend-registry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backend Registry
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#autopxd.backends" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;backends
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label=" backends">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#autopxd.backends--available-backends" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Available Backends
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#autopxd.backends--example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#autopxd.backends.get_backend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;get_backend
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#autopxd.backends.list_backends" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;list_backends
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#autopxd.backends.register_backend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;register_backend
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pycparser-backend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        pycparser Backend
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#autopxd.backends.pycparser_backend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;pycparser_backend
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label=" pycparser_backend">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#autopxd.backends.pycparser_backend--limitations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Limitations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#autopxd.backends.pycparser_backend--example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#autopxd.backends.pycparser_backend.PycparserBackend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;PycparserBackend
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label=" PycparserBackend">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#autopxd.backends.pycparser_backend.PycparserBackend--properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Properties
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#autopxd.backends.pycparser_backend.PycparserBackend--example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#autopxd.backends.pycparser_backend.PycparserBackend.parse" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;parse
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#libclang-backend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        libclang Backend
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#autopxd.backends.libclang_backend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;libclang_backend
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label=" libclang_backend">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#autopxd.backends.libclang_backend--requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Requirements
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#autopxd.backends.libclang_backend--advantages-over-pycparser" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Advantages over pycparser
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#autopxd.backends.libclang_backend--limitations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Limitations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#autopxd.backends.libclang_backend--example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#autopxd.backends.libclang_backend.LibclangBackend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;LibclangBackend
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label=" LibclangBackend">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#autopxd.backends.libclang_backend.LibclangBackend--properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Properties
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#autopxd.backends.libclang_backend.LibclangBackend--example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#autopxd.backends.libclang_backend.LibclangBackend.parse" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;parse
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#backend-registry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backend Registry
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#autopxd.backends" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;backends
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label=" backends">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#autopxd.backends--available-backends" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Available Backends
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#autopxd.backends--example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#autopxd.backends.get_backend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;get_backend
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#autopxd.backends.list_backends" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;list_backends
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#autopxd.backends.register_backend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;register_backend
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pycparser-backend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        pycparser Backend
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#autopxd.backends.pycparser_backend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;pycparser_backend
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label=" pycparser_backend">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#autopxd.backends.pycparser_backend--limitations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Limitations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#autopxd.backends.pycparser_backend--example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#autopxd.backends.pycparser_backend.PycparserBackend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;PycparserBackend
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label=" PycparserBackend">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#autopxd.backends.pycparser_backend.PycparserBackend--properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Properties
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#autopxd.backends.pycparser_backend.PycparserBackend--example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#autopxd.backends.pycparser_backend.PycparserBackend.parse" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;parse
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#libclang-backend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        libclang Backend
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#autopxd.backends.libclang_backend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;libclang_backend
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label=" libclang_backend">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#autopxd.backends.libclang_backend--requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Requirements
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#autopxd.backends.libclang_backend--advantages-over-pycparser" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Advantages over pycparser
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#autopxd.backends.libclang_backend--limitations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Limitations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#autopxd.backends.libclang_backend--example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#autopxd.backends.libclang_backend.LibclangBackend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;LibclangBackend
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label=" LibclangBackend">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#autopxd.backends.libclang_backend.LibclangBackend--properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Properties
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#autopxd.backends.libclang_backend.LibclangBackend--example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#autopxd.backends.libclang_backend.LibclangBackend.parse" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;parse
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="backends">Backends<a class="headerlink" href="#backends" title="Permanent link">&para;</a></h1>
+<p>Parser backends convert C/C++ source code into the autopxd IR.</p>
+<h2 id="backend-registry">Backend Registry<a class="headerlink" href="#backend-registry" title="Permanent link">&para;</a></h2>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<h2 id="autopxd.backends" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-module"></code>            <code>backends</code>
+
+
+<a href="#autopxd.backends" class="headerlink" title="Permanent link">&para;</a></h2>
+
+    <div class="doc doc-contents first">
+
+        <p>Parser backends for autopxd.</p>
+<p>This package contains parser backend implementations that convert C/C++
+source code into the autopxd IR (Intermediate Representation).</p>
+<h4 id="autopxd.backends--available-backends">Available Backends<a class="headerlink" href="#autopxd.backends--available-backends" title="Permanent link">&para;</a></h4>
+<p>pycparser
+    Pure Python C99 parser. Default backend with no external dependencies.
+    Requires preprocessed input (CPP/clang -E output).</p>
+<p>libclang
+    LLVM clang-based parser with full C++ support. Requires system
+    libclang library and matching <code>clang2</code> Python package.</p>
+<h4 id="autopxd.backends--example">Example<a class="headerlink" href="#autopxd.backends--example" title="Permanent link">&para;</a></h4>
+<p>::</p>
+<div class="highlight"><pre><span></span><code>from autopxd.backends import get_backend, list_backends
+
+# Get the default backend
+backend = get_backend()
+
+# Get a specific backend
+backend = get_backend(&quot;libclang&quot;)
+
+# List available backends
+for name in list_backends():
+    print(name)
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="autopxd.backends.get_backend" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <code class="highlight language-python"><span class="n">get_backend</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+<a href="#autopxd.backends.get_backend" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Get a parser backend instance.</p>
+<p>Returns a new instance of the requested backend. If no name is provided,
+returns the default backend (pycparser).</p>
+<p>::</p>
+<div class="highlight"><pre><span></span><code>from autopxd.backends import get_backend
+
+# Get default backend
+backend = get_backend()
+
+# Get libclang backend
+clang = get_backend(&quot;libclang&quot;)
+
+# Parse a header
+header = backend.parse(code, &quot;myheader.h&quot;)
+</code></pre></div>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>name</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Backend name (e.g., <code>"pycparser"</code>, <code>"libclang"</code>), or None for the default backend.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="            ParserBackend (autopxd.ir.ParserBackend)" href="../ir/#autopxd.ir.ParserBackend">ParserBackend</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>New instance of the requested backend.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>ValueError</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the requested backend is not available.  Example -------</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="autopxd.backends.list_backends" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <code class="highlight language-python"><span class="n">list_backends</span><span class="p">()</span></code>
+
+<a href="#autopxd.backends.list_backends" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>List names of all registered backends.</p>
+<p>::</p>
+<div class="highlight"><pre><span></span><code>from autopxd.backends import list_backends
+
+for name in list_backends():
+    print(f&quot;Available: {name}&quot;)
+</code></pre></div>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="list">list</span>[<span title="str">str</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>List of backend names that can be passed to :func:<code>get_backend</code>.  Example -------</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="autopxd.backends.register_backend" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <code class="highlight language-python"><span class="n">register_backend</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">backend_class</span><span class="p">,</span> <span class="n">is_default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+
+<a href="#autopxd.backends.register_backend" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Register a parser backend.</p>
+<p>Called by backend modules during import to add themselves to the registry.
+The first registered backend becomes the default unless <code>is_default</code> is
+explicitly set on a later registration.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>name</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Unique name for the backend (e.g., <code>"pycparser"</code>, <code>"libclang"</code>).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>backend_class</code>
+            </td>
+            <td>
+                  <code><span title="type">type</span>[<a class="autorefs autorefs-internal" title="            ParserBackend (autopxd.ir.ParserBackend)" href="../ir/#autopxd.ir.ParserBackend">ParserBackend</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Class implementing the :class:<code>~autopxd.ir.ParserBackend</code> protocol.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>is_default</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, this becomes the default backend for :func:<code>get_backend</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div><h2 id="pycparser-backend">pycparser Backend<a class="headerlink" href="#pycparser-backend" title="Permanent link">&para;</a></h2>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<h2 id="autopxd.backends.pycparser_backend" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-module"></code>            <code>pycparser_backend</code>
+
+
+<a href="#autopxd.backends.pycparser_backend" class="headerlink" title="Permanent link">&para;</a></h2>
+
+    <div class="doc doc-contents first">
+
+        <p>pycparser-based parser backend.</p>
+<p>This backend uses pycparser (pure Python C99 parser) to parse C header files.
+It's the default backend since it requires no external dependencies beyond
+the pycparser package itself.</p>
+<h4 id="autopxd.backends.pycparser_backend--limitations">Limitations<a class="headerlink" href="#autopxd.backends.pycparser_backend--limitations" title="Permanent link">&para;</a></h4>
+<ul>
+<li>C99 only - no C++ support (use libclang for C++)</li>
+<li>Cannot extract <code>#define</code> macro values (processed by preprocessor)</li>
+</ul>
+<h4 id="autopxd.backends.pycparser_backend--example">Example<a class="headerlink" href="#autopxd.backends.pycparser_backend--example" title="Permanent link">&para;</a></h4>
+<p>::</p>
+<div class="highlight"><pre><span></span><code>from autopxd.backends.pycparser_backend import PycparserBackend
+
+backend = PycparserBackend()
+header = backend.parse(code, &quot;myheader.h&quot;)
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="autopxd.backends.pycparser_backend.PycparserBackend" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <code>PycparserBackend</code>
+
+
+<a href="#autopxd.backends.pycparser_backend.PycparserBackend" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>Parser backend using pycparser.</p>
+<p>The default autopxd parser backend, using the pure-Python pycparser
+library. This backend has no external dependencies but requires
+preprocessed C code as input.</p>
+<h5 id="autopxd.backends.pycparser_backend.PycparserBackend--properties">Properties<a class="headerlink" href="#autopxd.backends.pycparser_backend.PycparserBackend--properties" title="Permanent link">&para;</a></h5>
+<p>name : str
+    Returns <code>"pycparser"</code>.
+supports_macros : bool
+    Returns <code>False</code> - macros are consumed by the preprocessor.
+supports_cpp : bool
+    Returns <code>False</code> - pycparser only supports C99.</p>
+<h5 id="autopxd.backends.pycparser_backend.PycparserBackend--example">Example<a class="headerlink" href="#autopxd.backends.pycparser_backend.PycparserBackend--example" title="Permanent link">&para;</a></h5>
+<p>::</p>
+<div class="highlight"><pre><span></span><code>from autopxd.backends.pycparser_backend import PycparserBackend
+
+backend = PycparserBackend()
+
+# Parse preprocessed code
+preprocessed = run_cpp(&quot;myheader.h&quot;)
+header = backend.parse(preprocessed, &quot;myheader.h&quot;)
+
+for decl in header.declarations:
+    print(decl)
+</code></pre></div>
+
+
+
+
+
+
+
+
+              <details class="mkdocstrings-source">
+                <summary>Source code in <code>autopxd/backends/pycparser_backend.py</code></summary>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-1064">1064</a></span>
+<span class="normal"><a href="#__codelineno-0-1065">1065</a></span>
+<span class="normal"><a href="#__codelineno-0-1066">1066</a></span>
+<span class="normal"><a href="#__codelineno-0-1067">1067</a></span>
+<span class="normal"><a href="#__codelineno-0-1068">1068</a></span>
+<span class="normal"><a href="#__codelineno-0-1069">1069</a></span>
+<span class="normal"><a href="#__codelineno-0-1070">1070</a></span>
+<span class="normal"><a href="#__codelineno-0-1071">1071</a></span>
+<span class="normal"><a href="#__codelineno-0-1072">1072</a></span>
+<span class="normal"><a href="#__codelineno-0-1073">1073</a></span>
+<span class="normal"><a href="#__codelineno-0-1074">1074</a></span>
+<span class="normal"><a href="#__codelineno-0-1075">1075</a></span>
+<span class="normal"><a href="#__codelineno-0-1076">1076</a></span>
+<span class="normal"><a href="#__codelineno-0-1077">1077</a></span>
+<span class="normal"><a href="#__codelineno-0-1078">1078</a></span>
+<span class="normal"><a href="#__codelineno-0-1079">1079</a></span>
+<span class="normal"><a href="#__codelineno-0-1080">1080</a></span>
+<span class="normal"><a href="#__codelineno-0-1081">1081</a></span>
+<span class="normal"><a href="#__codelineno-0-1082">1082</a></span>
+<span class="normal"><a href="#__codelineno-0-1083">1083</a></span>
+<span class="normal"><a href="#__codelineno-0-1084">1084</a></span>
+<span class="normal"><a href="#__codelineno-0-1085">1085</a></span>
+<span class="normal"><a href="#__codelineno-0-1086">1086</a></span>
+<span class="normal"><a href="#__codelineno-0-1087">1087</a></span>
+<span class="normal"><a href="#__codelineno-0-1088">1088</a></span>
+<span class="normal"><a href="#__codelineno-0-1089">1089</a></span>
+<span class="normal"><a href="#__codelineno-0-1090">1090</a></span>
+<span class="normal"><a href="#__codelineno-0-1091">1091</a></span>
+<span class="normal"><a href="#__codelineno-0-1092">1092</a></span>
+<span class="normal"><a href="#__codelineno-0-1093">1093</a></span>
+<span class="normal"><a href="#__codelineno-0-1094">1094</a></span>
+<span class="normal"><a href="#__codelineno-0-1095">1095</a></span>
+<span class="normal"><a href="#__codelineno-0-1096">1096</a></span>
+<span class="normal"><a href="#__codelineno-0-1097">1097</a></span>
+<span class="normal"><a href="#__codelineno-0-1098">1098</a></span>
+<span class="normal"><a href="#__codelineno-0-1099">1099</a></span>
+<span class="normal"><a href="#__codelineno-0-1100">1100</a></span>
+<span class="normal"><a href="#__codelineno-0-1101">1101</a></span>
+<span class="normal"><a href="#__codelineno-0-1102">1102</a></span>
+<span class="normal"><a href="#__codelineno-0-1103">1103</a></span>
+<span class="normal"><a href="#__codelineno-0-1104">1104</a></span>
+<span class="normal"><a href="#__codelineno-0-1105">1105</a></span>
+<span class="normal"><a href="#__codelineno-0-1106">1106</a></span>
+<span class="normal"><a href="#__codelineno-0-1107">1107</a></span>
+<span class="normal"><a href="#__codelineno-0-1108">1108</a></span>
+<span class="normal"><a href="#__codelineno-0-1109">1109</a></span>
+<span class="normal"><a href="#__codelineno-0-1110">1110</a></span>
+<span class="normal"><a href="#__codelineno-0-1111">1111</a></span>
+<span class="normal"><a href="#__codelineno-0-1112">1112</a></span>
+<span class="normal"><a href="#__codelineno-0-1113">1113</a></span>
+<span class="normal"><a href="#__codelineno-0-1114">1114</a></span>
+<span class="normal"><a href="#__codelineno-0-1115">1115</a></span>
+<span class="normal"><a href="#__codelineno-0-1116">1116</a></span>
+<span class="normal"><a href="#__codelineno-0-1117">1117</a></span>
+<span class="normal"><a href="#__codelineno-0-1118">1118</a></span>
+<span class="normal"><a href="#__codelineno-0-1119">1119</a></span>
+<span class="normal"><a href="#__codelineno-0-1120">1120</a></span>
+<span class="normal"><a href="#__codelineno-0-1121">1121</a></span>
+<span class="normal"><a href="#__codelineno-0-1122">1122</a></span>
+<span class="normal"><a href="#__codelineno-0-1123">1123</a></span>
+<span class="normal"><a href="#__codelineno-0-1124">1124</a></span>
+<span class="normal"><a href="#__codelineno-0-1125">1125</a></span>
+<span class="normal"><a href="#__codelineno-0-1126">1126</a></span>
+<span class="normal"><a href="#__codelineno-0-1127">1127</a></span>
+<span class="normal"><a href="#__codelineno-0-1128">1128</a></span>
+<span class="normal"><a href="#__codelineno-0-1129">1129</a></span>
+<span class="normal"><a href="#__codelineno-0-1130">1130</a></span>
+<span class="normal"><a href="#__codelineno-0-1131">1131</a></span>
+<span class="normal"><a href="#__codelineno-0-1132">1132</a></span>
+<span class="normal"><a href="#__codelineno-0-1133">1133</a></span>
+<span class="normal"><a href="#__codelineno-0-1134">1134</a></span>
+<span class="normal"><a href="#__codelineno-0-1135">1135</a></span>
+<span class="normal"><a href="#__codelineno-0-1136">1136</a></span>
+<span class="normal"><a href="#__codelineno-0-1137">1137</a></span>
+<span class="normal"><a href="#__codelineno-0-1138">1138</a></span>
+<span class="normal"><a href="#__codelineno-0-1139">1139</a></span>
+<span class="normal"><a href="#__codelineno-0-1140">1140</a></span>
+<span class="normal"><a href="#__codelineno-0-1141">1141</a></span>
+<span class="normal"><a href="#__codelineno-0-1142">1142</a></span>
+<span class="normal"><a href="#__codelineno-0-1143">1143</a></span>
+<span class="normal"><a href="#__codelineno-0-1144">1144</a></span>
+<span class="normal"><a href="#__codelineno-0-1145">1145</a></span>
+<span class="normal"><a href="#__codelineno-0-1146">1146</a></span>
+<span class="normal"><a href="#__codelineno-0-1147">1147</a></span>
+<span class="normal"><a href="#__codelineno-0-1148">1148</a></span>
+<span class="normal"><a href="#__codelineno-0-1149">1149</a></span>
+<span class="normal"><a href="#__codelineno-0-1150">1150</a></span>
+<span class="normal"><a href="#__codelineno-0-1151">1151</a></span>
+<span class="normal"><a href="#__codelineno-0-1152">1152</a></span>
+<span class="normal"><a href="#__codelineno-0-1153">1153</a></span>
+<span class="normal"><a href="#__codelineno-0-1154">1154</a></span>
+<span class="normal"><a href="#__codelineno-0-1155">1155</a></span>
+<span class="normal"><a href="#__codelineno-0-1156">1156</a></span>
+<span class="normal"><a href="#__codelineno-0-1157">1157</a></span>
+<span class="normal"><a href="#__codelineno-0-1158">1158</a></span>
+<span class="normal"><a href="#__codelineno-0-1159">1159</a></span>
+<span class="normal"><a href="#__codelineno-0-1160">1160</a></span>
+<span class="normal"><a href="#__codelineno-0-1161">1161</a></span>
+<span class="normal"><a href="#__codelineno-0-1162">1162</a></span>
+<span class="normal"><a href="#__codelineno-0-1163">1163</a></span>
+<span class="normal"><a href="#__codelineno-0-1164">1164</a></span>
+<span class="normal"><a href="#__codelineno-0-1165">1165</a></span>
+<span class="normal"><a href="#__codelineno-0-1166">1166</a></span>
+<span class="normal"><a href="#__codelineno-0-1167">1167</a></span>
+<span class="normal"><a href="#__codelineno-0-1168">1168</a></span>
+<span class="normal"><a href="#__codelineno-0-1169">1169</a></span>
+<span class="normal"><a href="#__codelineno-0-1170">1170</a></span>
+<span class="normal"><a href="#__codelineno-0-1171">1171</a></span>
+<span class="normal"><a href="#__codelineno-0-1172">1172</a></span>
+<span class="normal"><a href="#__codelineno-0-1173">1173</a></span>
+<span class="normal"><a href="#__codelineno-0-1174">1174</a></span>
+<span class="normal"><a href="#__codelineno-0-1175">1175</a></span>
+<span class="normal"><a href="#__codelineno-0-1176">1176</a></span>
+<span class="normal"><a href="#__codelineno-0-1177">1177</a></span>
+<span class="normal"><a href="#__codelineno-0-1178">1178</a></span>
+<span class="normal"><a href="#__codelineno-0-1179">1179</a></span>
+<span class="normal"><a href="#__codelineno-0-1180">1180</a></span>
+<span class="normal"><a href="#__codelineno-0-1181">1181</a></span>
+<span class="normal"><a href="#__codelineno-0-1182">1182</a></span>
+<span class="normal"><a href="#__codelineno-0-1183">1183</a></span>
+<span class="normal"><a href="#__codelineno-0-1184">1184</a></span>
+<span class="normal"><a href="#__codelineno-0-1185">1185</a></span>
+<span class="normal"><a href="#__codelineno-0-1186">1186</a></span>
+<span class="normal"><a href="#__codelineno-0-1187">1187</a></span>
+<span class="normal"><a href="#__codelineno-0-1188">1188</a></span>
+<span class="normal"><a href="#__codelineno-0-1189">1189</a></span>
+<span class="normal"><a href="#__codelineno-0-1190">1190</a></span>
+<span class="normal"><a href="#__codelineno-0-1191">1191</a></span>
+<span class="normal"><a href="#__codelineno-0-1192">1192</a></span>
+<span class="normal"><a href="#__codelineno-0-1193">1193</a></span>
+<span class="normal"><a href="#__codelineno-0-1194">1194</a></span>
+<span class="normal"><a href="#__codelineno-0-1195">1195</a></span>
+<span class="normal"><a href="#__codelineno-0-1196">1196</a></span>
+<span class="normal"><a href="#__codelineno-0-1197">1197</a></span>
+<span class="normal"><a href="#__codelineno-0-1198">1198</a></span>
+<span class="normal"><a href="#__codelineno-0-1199">1199</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-1064" name="__codelineno-0-1064"></a><span class="k">class</span><span class="w"> </span><span class="nc">PycparserBackend</span><span class="p">:</span>
+<a id="__codelineno-0-1065" name="__codelineno-0-1065"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Parser backend using pycparser.</span>
+<a id="__codelineno-0-1066" name="__codelineno-0-1066"></a>
+<a id="__codelineno-0-1067" name="__codelineno-0-1067"></a><span class="sd">    The default autopxd parser backend, using the pure-Python pycparser</span>
+<a id="__codelineno-0-1068" name="__codelineno-0-1068"></a><span class="sd">    library. This backend has no external dependencies but requires</span>
+<a id="__codelineno-0-1069" name="__codelineno-0-1069"></a><span class="sd">    preprocessed C code as input.</span>
+<a id="__codelineno-0-1070" name="__codelineno-0-1070"></a>
+<a id="__codelineno-0-1071" name="__codelineno-0-1071"></a><span class="sd">    Properties</span>
+<a id="__codelineno-0-1072" name="__codelineno-0-1072"></a><span class="sd">    ----------</span>
+<a id="__codelineno-0-1073" name="__codelineno-0-1073"></a><span class="sd">    name : str</span>
+<a id="__codelineno-0-1074" name="__codelineno-0-1074"></a><span class="sd">        Returns ``&quot;pycparser&quot;``.</span>
+<a id="__codelineno-0-1075" name="__codelineno-0-1075"></a><span class="sd">    supports_macros : bool</span>
+<a id="__codelineno-0-1076" name="__codelineno-0-1076"></a><span class="sd">        Returns ``False`` - macros are consumed by the preprocessor.</span>
+<a id="__codelineno-0-1077" name="__codelineno-0-1077"></a><span class="sd">    supports_cpp : bool</span>
+<a id="__codelineno-0-1078" name="__codelineno-0-1078"></a><span class="sd">        Returns ``False`` - pycparser only supports C99.</span>
+<a id="__codelineno-0-1079" name="__codelineno-0-1079"></a>
+<a id="__codelineno-0-1080" name="__codelineno-0-1080"></a><span class="sd">    Example</span>
+<a id="__codelineno-0-1081" name="__codelineno-0-1081"></a><span class="sd">    -------</span>
+<a id="__codelineno-0-1082" name="__codelineno-0-1082"></a><span class="sd">    ::</span>
+<a id="__codelineno-0-1083" name="__codelineno-0-1083"></a>
+<a id="__codelineno-0-1084" name="__codelineno-0-1084"></a><span class="sd">        from autopxd.backends.pycparser_backend import PycparserBackend</span>
+<a id="__codelineno-0-1085" name="__codelineno-0-1085"></a>
+<a id="__codelineno-0-1086" name="__codelineno-0-1086"></a><span class="sd">        backend = PycparserBackend()</span>
+<a id="__codelineno-0-1087" name="__codelineno-0-1087"></a>
+<a id="__codelineno-0-1088" name="__codelineno-0-1088"></a><span class="sd">        # Parse preprocessed code</span>
+<a id="__codelineno-0-1089" name="__codelineno-0-1089"></a><span class="sd">        preprocessed = run_cpp(&quot;myheader.h&quot;)</span>
+<a id="__codelineno-0-1090" name="__codelineno-0-1090"></a><span class="sd">        header = backend.parse(preprocessed, &quot;myheader.h&quot;)</span>
+<a id="__codelineno-0-1091" name="__codelineno-0-1091"></a>
+<a id="__codelineno-0-1092" name="__codelineno-0-1092"></a><span class="sd">        for decl in header.declarations:</span>
+<a id="__codelineno-0-1093" name="__codelineno-0-1093"></a><span class="sd">            print(decl)</span>
+<a id="__codelineno-0-1094" name="__codelineno-0-1094"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-1095" name="__codelineno-0-1095"></a>
+<a id="__codelineno-0-1096" name="__codelineno-0-1096"></a>    <span class="nd">@property</span>
+<a id="__codelineno-0-1097" name="__codelineno-0-1097"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<a id="__codelineno-0-1098" name="__codelineno-0-1098"></a>        <span class="k">return</span> <span class="s2">&quot;pycparser&quot;</span>
+<a id="__codelineno-0-1099" name="__codelineno-0-1099"></a>
+<a id="__codelineno-0-1100" name="__codelineno-0-1100"></a>    <span class="nd">@property</span>
+<a id="__codelineno-0-1101" name="__codelineno-0-1101"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">supports_macros</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<a id="__codelineno-0-1102" name="__codelineno-0-1102"></a>        <span class="k">return</span> <span class="kc">False</span>
+<a id="__codelineno-0-1103" name="__codelineno-0-1103"></a>
+<a id="__codelineno-0-1104" name="__codelineno-0-1104"></a>    <span class="nd">@property</span>
+<a id="__codelineno-0-1105" name="__codelineno-0-1105"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">supports_cpp</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<a id="__codelineno-0-1106" name="__codelineno-0-1106"></a>        <span class="k">return</span> <span class="kc">False</span>
+<a id="__codelineno-0-1107" name="__codelineno-0-1107"></a>
+<a id="__codelineno-0-1108" name="__codelineno-0-1108"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">parse</span><span class="p">(</span>
+<a id="__codelineno-0-1109" name="__codelineno-0-1109"></a>        <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-0-1110" name="__codelineno-0-1110"></a>        <span class="n">code</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-0-1111" name="__codelineno-0-1111"></a>        <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-0-1112" name="__codelineno-0-1112"></a>        <span class="n">include_dirs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-1113" name="__codelineno-0-1113"></a>        <span class="n">extra_args</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-1114" name="__codelineno-0-1114"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Header</span><span class="p">:</span>
+<a id="__codelineno-0-1115" name="__codelineno-0-1115"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse C code using pycparser.</span>
+<a id="__codelineno-0-1116" name="__codelineno-0-1116"></a>
+<a id="__codelineno-0-1117" name="__codelineno-0-1117"></a><span class="sd">        The code is automatically preprocessed using the system&#39;s C preprocessor</span>
+<a id="__codelineno-0-1118" name="__codelineno-0-1118"></a><span class="sd">        (``cpp`` on Unix/Mac, ``clang -E`` on macOS, or ``cl.exe /E`` on Windows).</span>
+<a id="__codelineno-0-1119" name="__codelineno-0-1119"></a>
+<a id="__codelineno-0-1120" name="__codelineno-0-1120"></a><span class="sd">        :param code: C source code to parse.</span>
+<a id="__codelineno-0-1121" name="__codelineno-0-1121"></a><span class="sd">        :param filename: Source filename for error messages and location tracking.</span>
+<a id="__codelineno-0-1122" name="__codelineno-0-1122"></a><span class="sd">        :param include_dirs: Additional include directories for the preprocessor.</span>
+<a id="__codelineno-0-1123" name="__codelineno-0-1123"></a><span class="sd">        :param extra_args: Extra arguments to pass to the preprocessor.</span>
+<a id="__codelineno-0-1124" name="__codelineno-0-1124"></a><span class="sd">        :returns: :class:`~autopxd.ir.Header` containing parsed declarations.</span>
+<a id="__codelineno-0-1125" name="__codelineno-0-1125"></a><span class="sd">        :raises RuntimeError: If preprocessing fails.</span>
+<a id="__codelineno-0-1126" name="__codelineno-0-1126"></a><span class="sd">        :raises pycparser.plyparser.ParseError: If the code has syntax errors.</span>
+<a id="__codelineno-0-1127" name="__codelineno-0-1127"></a><span class="sd">        &quot;&quot;&quot;</span>
+<a id="__codelineno-0-1128" name="__codelineno-0-1128"></a>        <span class="c1"># pylint: disable=import-outside-toplevel</span>
+<a id="__codelineno-0-1129" name="__codelineno-0-1129"></a>        <span class="kn">from</span><span class="w"> </span><span class="nn">pycparser</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<a id="__codelineno-0-1130" name="__codelineno-0-1130"></a>            <span class="n">c_parser</span><span class="p">,</span>
+<a id="__codelineno-0-1131" name="__codelineno-0-1131"></a>        <span class="p">)</span>
+<a id="__codelineno-0-1132" name="__codelineno-0-1132"></a>
+<a id="__codelineno-0-1133" name="__codelineno-0-1133"></a>        <span class="c1"># Preprocess the code</span>
+<a id="__codelineno-0-1134" name="__codelineno-0-1134"></a>        <span class="n">preprocessed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_preprocess</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">include_dirs</span><span class="p">,</span> <span class="n">extra_args</span><span class="p">)</span>
+<a id="__codelineno-0-1135" name="__codelineno-0-1135"></a>
+<a id="__codelineno-0-1136" name="__codelineno-0-1136"></a>        <span class="n">parser</span> <span class="o">=</span> <span class="n">c_parser</span><span class="o">.</span><span class="n">CParser</span><span class="p">()</span>
+<a id="__codelineno-0-1137" name="__codelineno-0-1137"></a>        <span class="n">ast</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">preprocessed</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="n">filename</span><span class="p">)</span>
+<a id="__codelineno-0-1138" name="__codelineno-0-1138"></a>
+<a id="__codelineno-0-1139" name="__codelineno-0-1139"></a>        <span class="n">converter</span> <span class="o">=</span> <span class="n">ASTConverter</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+<a id="__codelineno-0-1140" name="__codelineno-0-1140"></a>        <span class="k">return</span> <span class="n">converter</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="n">ast</span><span class="p">)</span>
+<a id="__codelineno-0-1141" name="__codelineno-0-1141"></a>
+<a id="__codelineno-0-1142" name="__codelineno-0-1142"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">_preprocess</span><span class="p">(</span>
+<a id="__codelineno-0-1143" name="__codelineno-0-1143"></a>        <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-0-1144" name="__codelineno-0-1144"></a>        <span class="n">code</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-0-1145" name="__codelineno-0-1145"></a>        <span class="n">include_dirs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-1146" name="__codelineno-0-1146"></a>        <span class="n">extra_args</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-1147" name="__codelineno-0-1147"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<a id="__codelineno-0-1148" name="__codelineno-0-1148"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Preprocess C code using the system&#39;s C preprocessor.</span>
+<a id="__codelineno-0-1149" name="__codelineno-0-1149"></a>
+<a id="__codelineno-0-1150" name="__codelineno-0-1150"></a><span class="sd">        :param code: C source code to preprocess.</span>
+<a id="__codelineno-0-1151" name="__codelineno-0-1151"></a><span class="sd">        :param include_dirs: Additional include directories.</span>
+<a id="__codelineno-0-1152" name="__codelineno-0-1152"></a><span class="sd">        :param extra_args: Extra preprocessor arguments (e.g., -DFOO=1).</span>
+<a id="__codelineno-0-1153" name="__codelineno-0-1153"></a><span class="sd">        :returns: Preprocessed code.</span>
+<a id="__codelineno-0-1154" name="__codelineno-0-1154"></a><span class="sd">        :raises RuntimeError: If preprocessing fails.</span>
+<a id="__codelineno-0-1155" name="__codelineno-0-1155"></a><span class="sd">        &quot;&quot;&quot;</span>
+<a id="__codelineno-0-1156" name="__codelineno-0-1156"></a>        <span class="k">if</span> <span class="n">include_dirs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-1157" name="__codelineno-0-1157"></a>            <span class="n">include_dirs</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-0-1158" name="__codelineno-0-1158"></a>        <span class="k">if</span> <span class="n">extra_args</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-1159" name="__codelineno-0-1159"></a>            <span class="n">extra_args</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-0-1160" name="__codelineno-0-1160"></a>
+<a id="__codelineno-0-1161" name="__codelineno-0-1161"></a>        <span class="c1"># Build include paths</span>
+<a id="__codelineno-0-1162" name="__codelineno-0-1162"></a>        <span class="n">includes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-0-1163" name="__codelineno-0-1163"></a>        <span class="k">if</span> <span class="n">platform</span><span class="o">.</span><span class="n">system</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;Darwin&quot;</span><span class="p">:</span>
+<a id="__codelineno-0-1164" name="__codelineno-0-1164"></a>            <span class="n">cmd</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;clang&quot;</span><span class="p">,</span> <span class="s2">&quot;-E&quot;</span><span class="p">]</span>
+<a id="__codelineno-0-1165" name="__codelineno-0-1165"></a>            <span class="n">includes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">DARWIN_HEADERS_DIR</span><span class="p">))</span>
+<a id="__codelineno-0-1166" name="__codelineno-0-1166"></a>        <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-0-1167" name="__codelineno-0-1167"></a>            <span class="n">cmd</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;cpp&quot;</span><span class="p">]</span>
+<a id="__codelineno-0-1168" name="__codelineno-0-1168"></a>        <span class="n">includes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">BUILTIN_HEADERS_DIR</span><span class="p">))</span>
+<a id="__codelineno-0-1169" name="__codelineno-0-1169"></a>
+<a id="__codelineno-0-1170" name="__codelineno-0-1170"></a>        <span class="c1"># Build command</span>
+<a id="__codelineno-0-1171" name="__codelineno-0-1171"></a>        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;-I</span><span class="si">{</span><span class="n">inc</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">inc</span> <span class="ow">in</span> <span class="n">includes</span><span class="p">]</span>
+<a id="__codelineno-0-1172" name="__codelineno-0-1172"></a>        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;-nostdinc&quot;</span><span class="p">,</span> <span class="s2">&quot;-iquote&quot;</span><span class="p">]</span>
+<a id="__codelineno-0-1173" name="__codelineno-0-1173"></a>        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;-I</span><span class="si">{</span><span class="n">inc</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">inc</span> <span class="ow">in</span> <span class="n">includes</span><span class="p">]</span>
+<a id="__codelineno-0-1174" name="__codelineno-0-1174"></a>        <span class="n">cmd</span> <span class="o">+=</span> <span class="p">[</span>
+<a id="__codelineno-0-1175" name="__codelineno-0-1175"></a>            <span class="s2">&quot;-D__attribute__(x)=&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-1176" name="__codelineno-0-1176"></a>            <span class="s2">&quot;-D__extension__=&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-1177" name="__codelineno-0-1177"></a>            <span class="s2">&quot;-D__inline=&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-1178" name="__codelineno-0-1178"></a>            <span class="s2">&quot;-D__asm=&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-1179" name="__codelineno-0-1179"></a>        <span class="p">]</span>
+<a id="__codelineno-0-1180" name="__codelineno-0-1180"></a>        <span class="c1"># Add user-specified include dirs</span>
+<a id="__codelineno-0-1181" name="__codelineno-0-1181"></a>        <span class="k">for</span> <span class="n">inc</span> <span class="ow">in</span> <span class="n">include_dirs</span><span class="p">:</span>
+<a id="__codelineno-0-1182" name="__codelineno-0-1182"></a>            <span class="n">cmd</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;-I</span><span class="si">{</span><span class="n">inc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-1183" name="__codelineno-0-1183"></a>        <span class="n">cmd</span> <span class="o">+=</span> <span class="n">extra_args</span>
+<a id="__codelineno-0-1184" name="__codelineno-0-1184"></a>        <span class="n">cmd</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-1185" name="__codelineno-0-1185"></a>
+<a id="__codelineno-0-1186" name="__codelineno-0-1186"></a>        <span class="k">with</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span>
+<a id="__codelineno-0-1187" name="__codelineno-0-1187"></a>            <span class="n">cmd</span><span class="p">,</span>
+<a id="__codelineno-0-1188" name="__codelineno-0-1188"></a>            <span class="n">stdin</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span>
+<a id="__codelineno-0-1189" name="__codelineno-0-1189"></a>            <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span>
+<a id="__codelineno-0-1190" name="__codelineno-0-1190"></a>            <span class="n">stderr</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span>
+<a id="__codelineno-0-1191" name="__codelineno-0-1191"></a>        <span class="p">)</span> <span class="k">as</span> <span class="n">proc</span><span class="p">:</span>
+<a id="__codelineno-0-1192" name="__codelineno-0-1192"></a>            <span class="n">stdout</span><span class="p">,</span> <span class="n">stderr</span> <span class="o">=</span> <span class="n">proc</span><span class="o">.</span><span class="n">communicate</span><span class="p">(</span><span class="nb">input</span><span class="o">=</span><span class="n">code</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">))</span>
+<a id="__codelineno-0-1193" name="__codelineno-0-1193"></a>            <span class="k">if</span> <span class="n">proc</span><span class="o">.</span><span class="n">returncode</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+<a id="__codelineno-0-1194" name="__codelineno-0-1194"></a>                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+<a id="__codelineno-0-1195" name="__codelineno-0-1195"></a>                    <span class="sa">f</span><span class="s2">&quot;C preprocessor failed (exit </span><span class="si">{</span><span class="n">proc</span><span class="o">.</span><span class="n">returncode</span><span class="si">}</span><span class="s2">): &quot;</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">stderr</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">errors</span><span class="o">=</span><span class="s1">&#39;replace&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+<a id="__codelineno-0-1196" name="__codelineno-0-1196"></a>                <span class="p">)</span>
+<a id="__codelineno-0-1197" name="__codelineno-0-1197"></a>
+<a id="__codelineno-0-1198" name="__codelineno-0-1198"></a>        <span class="n">result</span> <span class="o">=</span> <span class="n">stdout</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-1199" name="__codelineno-0-1199"></a>        <span class="k">return</span> <span class="n">result</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+              </details>
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="autopxd.backends.pycparser_backend.PycparserBackend.parse" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <code class="highlight language-python"><span class="n">parse</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">include_dirs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">extra_args</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+<a href="#autopxd.backends.pycparser_backend.PycparserBackend.parse" class="headerlink" title="Permanent link">&para;</a></h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Parse C code using pycparser.</p>
+<p>The code is automatically preprocessed using the system's C preprocessor
+(<code>cpp</code> on Unix/Mac, <code>clang -E</code> on macOS, or <code>cl.exe /E</code> on Windows).</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>code</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>C source code to parse.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>filename</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Source filename for error messages and location tracking.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>include_dirs</code>
+            </td>
+            <td>
+                  <code><span title="list">list</span>[<span title="str">str</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Additional include directories for the preprocessor.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>extra_args</code>
+            </td>
+            <td>
+                  <code><span title="list">list</span>[<span title="str">str</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Extra arguments to pass to the preprocessor.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="            Header
+
+
+  
+      dataclass
+   (autopxd.ir.Header)" href="../ir/#autopxd.ir.Header">Header</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>:class:<code>~autopxd.ir.Header</code> containing parsed declarations.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>RuntimeError</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If preprocessing fails.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code>pycparser.plyparser.ParseError</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the code has syntax errors.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>autopxd/backends/pycparser_backend.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-1108">1108</a></span>
+<span class="normal"><a href="#__codelineno-0-1109">1109</a></span>
+<span class="normal"><a href="#__codelineno-0-1110">1110</a></span>
+<span class="normal"><a href="#__codelineno-0-1111">1111</a></span>
+<span class="normal"><a href="#__codelineno-0-1112">1112</a></span>
+<span class="normal"><a href="#__codelineno-0-1113">1113</a></span>
+<span class="normal"><a href="#__codelineno-0-1114">1114</a></span>
+<span class="normal"><a href="#__codelineno-0-1115">1115</a></span>
+<span class="normal"><a href="#__codelineno-0-1116">1116</a></span>
+<span class="normal"><a href="#__codelineno-0-1117">1117</a></span>
+<span class="normal"><a href="#__codelineno-0-1118">1118</a></span>
+<span class="normal"><a href="#__codelineno-0-1119">1119</a></span>
+<span class="normal"><a href="#__codelineno-0-1120">1120</a></span>
+<span class="normal"><a href="#__codelineno-0-1121">1121</a></span>
+<span class="normal"><a href="#__codelineno-0-1122">1122</a></span>
+<span class="normal"><a href="#__codelineno-0-1123">1123</a></span>
+<span class="normal"><a href="#__codelineno-0-1124">1124</a></span>
+<span class="normal"><a href="#__codelineno-0-1125">1125</a></span>
+<span class="normal"><a href="#__codelineno-0-1126">1126</a></span>
+<span class="normal"><a href="#__codelineno-0-1127">1127</a></span>
+<span class="normal"><a href="#__codelineno-0-1128">1128</a></span>
+<span class="normal"><a href="#__codelineno-0-1129">1129</a></span>
+<span class="normal"><a href="#__codelineno-0-1130">1130</a></span>
+<span class="normal"><a href="#__codelineno-0-1131">1131</a></span>
+<span class="normal"><a href="#__codelineno-0-1132">1132</a></span>
+<span class="normal"><a href="#__codelineno-0-1133">1133</a></span>
+<span class="normal"><a href="#__codelineno-0-1134">1134</a></span>
+<span class="normal"><a href="#__codelineno-0-1135">1135</a></span>
+<span class="normal"><a href="#__codelineno-0-1136">1136</a></span>
+<span class="normal"><a href="#__codelineno-0-1137">1137</a></span>
+<span class="normal"><a href="#__codelineno-0-1138">1138</a></span>
+<span class="normal"><a href="#__codelineno-0-1139">1139</a></span>
+<span class="normal"><a href="#__codelineno-0-1140">1140</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-1108" name="__codelineno-0-1108"></a><span class="k">def</span><span class="w"> </span><span class="nf">parse</span><span class="p">(</span>
+<a id="__codelineno-0-1109" name="__codelineno-0-1109"></a>    <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-0-1110" name="__codelineno-0-1110"></a>    <span class="n">code</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-0-1111" name="__codelineno-0-1111"></a>    <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-0-1112" name="__codelineno-0-1112"></a>    <span class="n">include_dirs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-1113" name="__codelineno-0-1113"></a>    <span class="n">extra_args</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-1114" name="__codelineno-0-1114"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Header</span><span class="p">:</span>
+<a id="__codelineno-0-1115" name="__codelineno-0-1115"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse C code using pycparser.</span>
+<a id="__codelineno-0-1116" name="__codelineno-0-1116"></a>
+<a id="__codelineno-0-1117" name="__codelineno-0-1117"></a><span class="sd">    The code is automatically preprocessed using the system&#39;s C preprocessor</span>
+<a id="__codelineno-0-1118" name="__codelineno-0-1118"></a><span class="sd">    (``cpp`` on Unix/Mac, ``clang -E`` on macOS, or ``cl.exe /E`` on Windows).</span>
+<a id="__codelineno-0-1119" name="__codelineno-0-1119"></a>
+<a id="__codelineno-0-1120" name="__codelineno-0-1120"></a><span class="sd">    :param code: C source code to parse.</span>
+<a id="__codelineno-0-1121" name="__codelineno-0-1121"></a><span class="sd">    :param filename: Source filename for error messages and location tracking.</span>
+<a id="__codelineno-0-1122" name="__codelineno-0-1122"></a><span class="sd">    :param include_dirs: Additional include directories for the preprocessor.</span>
+<a id="__codelineno-0-1123" name="__codelineno-0-1123"></a><span class="sd">    :param extra_args: Extra arguments to pass to the preprocessor.</span>
+<a id="__codelineno-0-1124" name="__codelineno-0-1124"></a><span class="sd">    :returns: :class:`~autopxd.ir.Header` containing parsed declarations.</span>
+<a id="__codelineno-0-1125" name="__codelineno-0-1125"></a><span class="sd">    :raises RuntimeError: If preprocessing fails.</span>
+<a id="__codelineno-0-1126" name="__codelineno-0-1126"></a><span class="sd">    :raises pycparser.plyparser.ParseError: If the code has syntax errors.</span>
+<a id="__codelineno-0-1127" name="__codelineno-0-1127"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-1128" name="__codelineno-0-1128"></a>    <span class="c1"># pylint: disable=import-outside-toplevel</span>
+<a id="__codelineno-0-1129" name="__codelineno-0-1129"></a>    <span class="kn">from</span><span class="w"> </span><span class="nn">pycparser</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<a id="__codelineno-0-1130" name="__codelineno-0-1130"></a>        <span class="n">c_parser</span><span class="p">,</span>
+<a id="__codelineno-0-1131" name="__codelineno-0-1131"></a>    <span class="p">)</span>
+<a id="__codelineno-0-1132" name="__codelineno-0-1132"></a>
+<a id="__codelineno-0-1133" name="__codelineno-0-1133"></a>    <span class="c1"># Preprocess the code</span>
+<a id="__codelineno-0-1134" name="__codelineno-0-1134"></a>    <span class="n">preprocessed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_preprocess</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">include_dirs</span><span class="p">,</span> <span class="n">extra_args</span><span class="p">)</span>
+<a id="__codelineno-0-1135" name="__codelineno-0-1135"></a>
+<a id="__codelineno-0-1136" name="__codelineno-0-1136"></a>    <span class="n">parser</span> <span class="o">=</span> <span class="n">c_parser</span><span class="o">.</span><span class="n">CParser</span><span class="p">()</span>
+<a id="__codelineno-0-1137" name="__codelineno-0-1137"></a>    <span class="n">ast</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">preprocessed</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="n">filename</span><span class="p">)</span>
+<a id="__codelineno-0-1138" name="__codelineno-0-1138"></a>
+<a id="__codelineno-0-1139" name="__codelineno-0-1139"></a>    <span class="n">converter</span> <span class="o">=</span> <span class="n">ASTConverter</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+<a id="__codelineno-0-1140" name="__codelineno-0-1140"></a>    <span class="k">return</span> <span class="n">converter</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="n">ast</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+  </div>
+
+    </div>
+
+</div><h2 id="libclang-backend">libclang Backend<a class="headerlink" href="#libclang-backend" title="Permanent link">&para;</a></h2>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<h2 id="autopxd.backends.libclang_backend" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-module"></code>            <code>libclang_backend</code>
+
+
+<a href="#autopxd.backends.libclang_backend" class="headerlink" title="Permanent link">&para;</a></h2>
+
+    <div class="doc doc-contents first">
+
+        <p>libclang-based parser backend.</p>
+<p>This backend uses libclang (LLVM's C/C++ parser) to parse header files.
+It provides full C/C++ support including templates, namespaces, and classes.</p>
+<h4 id="autopxd.backends.libclang_backend--requirements">Requirements<a class="headerlink" href="#autopxd.backends.libclang_backend--requirements" title="Permanent link">&para;</a></h4>
+<ul>
+<li>System libclang library must be installed</li>
+<li>Python clang2 bindings version must match system libclang version
+  (e.g., <code>clang2==18.*</code> for LLVM 18)</li>
+</ul>
+<p>If system libclang is not available, autopxd2 automatically falls back
+to the pycparser backend (C99 only).</p>
+<h4 id="autopxd.backends.libclang_backend--advantages-over-pycparser">Advantages over pycparser<a class="headerlink" href="#autopxd.backends.libclang_backend--advantages-over-pycparser" title="Permanent link">&para;</a></h4>
+<ul>
+<li>Full C++ support (classes, templates, namespaces)</li>
+<li>Handles complex preprocessor constructs</li>
+<li>Uses the same parser as production compilers</li>
+<li>Better error messages with source locations</li>
+</ul>
+<h4 id="autopxd.backends.libclang_backend--limitations">Limitations<a class="headerlink" href="#autopxd.backends.libclang_backend--limitations" title="Permanent link">&para;</a></h4>
+<ul>
+<li>Macro extraction is limited due to Python bindings constraints</li>
+<li>Requires system libclang installation</li>
+</ul>
+<h4 id="autopxd.backends.libclang_backend--example">Example<a class="headerlink" href="#autopxd.backends.libclang_backend--example" title="Permanent link">&para;</a></h4>
+<p>::</p>
+<div class="highlight"><pre><span></span><code>from autopxd.backends.libclang_backend import LibclangBackend
+
+backend = LibclangBackend()
+header = backend.parse(code, &quot;myheader.hpp&quot;, extra_args=[&quot;-std=c++17&quot;])
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="autopxd.backends.libclang_backend.LibclangBackend" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <code>LibclangBackend</code>
+
+
+<a href="#autopxd.backends.libclang_backend.LibclangBackend" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>Parser backend using libclang.</p>
+<p>Uses LLVM's libclang to parse C and C++ code. This backend supports
+the full C++ language including templates, classes, and namespaces.</p>
+<h5 id="autopxd.backends.libclang_backend.LibclangBackend--properties">Properties<a class="headerlink" href="#autopxd.backends.libclang_backend.LibclangBackend--properties" title="Permanent link">&para;</a></h5>
+<p>name : str
+    Returns <code>"libclang"</code>.
+supports_macros : bool
+    Returns <code>False</code> - macro extraction is limited in Python bindings.
+supports_cpp : bool
+    Returns <code>True</code> - full C++ support.</p>
+<h5 id="autopxd.backends.libclang_backend.LibclangBackend--example">Example<a class="headerlink" href="#autopxd.backends.libclang_backend.LibclangBackend--example" title="Permanent link">&para;</a></h5>
+<p>::</p>
+<div class="highlight"><pre><span></span><code>from autopxd.backends.libclang_backend import LibclangBackend
+
+backend = LibclangBackend()
+
+# Parse C++ code with specific standard
+header = backend.parse(
+    code,
+    &quot;myheader.hpp&quot;,
+    extra_args=[&quot;-std=c++17&quot;, &quot;-DDEBUG=1&quot;]
+)
+</code></pre></div>
+
+
+
+
+
+
+
+
+              <details class="mkdocstrings-source">
+                <summary>Source code in <code>autopxd/backends/libclang_backend.py</code></summary>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-442">442</a></span>
+<span class="normal"><a href="#__codelineno-0-443">443</a></span>
+<span class="normal"><a href="#__codelineno-0-444">444</a></span>
+<span class="normal"><a href="#__codelineno-0-445">445</a></span>
+<span class="normal"><a href="#__codelineno-0-446">446</a></span>
+<span class="normal"><a href="#__codelineno-0-447">447</a></span>
+<span class="normal"><a href="#__codelineno-0-448">448</a></span>
+<span class="normal"><a href="#__codelineno-0-449">449</a></span>
+<span class="normal"><a href="#__codelineno-0-450">450</a></span>
+<span class="normal"><a href="#__codelineno-0-451">451</a></span>
+<span class="normal"><a href="#__codelineno-0-452">452</a></span>
+<span class="normal"><a href="#__codelineno-0-453">453</a></span>
+<span class="normal"><a href="#__codelineno-0-454">454</a></span>
+<span class="normal"><a href="#__codelineno-0-455">455</a></span>
+<span class="normal"><a href="#__codelineno-0-456">456</a></span>
+<span class="normal"><a href="#__codelineno-0-457">457</a></span>
+<span class="normal"><a href="#__codelineno-0-458">458</a></span>
+<span class="normal"><a href="#__codelineno-0-459">459</a></span>
+<span class="normal"><a href="#__codelineno-0-460">460</a></span>
+<span class="normal"><a href="#__codelineno-0-461">461</a></span>
+<span class="normal"><a href="#__codelineno-0-462">462</a></span>
+<span class="normal"><a href="#__codelineno-0-463">463</a></span>
+<span class="normal"><a href="#__codelineno-0-464">464</a></span>
+<span class="normal"><a href="#__codelineno-0-465">465</a></span>
+<span class="normal"><a href="#__codelineno-0-466">466</a></span>
+<span class="normal"><a href="#__codelineno-0-467">467</a></span>
+<span class="normal"><a href="#__codelineno-0-468">468</a></span>
+<span class="normal"><a href="#__codelineno-0-469">469</a></span>
+<span class="normal"><a href="#__codelineno-0-470">470</a></span>
+<span class="normal"><a href="#__codelineno-0-471">471</a></span>
+<span class="normal"><a href="#__codelineno-0-472">472</a></span>
+<span class="normal"><a href="#__codelineno-0-473">473</a></span>
+<span class="normal"><a href="#__codelineno-0-474">474</a></span>
+<span class="normal"><a href="#__codelineno-0-475">475</a></span>
+<span class="normal"><a href="#__codelineno-0-476">476</a></span>
+<span class="normal"><a href="#__codelineno-0-477">477</a></span>
+<span class="normal"><a href="#__codelineno-0-478">478</a></span>
+<span class="normal"><a href="#__codelineno-0-479">479</a></span>
+<span class="normal"><a href="#__codelineno-0-480">480</a></span>
+<span class="normal"><a href="#__codelineno-0-481">481</a></span>
+<span class="normal"><a href="#__codelineno-0-482">482</a></span>
+<span class="normal"><a href="#__codelineno-0-483">483</a></span>
+<span class="normal"><a href="#__codelineno-0-484">484</a></span>
+<span class="normal"><a href="#__codelineno-0-485">485</a></span>
+<span class="normal"><a href="#__codelineno-0-486">486</a></span>
+<span class="normal"><a href="#__codelineno-0-487">487</a></span>
+<span class="normal"><a href="#__codelineno-0-488">488</a></span>
+<span class="normal"><a href="#__codelineno-0-489">489</a></span>
+<span class="normal"><a href="#__codelineno-0-490">490</a></span>
+<span class="normal"><a href="#__codelineno-0-491">491</a></span>
+<span class="normal"><a href="#__codelineno-0-492">492</a></span>
+<span class="normal"><a href="#__codelineno-0-493">493</a></span>
+<span class="normal"><a href="#__codelineno-0-494">494</a></span>
+<span class="normal"><a href="#__codelineno-0-495">495</a></span>
+<span class="normal"><a href="#__codelineno-0-496">496</a></span>
+<span class="normal"><a href="#__codelineno-0-497">497</a></span>
+<span class="normal"><a href="#__codelineno-0-498">498</a></span>
+<span class="normal"><a href="#__codelineno-0-499">499</a></span>
+<span class="normal"><a href="#__codelineno-0-500">500</a></span>
+<span class="normal"><a href="#__codelineno-0-501">501</a></span>
+<span class="normal"><a href="#__codelineno-0-502">502</a></span>
+<span class="normal"><a href="#__codelineno-0-503">503</a></span>
+<span class="normal"><a href="#__codelineno-0-504">504</a></span>
+<span class="normal"><a href="#__codelineno-0-505">505</a></span>
+<span class="normal"><a href="#__codelineno-0-506">506</a></span>
+<span class="normal"><a href="#__codelineno-0-507">507</a></span>
+<span class="normal"><a href="#__codelineno-0-508">508</a></span>
+<span class="normal"><a href="#__codelineno-0-509">509</a></span>
+<span class="normal"><a href="#__codelineno-0-510">510</a></span>
+<span class="normal"><a href="#__codelineno-0-511">511</a></span>
+<span class="normal"><a href="#__codelineno-0-512">512</a></span>
+<span class="normal"><a href="#__codelineno-0-513">513</a></span>
+<span class="normal"><a href="#__codelineno-0-514">514</a></span>
+<span class="normal"><a href="#__codelineno-0-515">515</a></span>
+<span class="normal"><a href="#__codelineno-0-516">516</a></span>
+<span class="normal"><a href="#__codelineno-0-517">517</a></span>
+<span class="normal"><a href="#__codelineno-0-518">518</a></span>
+<span class="normal"><a href="#__codelineno-0-519">519</a></span>
+<span class="normal"><a href="#__codelineno-0-520">520</a></span>
+<span class="normal"><a href="#__codelineno-0-521">521</a></span>
+<span class="normal"><a href="#__codelineno-0-522">522</a></span>
+<span class="normal"><a href="#__codelineno-0-523">523</a></span>
+<span class="normal"><a href="#__codelineno-0-524">524</a></span>
+<span class="normal"><a href="#__codelineno-0-525">525</a></span>
+<span class="normal"><a href="#__codelineno-0-526">526</a></span>
+<span class="normal"><a href="#__codelineno-0-527">527</a></span>
+<span class="normal"><a href="#__codelineno-0-528">528</a></span>
+<span class="normal"><a href="#__codelineno-0-529">529</a></span>
+<span class="normal"><a href="#__codelineno-0-530">530</a></span>
+<span class="normal"><a href="#__codelineno-0-531">531</a></span>
+<span class="normal"><a href="#__codelineno-0-532">532</a></span>
+<span class="normal"><a href="#__codelineno-0-533">533</a></span>
+<span class="normal"><a href="#__codelineno-0-534">534</a></span>
+<span class="normal"><a href="#__codelineno-0-535">535</a></span>
+<span class="normal"><a href="#__codelineno-0-536">536</a></span>
+<span class="normal"><a href="#__codelineno-0-537">537</a></span>
+<span class="normal"><a href="#__codelineno-0-538">538</a></span>
+<span class="normal"><a href="#__codelineno-0-539">539</a></span>
+<span class="normal"><a href="#__codelineno-0-540">540</a></span>
+<span class="normal"><a href="#__codelineno-0-541">541</a></span>
+<span class="normal"><a href="#__codelineno-0-542">542</a></span>
+<span class="normal"><a href="#__codelineno-0-543">543</a></span>
+<span class="normal"><a href="#__codelineno-0-544">544</a></span>
+<span class="normal"><a href="#__codelineno-0-545">545</a></span>
+<span class="normal"><a href="#__codelineno-0-546">546</a></span>
+<span class="normal"><a href="#__codelineno-0-547">547</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-442" name="__codelineno-0-442"></a><span class="k">class</span><span class="w"> </span><span class="nc">LibclangBackend</span><span class="p">:</span>
+<a id="__codelineno-0-443" name="__codelineno-0-443"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Parser backend using libclang.</span>
+<a id="__codelineno-0-444" name="__codelineno-0-444"></a>
+<a id="__codelineno-0-445" name="__codelineno-0-445"></a><span class="sd">    Uses LLVM&#39;s libclang to parse C and C++ code. This backend supports</span>
+<a id="__codelineno-0-446" name="__codelineno-0-446"></a><span class="sd">    the full C++ language including templates, classes, and namespaces.</span>
+<a id="__codelineno-0-447" name="__codelineno-0-447"></a>
+<a id="__codelineno-0-448" name="__codelineno-0-448"></a><span class="sd">    Properties</span>
+<a id="__codelineno-0-449" name="__codelineno-0-449"></a><span class="sd">    ----------</span>
+<a id="__codelineno-0-450" name="__codelineno-0-450"></a><span class="sd">    name : str</span>
+<a id="__codelineno-0-451" name="__codelineno-0-451"></a><span class="sd">        Returns ``&quot;libclang&quot;``.</span>
+<a id="__codelineno-0-452" name="__codelineno-0-452"></a><span class="sd">    supports_macros : bool</span>
+<a id="__codelineno-0-453" name="__codelineno-0-453"></a><span class="sd">        Returns ``False`` - macro extraction is limited in Python bindings.</span>
+<a id="__codelineno-0-454" name="__codelineno-0-454"></a><span class="sd">    supports_cpp : bool</span>
+<a id="__codelineno-0-455" name="__codelineno-0-455"></a><span class="sd">        Returns ``True`` - full C++ support.</span>
+<a id="__codelineno-0-456" name="__codelineno-0-456"></a>
+<a id="__codelineno-0-457" name="__codelineno-0-457"></a><span class="sd">    Example</span>
+<a id="__codelineno-0-458" name="__codelineno-0-458"></a><span class="sd">    -------</span>
+<a id="__codelineno-0-459" name="__codelineno-0-459"></a><span class="sd">    ::</span>
+<a id="__codelineno-0-460" name="__codelineno-0-460"></a>
+<a id="__codelineno-0-461" name="__codelineno-0-461"></a><span class="sd">        from autopxd.backends.libclang_backend import LibclangBackend</span>
+<a id="__codelineno-0-462" name="__codelineno-0-462"></a>
+<a id="__codelineno-0-463" name="__codelineno-0-463"></a><span class="sd">        backend = LibclangBackend()</span>
+<a id="__codelineno-0-464" name="__codelineno-0-464"></a>
+<a id="__codelineno-0-465" name="__codelineno-0-465"></a><span class="sd">        # Parse C++ code with specific standard</span>
+<a id="__codelineno-0-466" name="__codelineno-0-466"></a><span class="sd">        header = backend.parse(</span>
+<a id="__codelineno-0-467" name="__codelineno-0-467"></a><span class="sd">            code,</span>
+<a id="__codelineno-0-468" name="__codelineno-0-468"></a><span class="sd">            &quot;myheader.hpp&quot;,</span>
+<a id="__codelineno-0-469" name="__codelineno-0-469"></a><span class="sd">            extra_args=[&quot;-std=c++17&quot;, &quot;-DDEBUG=1&quot;]</span>
+<a id="__codelineno-0-470" name="__codelineno-0-470"></a><span class="sd">        )</span>
+<a id="__codelineno-0-471" name="__codelineno-0-471"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-472" name="__codelineno-0-472"></a>
+<a id="__codelineno-0-473" name="__codelineno-0-473"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-474" name="__codelineno-0-474"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_index</span><span class="p">:</span> <span class="n">clang</span><span class="o">.</span><span class="n">cindex</span><span class="o">.</span><span class="n">Index</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-475" name="__codelineno-0-475"></a>
+<a id="__codelineno-0-476" name="__codelineno-0-476"></a>    <span class="nd">@property</span>
+<a id="__codelineno-0-477" name="__codelineno-0-477"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<a id="__codelineno-0-478" name="__codelineno-0-478"></a>        <span class="k">return</span> <span class="s2">&quot;libclang&quot;</span>
+<a id="__codelineno-0-479" name="__codelineno-0-479"></a>
+<a id="__codelineno-0-480" name="__codelineno-0-480"></a>    <span class="nd">@property</span>
+<a id="__codelineno-0-481" name="__codelineno-0-481"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">supports_macros</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<a id="__codelineno-0-482" name="__codelineno-0-482"></a>        <span class="c1"># Limited macro support due to Python bindings</span>
+<a id="__codelineno-0-483" name="__codelineno-0-483"></a>        <span class="k">return</span> <span class="kc">False</span>
+<a id="__codelineno-0-484" name="__codelineno-0-484"></a>
+<a id="__codelineno-0-485" name="__codelineno-0-485"></a>    <span class="nd">@property</span>
+<a id="__codelineno-0-486" name="__codelineno-0-486"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">supports_cpp</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<a id="__codelineno-0-487" name="__codelineno-0-487"></a>        <span class="k">return</span> <span class="kc">True</span>
+<a id="__codelineno-0-488" name="__codelineno-0-488"></a>
+<a id="__codelineno-0-489" name="__codelineno-0-489"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">_get_index</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;clang.cindex.Index&quot;</span><span class="p">:</span>
+<a id="__codelineno-0-490" name="__codelineno-0-490"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Get or create the clang index.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-491" name="__codelineno-0-491"></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_index</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-492" name="__codelineno-0-492"></a>            <span class="bp">self</span><span class="o">.</span><span class="n">_index</span> <span class="o">=</span> <span class="n">clang</span><span class="o">.</span><span class="n">cindex</span><span class="o">.</span><span class="n">Index</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
+<a id="__codelineno-0-493" name="__codelineno-0-493"></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_index</span>
+<a id="__codelineno-0-494" name="__codelineno-0-494"></a>
+<a id="__codelineno-0-495" name="__codelineno-0-495"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">parse</span><span class="p">(</span>
+<a id="__codelineno-0-496" name="__codelineno-0-496"></a>        <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-0-497" name="__codelineno-0-497"></a>        <span class="n">code</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-0-498" name="__codelineno-0-498"></a>        <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-0-499" name="__codelineno-0-499"></a>        <span class="n">include_dirs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-500" name="__codelineno-0-500"></a>        <span class="n">extra_args</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-501" name="__codelineno-0-501"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Header</span><span class="p">:</span>
+<a id="__codelineno-0-502" name="__codelineno-0-502"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse C/C++ code using libclang.</span>
+<a id="__codelineno-0-503" name="__codelineno-0-503"></a>
+<a id="__codelineno-0-504" name="__codelineno-0-504"></a><span class="sd">        Unlike the pycparser backend, this method handles raw (unpreprocessed)</span>
+<a id="__codelineno-0-505" name="__codelineno-0-505"></a><span class="sd">        code and performs preprocessing internally.</span>
+<a id="__codelineno-0-506" name="__codelineno-0-506"></a>
+<a id="__codelineno-0-507" name="__codelineno-0-507"></a><span class="sd">        :param code: C/C++ source code to parse (raw, not preprocessed).</span>
+<a id="__codelineno-0-508" name="__codelineno-0-508"></a><span class="sd">        :param filename: Source filename for error messages and location tracking.</span>
+<a id="__codelineno-0-509" name="__codelineno-0-509"></a><span class="sd">        :param include_dirs: Additional include directories (converted to ``-I`` flags).</span>
+<a id="__codelineno-0-510" name="__codelineno-0-510"></a><span class="sd">        :param extra_args: Additional compiler arguments (e.g., ``[&quot;-std=c++17&quot;]``).</span>
+<a id="__codelineno-0-511" name="__codelineno-0-511"></a><span class="sd">        :returns: :class:`~autopxd.ir.Header` containing parsed declarations.</span>
+<a id="__codelineno-0-512" name="__codelineno-0-512"></a><span class="sd">        :raises RuntimeError: If parsing fails with errors.</span>
+<a id="__codelineno-0-513" name="__codelineno-0-513"></a>
+<a id="__codelineno-0-514" name="__codelineno-0-514"></a><span class="sd">        Example</span>
+<a id="__codelineno-0-515" name="__codelineno-0-515"></a><span class="sd">        -------</span>
+<a id="__codelineno-0-516" name="__codelineno-0-516"></a><span class="sd">        ::</span>
+<a id="__codelineno-0-517" name="__codelineno-0-517"></a>
+<a id="__codelineno-0-518" name="__codelineno-0-518"></a><span class="sd">            header = backend.parse(</span>
+<a id="__codelineno-0-519" name="__codelineno-0-519"></a><span class="sd">                code,</span>
+<a id="__codelineno-0-520" name="__codelineno-0-520"></a><span class="sd">                &quot;myheader.hpp&quot;,</span>
+<a id="__codelineno-0-521" name="__codelineno-0-521"></a><span class="sd">                include_dirs=[&quot;/usr/local/include&quot;],</span>
+<a id="__codelineno-0-522" name="__codelineno-0-522"></a><span class="sd">                extra_args=[&quot;-std=c++17&quot;, &quot;-DNDEBUG&quot;]</span>
+<a id="__codelineno-0-523" name="__codelineno-0-523"></a><span class="sd">            )</span>
+<a id="__codelineno-0-524" name="__codelineno-0-524"></a><span class="sd">        &quot;&quot;&quot;</span>
+<a id="__codelineno-0-525" name="__codelineno-0-525"></a>        <span class="n">args</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-0-526" name="__codelineno-0-526"></a>
+<a id="__codelineno-0-527" name="__codelineno-0-527"></a>        <span class="c1"># Add include directories</span>
+<a id="__codelineno-0-528" name="__codelineno-0-528"></a>        <span class="k">if</span> <span class="n">include_dirs</span><span class="p">:</span>
+<a id="__codelineno-0-529" name="__codelineno-0-529"></a>            <span class="k">for</span> <span class="n">inc_dir</span> <span class="ow">in</span> <span class="n">include_dirs</span><span class="p">:</span>
+<a id="__codelineno-0-530" name="__codelineno-0-530"></a>                <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;-I</span><span class="si">{</span><span class="n">inc_dir</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-531" name="__codelineno-0-531"></a>
+<a id="__codelineno-0-532" name="__codelineno-0-532"></a>        <span class="c1"># Add extra arguments</span>
+<a id="__codelineno-0-533" name="__codelineno-0-533"></a>        <span class="k">if</span> <span class="n">extra_args</span><span class="p">:</span>
+<a id="__codelineno-0-534" name="__codelineno-0-534"></a>            <span class="n">args</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">extra_args</span><span class="p">)</span>
+<a id="__codelineno-0-535" name="__codelineno-0-535"></a>
+<a id="__codelineno-0-536" name="__codelineno-0-536"></a>        <span class="c1"># Parse the code</span>
+<a id="__codelineno-0-537" name="__codelineno-0-537"></a>        <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_index</span><span class="p">()</span>
+<a id="__codelineno-0-538" name="__codelineno-0-538"></a>        <span class="n">tu</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span> <span class="n">unsaved_files</span><span class="o">=</span><span class="p">[(</span><span class="n">filename</span><span class="p">,</span> <span class="n">code</span><span class="p">)])</span>
+<a id="__codelineno-0-539" name="__codelineno-0-539"></a>
+<a id="__codelineno-0-540" name="__codelineno-0-540"></a>        <span class="c1"># Check for fatal errors</span>
+<a id="__codelineno-0-541" name="__codelineno-0-541"></a>        <span class="k">for</span> <span class="n">diag</span> <span class="ow">in</span> <span class="n">tu</span><span class="o">.</span><span class="n">diagnostics</span><span class="p">:</span>
+<a id="__codelineno-0-542" name="__codelineno-0-542"></a>            <span class="k">if</span> <span class="n">diag</span><span class="o">.</span><span class="n">severity</span> <span class="o">&gt;=</span> <span class="n">clang</span><span class="o">.</span><span class="n">cindex</span><span class="o">.</span><span class="n">Diagnostic</span><span class="o">.</span><span class="n">Error</span><span class="p">:</span>
+<a id="__codelineno-0-543" name="__codelineno-0-543"></a>                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Parse error: </span><span class="si">{</span><span class="n">diag</span><span class="o">.</span><span class="n">spelling</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-544" name="__codelineno-0-544"></a>
+<a id="__codelineno-0-545" name="__codelineno-0-545"></a>        <span class="c1"># Convert to IR</span>
+<a id="__codelineno-0-546" name="__codelineno-0-546"></a>        <span class="n">converter</span> <span class="o">=</span> <span class="n">ClangASTConverter</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+<a id="__codelineno-0-547" name="__codelineno-0-547"></a>        <span class="k">return</span> <span class="n">converter</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="n">tu</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+              </details>
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="autopxd.backends.libclang_backend.LibclangBackend.parse" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <code class="highlight language-python"><span class="n">parse</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">include_dirs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">extra_args</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+<a href="#autopxd.backends.libclang_backend.LibclangBackend.parse" class="headerlink" title="Permanent link">&para;</a></h4>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Parse C/C++ code using libclang.</p>
+<p>Unlike the pycparser backend, this method handles raw (unpreprocessed)
+code and performs preprocessing internally.</p>
+<p>::</p>
+<div class="highlight"><pre><span></span><code>header = backend.parse(
+    code,
+    &quot;myheader.hpp&quot;,
+    include_dirs=[&quot;/usr/local/include&quot;],
+    extra_args=[&quot;-std=c++17&quot;, &quot;-DNDEBUG&quot;]
+)
+</code></pre></div>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>code</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>C/C++ source code to parse (raw, not preprocessed).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>filename</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Source filename for error messages and location tracking.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>include_dirs</code>
+            </td>
+            <td>
+                  <code><span title="list">list</span>[<span title="str">str</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Additional include directories (converted to <code>-I</code> flags).</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>extra_args</code>
+            </td>
+            <td>
+                  <code><span title="list">list</span>[<span title="str">str</span>] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Additional compiler arguments (e.g., <code>["-std=c++17"]</code>).</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="            Header
+
+
+  
+      dataclass
+   (autopxd.ir.Header)" href="../ir/#autopxd.ir.Header">Header</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>:class:<code>~autopxd.ir.Header</code> containing parsed declarations.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>RuntimeError</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If parsing fails with errors.  Example -------</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>autopxd/backends/libclang_backend.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-495">495</a></span>
+<span class="normal"><a href="#__codelineno-0-496">496</a></span>
+<span class="normal"><a href="#__codelineno-0-497">497</a></span>
+<span class="normal"><a href="#__codelineno-0-498">498</a></span>
+<span class="normal"><a href="#__codelineno-0-499">499</a></span>
+<span class="normal"><a href="#__codelineno-0-500">500</a></span>
+<span class="normal"><a href="#__codelineno-0-501">501</a></span>
+<span class="normal"><a href="#__codelineno-0-502">502</a></span>
+<span class="normal"><a href="#__codelineno-0-503">503</a></span>
+<span class="normal"><a href="#__codelineno-0-504">504</a></span>
+<span class="normal"><a href="#__codelineno-0-505">505</a></span>
+<span class="normal"><a href="#__codelineno-0-506">506</a></span>
+<span class="normal"><a href="#__codelineno-0-507">507</a></span>
+<span class="normal"><a href="#__codelineno-0-508">508</a></span>
+<span class="normal"><a href="#__codelineno-0-509">509</a></span>
+<span class="normal"><a href="#__codelineno-0-510">510</a></span>
+<span class="normal"><a href="#__codelineno-0-511">511</a></span>
+<span class="normal"><a href="#__codelineno-0-512">512</a></span>
+<span class="normal"><a href="#__codelineno-0-513">513</a></span>
+<span class="normal"><a href="#__codelineno-0-514">514</a></span>
+<span class="normal"><a href="#__codelineno-0-515">515</a></span>
+<span class="normal"><a href="#__codelineno-0-516">516</a></span>
+<span class="normal"><a href="#__codelineno-0-517">517</a></span>
+<span class="normal"><a href="#__codelineno-0-518">518</a></span>
+<span class="normal"><a href="#__codelineno-0-519">519</a></span>
+<span class="normal"><a href="#__codelineno-0-520">520</a></span>
+<span class="normal"><a href="#__codelineno-0-521">521</a></span>
+<span class="normal"><a href="#__codelineno-0-522">522</a></span>
+<span class="normal"><a href="#__codelineno-0-523">523</a></span>
+<span class="normal"><a href="#__codelineno-0-524">524</a></span>
+<span class="normal"><a href="#__codelineno-0-525">525</a></span>
+<span class="normal"><a href="#__codelineno-0-526">526</a></span>
+<span class="normal"><a href="#__codelineno-0-527">527</a></span>
+<span class="normal"><a href="#__codelineno-0-528">528</a></span>
+<span class="normal"><a href="#__codelineno-0-529">529</a></span>
+<span class="normal"><a href="#__codelineno-0-530">530</a></span>
+<span class="normal"><a href="#__codelineno-0-531">531</a></span>
+<span class="normal"><a href="#__codelineno-0-532">532</a></span>
+<span class="normal"><a href="#__codelineno-0-533">533</a></span>
+<span class="normal"><a href="#__codelineno-0-534">534</a></span>
+<span class="normal"><a href="#__codelineno-0-535">535</a></span>
+<span class="normal"><a href="#__codelineno-0-536">536</a></span>
+<span class="normal"><a href="#__codelineno-0-537">537</a></span>
+<span class="normal"><a href="#__codelineno-0-538">538</a></span>
+<span class="normal"><a href="#__codelineno-0-539">539</a></span>
+<span class="normal"><a href="#__codelineno-0-540">540</a></span>
+<span class="normal"><a href="#__codelineno-0-541">541</a></span>
+<span class="normal"><a href="#__codelineno-0-542">542</a></span>
+<span class="normal"><a href="#__codelineno-0-543">543</a></span>
+<span class="normal"><a href="#__codelineno-0-544">544</a></span>
+<span class="normal"><a href="#__codelineno-0-545">545</a></span>
+<span class="normal"><a href="#__codelineno-0-546">546</a></span>
+<span class="normal"><a href="#__codelineno-0-547">547</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-495" name="__codelineno-0-495"></a><span class="k">def</span><span class="w"> </span><span class="nf">parse</span><span class="p">(</span>
+<a id="__codelineno-0-496" name="__codelineno-0-496"></a>    <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-0-497" name="__codelineno-0-497"></a>    <span class="n">code</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-0-498" name="__codelineno-0-498"></a>    <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-0-499" name="__codelineno-0-499"></a>    <span class="n">include_dirs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-500" name="__codelineno-0-500"></a>    <span class="n">extra_args</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-501" name="__codelineno-0-501"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Header</span><span class="p">:</span>
+<a id="__codelineno-0-502" name="__codelineno-0-502"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse C/C++ code using libclang.</span>
+<a id="__codelineno-0-503" name="__codelineno-0-503"></a>
+<a id="__codelineno-0-504" name="__codelineno-0-504"></a><span class="sd">    Unlike the pycparser backend, this method handles raw (unpreprocessed)</span>
+<a id="__codelineno-0-505" name="__codelineno-0-505"></a><span class="sd">    code and performs preprocessing internally.</span>
+<a id="__codelineno-0-506" name="__codelineno-0-506"></a>
+<a id="__codelineno-0-507" name="__codelineno-0-507"></a><span class="sd">    :param code: C/C++ source code to parse (raw, not preprocessed).</span>
+<a id="__codelineno-0-508" name="__codelineno-0-508"></a><span class="sd">    :param filename: Source filename for error messages and location tracking.</span>
+<a id="__codelineno-0-509" name="__codelineno-0-509"></a><span class="sd">    :param include_dirs: Additional include directories (converted to ``-I`` flags).</span>
+<a id="__codelineno-0-510" name="__codelineno-0-510"></a><span class="sd">    :param extra_args: Additional compiler arguments (e.g., ``[&quot;-std=c++17&quot;]``).</span>
+<a id="__codelineno-0-511" name="__codelineno-0-511"></a><span class="sd">    :returns: :class:`~autopxd.ir.Header` containing parsed declarations.</span>
+<a id="__codelineno-0-512" name="__codelineno-0-512"></a><span class="sd">    :raises RuntimeError: If parsing fails with errors.</span>
+<a id="__codelineno-0-513" name="__codelineno-0-513"></a>
+<a id="__codelineno-0-514" name="__codelineno-0-514"></a><span class="sd">    Example</span>
+<a id="__codelineno-0-515" name="__codelineno-0-515"></a><span class="sd">    -------</span>
+<a id="__codelineno-0-516" name="__codelineno-0-516"></a><span class="sd">    ::</span>
+<a id="__codelineno-0-517" name="__codelineno-0-517"></a>
+<a id="__codelineno-0-518" name="__codelineno-0-518"></a><span class="sd">        header = backend.parse(</span>
+<a id="__codelineno-0-519" name="__codelineno-0-519"></a><span class="sd">            code,</span>
+<a id="__codelineno-0-520" name="__codelineno-0-520"></a><span class="sd">            &quot;myheader.hpp&quot;,</span>
+<a id="__codelineno-0-521" name="__codelineno-0-521"></a><span class="sd">            include_dirs=[&quot;/usr/local/include&quot;],</span>
+<a id="__codelineno-0-522" name="__codelineno-0-522"></a><span class="sd">            extra_args=[&quot;-std=c++17&quot;, &quot;-DNDEBUG&quot;]</span>
+<a id="__codelineno-0-523" name="__codelineno-0-523"></a><span class="sd">        )</span>
+<a id="__codelineno-0-524" name="__codelineno-0-524"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-525" name="__codelineno-0-525"></a>    <span class="n">args</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-0-526" name="__codelineno-0-526"></a>
+<a id="__codelineno-0-527" name="__codelineno-0-527"></a>    <span class="c1"># Add include directories</span>
+<a id="__codelineno-0-528" name="__codelineno-0-528"></a>    <span class="k">if</span> <span class="n">include_dirs</span><span class="p">:</span>
+<a id="__codelineno-0-529" name="__codelineno-0-529"></a>        <span class="k">for</span> <span class="n">inc_dir</span> <span class="ow">in</span> <span class="n">include_dirs</span><span class="p">:</span>
+<a id="__codelineno-0-530" name="__codelineno-0-530"></a>            <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;-I</span><span class="si">{</span><span class="n">inc_dir</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-531" name="__codelineno-0-531"></a>
+<a id="__codelineno-0-532" name="__codelineno-0-532"></a>    <span class="c1"># Add extra arguments</span>
+<a id="__codelineno-0-533" name="__codelineno-0-533"></a>    <span class="k">if</span> <span class="n">extra_args</span><span class="p">:</span>
+<a id="__codelineno-0-534" name="__codelineno-0-534"></a>        <span class="n">args</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">extra_args</span><span class="p">)</span>
+<a id="__codelineno-0-535" name="__codelineno-0-535"></a>
+<a id="__codelineno-0-536" name="__codelineno-0-536"></a>    <span class="c1"># Parse the code</span>
+<a id="__codelineno-0-537" name="__codelineno-0-537"></a>    <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_index</span><span class="p">()</span>
+<a id="__codelineno-0-538" name="__codelineno-0-538"></a>    <span class="n">tu</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span> <span class="n">unsaved_files</span><span class="o">=</span><span class="p">[(</span><span class="n">filename</span><span class="p">,</span> <span class="n">code</span><span class="p">)])</span>
+<a id="__codelineno-0-539" name="__codelineno-0-539"></a>
+<a id="__codelineno-0-540" name="__codelineno-0-540"></a>    <span class="c1"># Check for fatal errors</span>
+<a id="__codelineno-0-541" name="__codelineno-0-541"></a>    <span class="k">for</span> <span class="n">diag</span> <span class="ow">in</span> <span class="n">tu</span><span class="o">.</span><span class="n">diagnostics</span><span class="p">:</span>
+<a id="__codelineno-0-542" name="__codelineno-0-542"></a>        <span class="k">if</span> <span class="n">diag</span><span class="o">.</span><span class="n">severity</span> <span class="o">&gt;=</span> <span class="n">clang</span><span class="o">.</span><span class="n">cindex</span><span class="o">.</span><span class="n">Diagnostic</span><span class="o">.</span><span class="n">Error</span><span class="p">:</span>
+<a id="__codelineno-0-543" name="__codelineno-0-543"></a>            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Parse error: </span><span class="si">{</span><span class="n">diag</span><span class="o">.</span><span class="n">spelling</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-544" name="__codelineno-0-544"></a>
+<a id="__codelineno-0-545" name="__codelineno-0-545"></a>    <span class="c1"># Convert to IR</span>
+<a id="__codelineno-0-546" name="__codelineno-0-546"></a>    <span class="n">converter</span> <span class="o">=</span> <span class="n">ClangASTConverter</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+<a id="__codelineno-0-547" name="__codelineno-0-547"></a>    <span class="k">return</span> <span class="n">converter</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="n">tu</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "navigation.top", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.e71a0d61.min.js"></script>
+      
+    
+  </body>
+</html>
