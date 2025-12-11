@@ -1,0 +1,17 @@
+typedef _Atomic int atomic_int;
+typedef _Atomic long atomic_long;
+
+struct counter_state {
+    atomic_int value;
+    atomic_long total;
+};
+---
+cdef extern from "atomic_typedef.cpptest":
+
+    ctypedef int atomic_int
+
+    ctypedef long atomic_long
+
+    cdef struct counter_state:
+        atomic_int value
+        atomic_long total

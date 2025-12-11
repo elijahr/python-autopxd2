@@ -1,0 +1,15 @@
+#define SIZE 100
+#define COUNT 50
+#define HEX_VAL 0xFF
+
+void use_macros(void);
+---
+cdef extern from "issue_037_macros.cpptest":
+
+    int SIZE
+
+    int COUNT
+
+    int HEX_VAL
+
+    void use_macros()

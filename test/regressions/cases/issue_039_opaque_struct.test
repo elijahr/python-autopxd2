@@ -1,0 +1,12 @@
+typedef struct opaque_handle opaque_handle;
+
+opaque_handle* create_handle(void);
+void destroy_handle(opaque_handle* h);
+---
+cdef extern from "issue_039_opaque_struct.test":
+
+    cdef struct opaque_handle
+
+    opaque_handle* create_handle()
+
+    void destroy_handle(opaque_handle* h)

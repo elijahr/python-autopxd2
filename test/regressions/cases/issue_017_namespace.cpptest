@@ -1,0 +1,17 @@
+namespace MyLib {
+    class Widget {
+    public:
+        int width;
+        void resize(int w);
+    };
+
+    int helper_func(int x);
+}
+---
+cdef extern from "issue_017_namespace.cpptest" namespace "MyLib":
+
+    cdef cppclass Widget:
+        int width
+        void resize(int w)
+
+    int helper_func(int x)

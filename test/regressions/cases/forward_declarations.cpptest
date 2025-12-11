@@ -1,0 +1,17 @@
+struct opaque_struct;
+union opaque_union;
+
+struct container {
+    struct opaque_struct *sptr;
+    union opaque_union *uptr;
+};
+---
+cdef extern from "forward_declarations.cpptest":
+
+    cdef struct opaque_struct
+
+    cdef union opaque_union
+
+    cdef struct container:
+        opaque_struct* sptr
+        opaque_union* uptr
