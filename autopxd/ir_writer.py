@@ -26,6 +26,7 @@ Example
 
 from autopxd.cython_types import (
     get_cython_module_for_type,
+    get_libcpp_module_for_type,
     get_stub_module_for_type,
 )
 from autopxd.ir import (
@@ -96,6 +97,7 @@ class PxdWriter:
         # New cimport tracking using registries
         self.cython_cimports: dict[str, set[str]] = {}  # module -> types
         self.stub_cimports: dict[str, set[str]] = {}  # stub_module -> types
+        self.libcpp_cimports: dict[str, set[str]] = {}  # module -> types
 
         # Collect types from all declarations
         self._collect_cimport_types()
@@ -112,7 +114,12 @@ class PxdWriter:
             types = sorted(self.cython_cimports[module])
             lines.append(f"from {module} cimport {', '.join(types)}")
 
-        # 2. Autopxd stub cimports
+        # 2. C++ STL cimports
+        for module in sorted(self.libcpp_cimports.keys()):
+            types = sorted(self.libcpp_cimports[module])
+            lines.append(f"from {module} cimport {', '.join(types)}")
+
+        # 3. Autopxd stub cimports
         for stub_module in sorted(self.stub_cimports.keys()):
             types = sorted(self.stub_cimports[stub_module])
             lines.append(f"from autopxd.stubs.{stub_module} cimport {', '.join(types)}")
@@ -170,6 +177,11 @@ class PxdWriter:
         elif isinstance(decl, Struct):
             for field in decl.fields:
                 self._check_type(field.type)
+            # Also check methods (for cppclass)
+            for method in decl.methods:
+                self._check_type(method.return_type)
+                for param in method.parameters:
+                    self._check_type(param.type)
         elif isinstance(decl, Typedef):
             self._check_type(decl.underlying_type)
         elif isinstance(decl, Variable):
@@ -190,16 +202,88 @@ class PxdWriter:
 
     def _check_type_name(self, name: str) -> None:
         """Check a type name against registries."""
+        # Strip struct/class/union keywords (e.g., "struct string" -> "string")
+        clean_name = name.removeprefix("struct ").removeprefix("class ").removeprefix("union ")
+
+        # Strip std:: prefix for C++ types
+        cpp_name = clean_name.removeprefix("std::")
+
+        # For template types, extract the base type name (e.g., "vector<int>" -> "vector")
+        base_name = cpp_name.split("<")[0] if "<" in cpp_name else cpp_name
+
         # Check Cython stdlib
         module = get_cython_module_for_type(name)
         if module:
             self.cython_cimports.setdefault(module, set()).add(name)
             return
 
+        # Check C++ STL (use base name without template args)
+        module = get_libcpp_module_for_type(base_name)
+        if module:
+            self.libcpp_cimports.setdefault(module, set()).add(base_name)
+
+        # Also check template arguments recursively for C++ types
+        if "<" in cpp_name:
+            self._check_template_args(cpp_name)
+            return
+
         # Check autopxd stubs
         stub_module = get_stub_module_for_type(name)
         if stub_module:
             self.stub_cimports.setdefault(stub_module, set()).add(name)
+
+    def _check_template_args(self, type_str: str) -> None:
+        """Recursively check template arguments for types that need cimports.
+
+        Args:
+            type_str: Type string potentially containing template args (e.g., "map<string, vector<int>>")
+        """
+        # Extract content between first < and last >
+        start = type_str.find("<")
+        if start == -1:
+            return
+
+        # Find matching closing >
+        depth = 0
+        end = -1
+        for i in range(start, len(type_str)):
+            if type_str[i] == "<":
+                depth += 1
+            elif type_str[i] == ">":
+                depth -= 1
+                if depth == 0:
+                    end = i
+                    break
+
+        if end == -1:
+            return
+
+        # Get the template arguments
+        args_str = type_str[start + 1 : end]
+
+        # Split by commas, respecting nested templates
+        args = []
+        current_arg = ""
+        depth = 0
+        for char in args_str:
+            if char == "<":
+                depth += 1
+                current_arg += char
+            elif char == ">":
+                depth -= 1
+                current_arg += char
+            elif char == "," and depth == 0:
+                args.append(current_arg.strip())
+                current_arg = ""
+            else:
+                current_arg += char
+
+        if current_arg.strip():
+            args.append(current_arg.strip())
+
+        # Check each argument
+        for arg in args:
+            self._check_type_name(arg)
 
     def _write_declaration(self, decl: Declaration) -> list[str]:
         """Write a single declaration."""
