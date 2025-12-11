@@ -5,6 +5,7 @@ These tests verify that both parser backends can handle patterns
 commonly found in real C/C++ libraries.
 """
 
+import os
 import re
 
 import pytest
@@ -16,9 +17,9 @@ from fixtures.realistic_headers import (
 from autopxd.ir import (
     Function,
 )
-from autopxd.ir_writer import (
-    write_pxd,
-)
+from test.assertions import assert_pxd_file_equals
+
+EXPECTED_DIR = os.path.join(os.path.dirname(__file__), "fixtures", "realistic_headers")
 
 
 def preprocess_for_pycparser(code: str) -> str:
@@ -50,14 +51,18 @@ class TestRealisticCHeaders:
         assert decl_types & {"Function", "Struct", "Typedef", "Enum"}
 
     @pytest.mark.parametrize("fixture_name", list(C_FIXTURES.keys()))
-    def test_generate_pxd_c_fixture(self, backend, fixture_name):
-        """Test pxd generation from realistic C headers."""
-        code = get_code_for_backend(C_FIXTURES[fixture_name], backend.name)
-        header = backend.parse(code, f"{fixture_name}.h")
-        pxd = write_pxd(header)
+    def test_generate_pxd_c_fixture(self, fixture_name, tmp_path):
+        """Test pxd generation from realistic C headers matches expected and compiles."""
+        code = preprocess_for_pycparser(C_FIXTURES[fixture_name])
+        expected_path = os.path.join(EXPECTED_DIR, f"{fixture_name}.expected.pxd")
 
-        assert len(pxd) > 0
-        assert "cdef extern from" in pxd
+        assert_pxd_file_equals(
+            code,
+            expected_path,
+            tmp_path,
+            backend="pycparser",
+            filename=f"{fixture_name}.h",
+        )
 
 
 @pytest.mark.libclang
@@ -80,14 +85,20 @@ class TestRealisticCppHeaders:
         assert len(header.declarations) > 0
 
     @pytest.mark.parametrize("fixture_name", list(CPP_FIXTURES.keys()))
-    def test_generate_pxd_cpp_fixture(self, libclang_backend, fixture_name):
-        """Test pxd generation from C++ headers."""
+    def test_generate_pxd_cpp_fixture(self, fixture_name, tmp_path):
+        """Test pxd generation from C++ headers matches expected and compiles."""
         code = CPP_FIXTURES[fixture_name]
-        header = libclang_backend.parse(code, f"{fixture_name}.hpp", extra_args=["-x", "c++"])
-        pxd = write_pxd(header)
+        expected_path = os.path.join(EXPECTED_DIR, f"{fixture_name}.expected.pxd")
 
-        assert len(pxd) > 0
-        assert "cdef extern from" in pxd
+        assert_pxd_file_equals(
+            code,
+            expected_path,
+            tmp_path,
+            backend="libclang",
+            filename=f"{fixture_name}.hpp",
+            cplus=True,
+            extra_args=["-x", "c++"],
+        )
 
 
 class TestBackendConsistency:

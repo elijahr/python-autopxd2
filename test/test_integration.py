@@ -7,213 +7,261 @@ for various C constructs.
 
 import pytest
 
-from autopxd.backends.pycparser_backend import (
-    PycparserBackend,
-)
-from autopxd.ir_writer import (
-    write_pxd,
-)
+from test.assertions import assert_ir_to_pxd_equals, assert_pxd_equals
 
 
 class TestIntegrationBasic:
     """Test basic C constructs through the full pipeline."""
 
-    def setup_method(self):
-        self.backend = PycparserBackend()
+    def test_simple_function(self, tmp_path):
+        assert_pxd_equals(
+            "int foo(void);",
+            """cdef extern from "test.h":
 
-    def _translate(self, code: str, filename: str = "test.h") -> str:
-        """Parse code and generate pxd output."""
-        header = self.backend.parse(code, filename)
-        return write_pxd(header)
+    int foo()
+""",
+            tmp_path,
+        )
 
-    def test_simple_function(self):
-        code = "int foo(void);"
-        result = self._translate(code)
-        assert 'cdef extern from "test.h":' in result
-        assert "int foo()" in result
+    def test_function_with_params(self, tmp_path):
+        assert_pxd_equals(
+            "int add(int a, int b);",
+            """cdef extern from "test.h":
 
-    def test_function_with_params(self):
-        code = "int add(int a, int b);"
-        result = self._translate(code)
-        assert "int add(int a, int b)" in result
+    int add(int a, int b)
+""",
+            tmp_path,
+        )
 
-    def test_simple_struct(self):
-        code = """
-        struct Point {
-            int x;
-            int y;
-        };
-        """
-        result = self._translate(code)
-        assert "cdef struct Point:" in result
-        assert "int x" in result
-        assert "int y" in result
+    def test_simple_struct(self, tmp_path):
+        assert_pxd_equals(
+            """
+            struct Point {
+                int x;
+                int y;
+            };
+            """,
+            """cdef extern from "test.h":
 
-    def test_simple_enum(self):
-        code = """
-        enum Color {
-            RED,
-            GREEN,
-            BLUE
-        };
-        """
-        result = self._translate(code)
-        assert "cpdef enum Color:" in result
-        assert "RED" in result
-        assert "GREEN" in result
-        assert "BLUE" in result
+    cdef struct Point:
+        int x
+        int y
+""",
+            tmp_path,
+        )
 
-    def test_global_variable(self):
-        code = "int count;"
-        result = self._translate(code)
-        assert "int count" in result
+    def test_simple_enum(self, tmp_path):
+        assert_pxd_equals(
+            """
+            enum Color {
+                RED,
+                GREEN,
+                BLUE
+            };
+            """,
+            """cdef extern from "test.h":
 
-    def test_typedef(self):
-        code = "typedef int myint;"
-        result = self._translate(code)
-        assert "ctypedef int myint" in result
+    cpdef enum Color:
+        RED
+        GREEN
+        BLUE
+""",
+            tmp_path,
+        )
+
+    def test_global_variable(self, tmp_path):
+        assert_pxd_equals(
+            "int count;",
+            """cdef extern from "test.h":
+
+    int count
+""",
+            tmp_path,
+        )
+
+    def test_typedef(self, tmp_path):
+        assert_pxd_equals(
+            "typedef int myint;",
+            """cdef extern from "test.h":
+
+    ctypedef int myint
+""",
+            tmp_path,
+        )
 
 
 class TestIntegrationPointers:
     """Test pointer handling through the pipeline."""
 
-    def setup_method(self):
-        self.backend = PycparserBackend()
+    def test_pointer_variable(self, tmp_path):
+        assert_pxd_equals(
+            "int* ptr;",
+            """cdef extern from "test.h":
 
-    def _translate(self, code: str, filename: str = "test.h") -> str:
-        header = self.backend.parse(code, filename)
-        return write_pxd(header)
+    int* ptr
+""",
+            tmp_path,
+        )
 
-    def test_pointer_variable(self):
-        code = "int* ptr;"
-        result = self._translate(code)
-        assert "int* ptr" in result
+    def test_const_char_pointer(self, tmp_path):
+        assert_pxd_equals(
+            "const char* str;",
+            """cdef extern from "test.h":
 
-    def test_const_char_pointer(self):
-        code = "const char* str;"
-        result = self._translate(code)
-        assert "const char* str" in result
+    const char* str
+""",
+            tmp_path,
+        )
 
-    def test_double_pointer(self):
-        code = "char** argv;"
-        result = self._translate(code)
-        assert "char** argv" in result
+    def test_double_pointer(self, tmp_path):
+        assert_pxd_equals(
+            "char** argv;",
+            """cdef extern from "test.h":
+
+    char** argv
+""",
+            tmp_path,
+        )
 
 
 class TestIntegrationArrays:
     """Test array handling through the pipeline."""
 
-    def setup_method(self):
-        self.backend = PycparserBackend()
+    def test_fixed_size_array(self, tmp_path):
+        assert_pxd_equals(
+            "int arr[10];",
+            """cdef extern from "test.h":
 
-    def _translate(self, code: str, filename: str = "test.h") -> str:
-        header = self.backend.parse(code, filename)
-        return write_pxd(header)
+    int arr[10]
+""",
+            tmp_path,
+        )
 
-    def test_fixed_size_array(self):
-        code = "int arr[10];"
-        result = self._translate(code)
-        assert "int arr[10]" in result
+    def test_array_in_struct(self, tmp_path):
+        assert_pxd_equals(
+            """
+            struct Buffer {
+                char data[256];
+            };
+            """,
+            """cdef extern from "test.h":
 
-    def test_array_in_struct(self):
-        code = """
-        struct Buffer {
-            char data[256];
-        };
-        """
-        result = self._translate(code)
-        assert "char data[256]" in result
+    cdef struct Buffer:
+        char data[256]
+""",
+            tmp_path,
+        )
 
 
 class TestIntegrationComplex:
     """Test complex C constructs through the pipeline."""
 
-    def setup_method(self):
-        self.backend = PycparserBackend()
+    def test_typedef_struct(self, tmp_path):
+        assert_pxd_equals(
+            """
+            typedef struct {
+                int x;
+                int y;
+            } Point;
+            """,
+            """cdef extern from "test.h":
 
-    def _translate(self, code: str, filename: str = "test.h") -> str:
-        header = self.backend.parse(code, filename)
-        return write_pxd(header)
+    ctypedef struct Point:
+        int x
+        int y
+""",
+            tmp_path,
+        )
 
-    def test_typedef_struct(self):
-        code = """
-        typedef struct {
-            int x;
-            int y;
-        } Point;
-        """
-        result = self._translate(code)
-        # Should create a struct named Point
-        assert "struct Point:" in result or "Point:" in result
-        assert "int x" in result
+    def test_variadic_function(self, tmp_path):
+        assert_pxd_equals(
+            "int printf(const char* fmt, ...);",
+            """cdef extern from "test.h":
 
-    def test_variadic_function(self):
-        code = "int printf(const char* fmt, ...);"
-        result = self._translate(code)
-        assert "printf" in result
-        assert "..." in result
+    int printf(const char* fmt, ...)
+""",
+            tmp_path,
+        )
 
-    def test_enum_with_values(self):
-        code = """
-        enum Flags {
-            FLAG_A = 1,
-            FLAG_B = 2,
-            FLAG_C = 4
-        };
-        """
-        result = self._translate(code)
-        assert "cpdef enum Flags:" in result
-        assert "FLAG_A" in result
-        assert "FLAG_B" in result
-        assert "FLAG_C" in result
+    def test_enum_with_values(self, tmp_path):
+        assert_pxd_equals(
+            """
+            enum Flags {
+                FLAG_A = 1,
+                FLAG_B = 2,
+                FLAG_C = 4
+            };
+            """,
+            """cdef extern from "test.h":
 
-    def test_function_pointer_typedef(self):
-        code = "typedef int (*callback)(int, int);"
-        result = self._translate(code)
-        assert "ctypedef" in result
-        assert "callback" in result
+    cpdef enum Flags:
+        FLAG_A
+        FLAG_B
+        FLAG_C
+""",
+            tmp_path,
+        )
 
-    def test_union(self):
-        code = """
-        union Data {
-            int i;
-            float f;
-        };
-        """
-        result = self._translate(code)
-        assert "cdef union Data:" in result
-        assert "int i" in result
-        assert "float f" in result
+    def test_function_pointer_typedef(self, tmp_path):
+        assert_pxd_equals(
+            "typedef int (*callback)(int, int);",
+            """cdef extern from "test.h":
+
+    ctypedef int (*callback)(int, int)
+""",
+            tmp_path,
+        )
+
+    def test_union(self, tmp_path):
+        assert_pxd_equals(
+            """
+            union Data {
+                int i;
+                float f;
+            };
+            """,
+            """cdef extern from "test.h":
+
+    cdef union Data:
+        int i
+        float f
+""",
+            tmp_path,
+        )
 
 
 class TestIntegrationKeywords:
     """Test Python keyword escaping through the pipeline."""
 
-    def setup_method(self):
-        self.backend = PycparserBackend()
+    def test_keyword_struct_name(self, tmp_path):
+        assert_pxd_equals(
+            """
+            struct class {
+                int value;
+            };
+            """,
+            """cdef extern from "test.h":
 
-    def _translate(self, code: str, filename: str = "test.h") -> str:
-        header = self.backend.parse(code, filename)
-        return write_pxd(header)
+    cdef struct class_ "class":
+        int value
+""",
+            tmp_path,
+        )
 
-    def test_keyword_struct_name(self):
-        code = """
-        struct class {
-            int value;
-        };
-        """
-        result = self._translate(code)
-        # The struct name 'class' should be escaped
-        assert 'class_ "class"' in result or "class_" in result
+    def test_keyword_field_name(self, tmp_path):
+        assert_pxd_equals(
+            """
+            struct Foo {
+                int import;
+            };
+            """,
+            """cdef extern from "test.h":
 
-    def test_keyword_field_name(self):
-        code = """
-        struct Foo {
-            int import;
-        };
-        """
-        result = self._translate(code)
-        assert "import_" in result
+    cdef struct Foo:
+        int import_ "import"
+""",
+            tmp_path,
+        )
 
 
 class TestIntegrationStdint:
@@ -225,7 +273,7 @@ class TestIntegrationStdint:
     when they appear in the IR.
     """
 
-    def test_stdint_import_from_ir(self):
+    def test_stdint_import_from_ir(self, tmp_path):
         """Test that stdint types in IR are properly imported."""
         from autopxd.ir import (
             CType,
@@ -247,10 +295,18 @@ class TestIntegrationStdint:
                 )
             ],
         )
-        result = write_pxd(header)
-        assert "from libc.stdint cimport" in result
-        assert "uint32_t" in result
-        assert "int64_t" in result
+        assert_ir_to_pxd_equals(
+            header,
+            """from libc.stdint cimport int64_t, uint32_t
+
+cdef extern from "test.h":
+
+    cdef struct Data:
+        uint32_t a
+        int64_t b
+""",
+            tmp_path,
+        )
 
 
 # =============================================================================
@@ -262,193 +318,230 @@ class TestIntegrationStdint:
 class TestLibclangIntegrationBasic:
     """Test basic C constructs through libclang → IR → writer pipeline."""
 
-    def setup_method(self):
-        from autopxd.backends.libclang_backend import (
-            LibclangBackend,
+    def test_simple_function(self, tmp_path):
+        assert_pxd_equals(
+            "int foo(void);",
+            """cdef extern from "test.h":
+
+    int foo()
+""",
+            tmp_path,
+            backend="libclang",
         )
 
-        self.backend = LibclangBackend()
+    def test_function_with_params(self, tmp_path):
+        assert_pxd_equals(
+            "int add(int a, int b);",
+            """cdef extern from "test.h":
 
-    def _translate(self, code: str, filename: str = "test.h") -> str:
-        """Parse code and generate pxd output."""
-        header = self.backend.parse(code, filename)
-        return write_pxd(header)
+    int add(int a, int b)
+""",
+            tmp_path,
+            backend="libclang",
+        )
 
-    def test_simple_function(self):
-        code = "int foo(void);"
-        result = self._translate(code)
-        assert 'cdef extern from "test.h":' in result
-        assert "int foo()" in result
+    def test_simple_struct(self, tmp_path):
+        assert_pxd_equals(
+            """
+            struct Point {
+                int x;
+                int y;
+            };
+            """,
+            """cdef extern from "test.h":
 
-    def test_function_with_params(self):
-        code = "int add(int a, int b);"
-        result = self._translate(code)
-        assert "int add(int a, int b)" in result
+    cdef struct Point:
+        int x
+        int y
+""",
+            tmp_path,
+            backend="libclang",
+        )
 
-    def test_simple_struct(self):
-        code = """
-        struct Point {
-            int x;
-            int y;
-        };
-        """
-        result = self._translate(code)
-        assert "cdef struct Point:" in result
-        assert "int x" in result
-        assert "int y" in result
+    def test_simple_enum(self, tmp_path):
+        assert_pxd_equals(
+            """
+            enum Color {
+                RED,
+                GREEN,
+                BLUE
+            };
+            """,
+            """cdef extern from "test.h":
 
-    def test_simple_enum(self):
-        code = """
-        enum Color {
-            RED,
-            GREEN,
-            BLUE
-        };
-        """
-        result = self._translate(code)
-        assert "cpdef enum Color:" in result
-        assert "RED" in result
-        assert "GREEN" in result
-        assert "BLUE" in result
+    cpdef enum Color:
+        RED
+        GREEN
+        BLUE
+""",
+            tmp_path,
+            backend="libclang",
+        )
 
-    def test_global_variable(self):
-        code = "int count;"
-        result = self._translate(code)
-        assert "int count" in result
+    def test_global_variable(self, tmp_path):
+        assert_pxd_equals(
+            "int count;",
+            """cdef extern from "test.h":
 
-    def test_typedef(self):
-        code = "typedef int myint;"
-        result = self._translate(code)
-        assert "ctypedef" in result
-        assert "myint" in result
+    int count
+""",
+            tmp_path,
+            backend="libclang",
+        )
+
+    def test_typedef(self, tmp_path):
+        assert_pxd_equals(
+            "typedef int myint;",
+            """cdef extern from "test.h":
+
+    ctypedef int myint
+""",
+            tmp_path,
+            backend="libclang",
+        )
 
 
 @pytest.mark.libclang
 class TestLibclangIntegrationComplex:
     """Test complex C constructs through libclang pipeline."""
 
-    def setup_method(self):
-        from autopxd.backends.libclang_backend import (
-            LibclangBackend,
+    def test_variadic_function(self, tmp_path):
+        assert_pxd_equals(
+            "int printf(const char* fmt, ...);",
+            """cdef extern from "test.h":
+
+    int printf(const char* fmt, ...)
+""",
+            tmp_path,
+            backend="libclang",
         )
 
-        self.backend = LibclangBackend()
+    def test_union(self, tmp_path):
+        assert_pxd_equals(
+            """
+            union Data {
+                int i;
+                float f;
+            };
+            """,
+            """cdef extern from "test.h":
 
-    def _translate(self, code: str, filename: str = "test.h") -> str:
-        header = self.backend.parse(code, filename)
-        return write_pxd(header)
+    cdef union Data:
+        int i
+        float f
+""",
+            tmp_path,
+            backend="libclang",
+        )
 
-    def test_variadic_function(self):
-        code = "int printf(const char* fmt, ...);"
-        result = self._translate(code)
-        assert "printf" in result
-        assert "..." in result
+    def test_pointer_variable(self, tmp_path):
+        assert_pxd_equals(
+            "int* ptr;",
+            """cdef extern from "test.h":
 
-    def test_union(self):
-        code = """
-        union Data {
-            int i;
-            float f;
-        };
-        """
-        result = self._translate(code)
-        assert "cdef union Data:" in result
-        assert "int i" in result
-        assert "float f" in result
+    int* ptr
+""",
+            tmp_path,
+            backend="libclang",
+        )
 
-    def test_pointer_variable(self):
-        code = "int* ptr;"
-        result = self._translate(code)
-        assert "int*" in result
-        assert "ptr" in result
+    def test_array_variable(self, tmp_path):
+        assert_pxd_equals(
+            "int arr[10];",
+            """cdef extern from "test.h":
 
-    def test_array_variable(self):
-        code = "int arr[10];"
-        result = self._translate(code)
-        assert "int arr[10]" in result
+    int arr[10]
+""",
+            tmp_path,
+            backend="libclang",
+        )
 
 
 @pytest.mark.libclang
 class TestLibclangIntegrationCpp:
     """Test C++ specific features through libclang pipeline."""
 
-    def setup_method(self):
-        from autopxd.backends.libclang_backend import (
-            LibclangBackend,
+    def test_cpp_class(self, tmp_path):
+        assert_pxd_equals(
+            """
+            class Widget {
+            public:
+                int width;
+                int height;
+            };
+            """,
+            """cdef extern from "test.hpp":
+
+    cdef cppclass Widget:
+        int width
+        int height
+""",
+            tmp_path,
+            backend="libclang",
+            filename="test.hpp",
+            cplus=True,
+            extra_args=["-x", "c++"],
         )
 
-        self.backend = LibclangBackend()
+    def test_cpp_function(self, tmp_path):
+        assert_pxd_equals(
+            "int compute(int x, int y);",
+            """cdef extern from "test.hpp":
 
-    def _translate(self, code: str, filename: str = "test.hpp") -> str:
-        header = self.backend.parse(code, filename, extra_args=["-x", "c++"])
-        return write_pxd(header)
-
-    def test_cpp_class(self):
-        code = """
-        class Widget {
-        public:
-            int width;
-            int height;
-        };
-        """
-        result = self._translate(code)
-        # Classes are treated as structs
-        assert "Widget" in result
-        assert "int width" in result
-        assert "int height" in result
-
-    def test_cpp_function(self):
-        code = "int compute(int x, int y);"
-        result = self._translate(code)
-        assert "int compute(int x, int y)" in result
+    int compute(int x, int y)
+""",
+            tmp_path,
+            backend="libclang",
+            filename="test.hpp",
+            extra_args=["-x", "c++"],
+        )
 
 
 @pytest.mark.libclang
 class TestBackendComparison:
     """Test that both backends produce similar output for the same input."""
 
-    def setup_method(self):
-        from autopxd.backends.libclang_backend import (
-            LibclangBackend,
-        )
-
-        self.pycparser = PycparserBackend()
-        self.libclang = LibclangBackend()
-
-    def test_simple_struct_both_backends(self):
+    def test_simple_struct_both_backends(self, tmp_path):
         code = """
         struct Point {
             int x;
             int y;
         };
         """
-        pycparser_result = write_pxd(self.pycparser.parse(code, "test.h"))
-        libclang_result = write_pxd(self.libclang.parse(code, "test.h"))
+        expected = """cdef extern from "test.h":
 
-        # Both should have the struct
-        assert "cdef struct Point:" in pycparser_result
-        assert "cdef struct Point:" in libclang_result
-        assert "int x" in pycparser_result
-        assert "int x" in libclang_result
+    cdef struct Point:
+        int x
+        int y
+"""
+        # Test pycparser
+        assert_pxd_equals(code, expected, tmp_path, backend="pycparser")
+        # Test libclang
+        assert_pxd_equals(code, expected, tmp_path, backend="libclang")
 
-    def test_simple_function_both_backends(self):
+    def test_simple_function_both_backends(self, tmp_path):
         code = "int add(int a, int b);"
-        pycparser_result = write_pxd(self.pycparser.parse(code, "test.h"))
-        libclang_result = write_pxd(self.libclang.parse(code, "test.h"))
+        expected = """cdef extern from "test.h":
 
-        # Both should have the function
-        assert "int add(int a, int b)" in pycparser_result
-        assert "int add(int a, int b)" in libclang_result
+    int add(int a, int b)
+"""
+        # Test pycparser
+        assert_pxd_equals(code, expected, tmp_path, backend="pycparser")
+        # Test libclang
+        assert_pxd_equals(code, expected, tmp_path, backend="libclang")
 
-    def test_enum_both_backends(self):
+    def test_enum_both_backends(self, tmp_path):
         code = """
         enum Color { RED, GREEN, BLUE };
         """
-        pycparser_result = write_pxd(self.pycparser.parse(code, "test.h"))
-        libclang_result = write_pxd(self.libclang.parse(code, "test.h"))
+        expected = """cdef extern from "test.h":
 
-        # Both should have the enum
-        assert "cpdef enum Color:" in pycparser_result
-        assert "cpdef enum Color:" in libclang_result
-        assert "RED" in pycparser_result
-        assert "RED" in libclang_result
+    cpdef enum Color:
+        RED
+        GREEN
+        BLUE
+"""
+        # Test pycparser
+        assert_pxd_equals(code, expected, tmp_path, backend="pycparser")
+        # Test libclang
+        assert_pxd_equals(code, expected, tmp_path, backend="libclang")

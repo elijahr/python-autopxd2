@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Auto-import `libc.stdio` types** - `FILE` and `fpos_t` types are now automatically imported from `libc.stdio` when detected in headers.
+- **Auto-declare `va_list`** - When `va_list` is detected, autopxd now generates an opaque type declaration from `<stdarg.h>` since Cython doesn't include this type.
+
+### Fixed
+- **Forward declarations now emitted** - Struct, union, and class forward declarations (e.g., `struct internal_state;`) are now properly emitted in the generated pxd, fixing Cython compilation errors when opaque pointers reference forward-declared types.
+- **`_Atomic` type qualifier handling** - The C11 `_Atomic` type qualifier is now properly stripped from generated pxd output. Both `_Atomic type` and `_Atomic(type)` syntaxes are handled, fixing Cython compilation errors for headers using C11 atomics (e.g., pyrime's use of librime).
+
 ## [3.0.0] - 2025-12-10
 
 ### Added

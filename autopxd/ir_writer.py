@@ -24,8 +24,9 @@ Example
         f.write(pxd_content)
 """
 
-from autopxd.declarations import (
-    STDINT_DECLARATIONS,
+from autopxd.cython_types import (
+    get_cython_module_for_type,
+    get_stub_module_for_type,
 )
 from autopxd.ir import (
     Array,
@@ -46,6 +47,9 @@ from autopxd.ir import (
 from autopxd.keywords import (
     keywords,
 )
+
+# Type qualifiers that Cython doesn't support - strip from output
+UNSUPPORTED_TYPE_QUALIFIERS = {"_Atomic", "__restrict", "_Noreturn", "__restrict__"}
 
 
 class PxdWriter:
@@ -83,12 +87,18 @@ class PxdWriter:
 
     def __init__(self, header: Header) -> None:
         self.header = header
-        self.stdint_types: set[str] = set()
         # Track declared struct/union/enum names for type reference cleanup
         self.known_structs: set[str] = set()
         self.known_unions: set[str] = set()
         self.known_enums: set[str] = set()
         self._collect_known_types()
+
+        # New cimport tracking using registries
+        self.cython_cimports: dict[str, set[str]] = {}  # module -> types
+        self.stub_cimports: dict[str, set[str]] = {}  # stub_module -> types
+
+        # Collect types from all declarations
+        self._collect_cimport_types()
 
     def write(self) -> str:
         """Convert IR Header to Cython ``.pxd`` string.
@@ -97,13 +107,18 @@ class PxdWriter:
         """
         lines: list[str] = []
 
-        # Collect stdint types used
-        self._collect_stdint_types()
+        # 1. Cython stdlib cimports (sorted for determinism)
+        for module in sorted(self.cython_cimports.keys()):
+            types = sorted(self.cython_cimports[module])
+            lines.append(f"from {module} cimport {', '.join(types)}")
 
-        # Add stdint imports if needed
-        if self.stdint_types:
-            cimports = ", ".join(sorted(self.stdint_types))
-            lines.append(f"from libc.stdint cimport {cimports}")
+        # 2. Autopxd stub cimports
+        for stub_module in sorted(self.stub_cimports.keys()):
+            types = sorted(self.stub_cimports[stub_module])
+            lines.append(f"from autopxd.stubs.{stub_module} cimport {', '.join(types)}")
+
+        # Blank line before extern blocks if we had cimports
+        if lines:
             lines.append("")
 
         # Add extern block
@@ -141,38 +156,50 @@ class PxdWriter:
                     # Track typedef names - these can be used without prefix
                     self.known_structs.add(decl.name)
 
-    def _collect_stdint_types(self) -> None:
-        """Collect all stdint types used in declarations."""
+    def _collect_cimport_types(self) -> None:
+        """Collect all types that need cimport statements."""
         for decl in self.header.declarations:
-            self._collect_stdint_from_decl(decl)
+            self._collect_types_from_declaration(decl)
 
-    def _collect_stdint_from_decl(self, decl: Declaration) -> None:
-        """Collect stdint types from a declaration."""
-        if isinstance(decl, Struct):
-            for field in decl.fields:
-                self._collect_stdint_from_type(field.type)
-        elif isinstance(decl, Function):
-            self._collect_stdint_from_type(decl.return_type)
+    def _collect_types_from_declaration(self, decl: Declaration) -> None:
+        """Recursively collect types from a declaration."""
+        if isinstance(decl, Function):
+            self._check_type(decl.return_type)
             for param in decl.parameters:
-                self._collect_stdint_from_type(param.type)
+                self._check_type(param.type)
+        elif isinstance(decl, Struct):
+            for field in decl.fields:
+                self._check_type(field.type)
         elif isinstance(decl, Typedef):
-            self._collect_stdint_from_type(decl.underlying_type)
+            self._check_type(decl.underlying_type)
         elif isinstance(decl, Variable):
-            self._collect_stdint_from_type(decl.type)
+            self._check_type(decl.type)
 
-    def _collect_stdint_from_type(self, type_expr: TypeExpr) -> None:
-        """Collect stdint types from a type expression."""
-        if isinstance(type_expr, CType):
-            if type_expr.name in STDINT_DECLARATIONS:
-                self.stdint_types.add(type_expr.name)
-        elif isinstance(type_expr, Pointer):
-            self._collect_stdint_from_type(type_expr.pointee)
-        elif isinstance(type_expr, Array):
-            self._collect_stdint_from_type(type_expr.element_type)
-        elif isinstance(type_expr, FunctionPointer):
-            self._collect_stdint_from_type(type_expr.return_type)
-            for param in type_expr.parameters:
-                self._collect_stdint_from_type(param.type)
+    def _check_type(self, typ: TypeExpr) -> None:
+        """Check if a type needs a cimport and record it."""
+        if isinstance(typ, CType):
+            self._check_type_name(typ.name)
+        elif isinstance(typ, Pointer):
+            self._check_type(typ.pointee)
+        elif isinstance(typ, Array):
+            self._check_type(typ.element_type)
+        elif isinstance(typ, FunctionPointer):
+            self._check_type(typ.return_type)
+            for param in typ.parameters:
+                self._check_type(param.type)
+
+    def _check_type_name(self, name: str) -> None:
+        """Check a type name against registries."""
+        # Check Cython stdlib
+        module = get_cython_module_for_type(name)
+        if module:
+            self.cython_cimports.setdefault(module, set()).add(name)
+            return
+
+        # Check autopxd stubs
+        stub_module = get_stub_module_for_type(name)
+        if stub_module:
+            self.stub_cimports.setdefault(stub_module, set()).add(name)
 
     def _write_declaration(self, decl: Declaration) -> list[str]:
         """Write a single declaration."""
@@ -322,9 +349,21 @@ class PxdWriter:
 
         Strips 'struct ', 'union ', 'enum ' prefixes when the type is already
         declared in the header, since Cython references them by name only.
+        Also strips unsupported type qualifiers like _Atomic.
         Also de-duplicates qualifiers that may already be in the type name.
         """
         name = ctype.name
+
+        # Strip unsupported type qualifiers from type name
+        for qual in UNSUPPORTED_TYPE_QUALIFIERS:
+            name = name.replace(f"{qual} ", "")
+            # Also handle case where qualifier is at the end
+            if name.endswith(f" {qual}"):
+                name = name[: -(len(qual) + 1)]
+            # Handle qualifier(type) syntax (e.g., _Atomic(int)) - extract the inner type
+            prefix = f"{qual}("
+            if name.startswith(prefix) and name.endswith(")"):
+                name = name[len(prefix) : -1]
 
         # Strip struct/union/enum prefix if the type is already declared
         if name.startswith("struct "):
@@ -346,11 +385,11 @@ class PxdWriter:
         name = " ".join(escaped_parts)
 
         if ctype.qualifiers:
+            # Filter out unsupported qualifiers
+            filtered_quals = [q for q in ctype.qualifiers if q not in UNSUPPORTED_TYPE_QUALIFIERS]
             # De-duplicate qualifiers that are already in the type name
-            # e.g., if name is "const char" and qualifiers contains "const",
-            # we don't want to produce "const const char"
             new_quals = []
-            for q in ctype.qualifiers:
+            for q in filtered_quals:
                 if q not in parts:
                     new_quals.append(q)
             if new_quals:

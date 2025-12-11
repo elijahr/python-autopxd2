@@ -135,9 +135,17 @@ class ASTConverter(c_ast.NodeVisitor):  # type: ignore[misc]
             inner = node.type.type
             if isinstance(inner, c_ast.Struct):
                 # Check if this is just a reference to an existing struct (no body)
-                # e.g., "typedef struct my_struct my_struct;" - skip if name matches
+                # e.g., "typedef struct my_struct my_struct;" - emit forward declaration
                 if inner.decls is None and inner.name == name:
-                    # Self-typedef of named struct - skip entirely
+                    # Self-typedef - emit forward declaration for opaque type
+                    self.declarations.append(
+                        Struct(
+                            name=name,
+                            fields=[],
+                            is_union=False,
+                            location=self._get_location(node),
+                        )
+                    )
                     return
 
                 struct = self._convert_struct(inner, is_union=False)
@@ -162,7 +170,15 @@ class ASTConverter(c_ast.NodeVisitor):  # type: ignore[misc]
             if isinstance(inner, c_ast.Union):
                 # Check if this is just a reference to an existing union (no body)
                 if inner.decls is None and inner.name == name:
-                    # Self-typedef of named union - skip entirely
+                    # Self-typedef - emit forward declaration for opaque type
+                    self.declarations.append(
+                        Struct(
+                            name=name,
+                            fields=[],
+                            is_union=True,
+                            location=self._get_location(node),
+                        )
+                    )
                     return
 
                 struct = self._convert_struct(inner, is_union=True)

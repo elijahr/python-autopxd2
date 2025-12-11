@@ -17,6 +17,7 @@ import pytest
 from autopxd.backends import get_backend
 from autopxd.ir import Enum, Function, Struct
 from autopxd.ir_writer import write_pxd
+from test.assertions import assert_header_pxd_equals
 
 # Directory containing real header files
 REAL_HEADERS_DIR = os.path.join(os.path.dirname(__file__), "real_headers")
@@ -123,11 +124,29 @@ class TestZlibHeader:
         found = expected & func_names
         assert len(found) > 0, f"Expected some of {expected}, found functions: {func_names}"
 
-    def test_generates_valid_pxd(self, zlib_header):
-        """Verify we can generate pxd output."""
-        pxd = write_pxd(zlib_header)
-        assert len(pxd) > 0
-        assert 'cdef extern from "zlib.h":' in pxd
+    def test_pxd_matches_expected(self, zlib_header):
+        """Verify generated pxd matches expected output.
+
+        Note: Cython compilation validation is not possible for zlib because
+        it uses macro-based type aliases (voidpf, Bytef, uInt, etc.) defined
+        in zconf.h via #define rather than typedef. These macros are expanded
+        by libclang but the alias names are used in the output, which Cython
+        cannot resolve without the actual header.
+        """
+        expected_path = os.path.join(REAL_HEADERS_DIR, "zlib.expected.pxd")
+        if not os.path.exists(expected_path):
+            pytest.skip("zlib.expected.pxd not found")
+
+        with open(expected_path, encoding="utf-8") as f:
+            expected = f.read()
+
+        actual = write_pxd(zlib_header)
+
+        assert actual == expected, (
+            f"\n{'='*60}\nEXPECTED ({os.path.basename(expected_path)}):\n{'='*60}\n{repr(expected)}\n"
+            f"{'='*60}\nACTUAL:\n{'='*60}\n{repr(actual)}\n{'='*60}"
+        )
+        # NO Cython validation - see docstring for why
 
 
 class TestJanssonHeader:
@@ -185,11 +204,27 @@ class TestJanssonHeader:
         found = expected & func_names
         assert len(found) >= 3, f"Expected some of {expected}, found functions: {func_names}"
 
-    def test_generates_valid_pxd(self, jansson_header):
-        """Verify we can generate pxd output."""
-        pxd = write_pxd(jansson_header)
-        assert len(pxd) > 0
-        assert 'cdef extern from "jansson.h":' in pxd
+    def test_pxd_matches_expected(self, jansson_header):
+        """Verify generated pxd matches expected output.
+
+        Note: Cython compilation validation is not possible for jansson because
+        it uses va_list from <stdarg.h> and FILE from <stdio.h>. These system
+        types are not defined in the generated pxd, so Cython cannot resolve them.
+        """
+        expected_path = os.path.join(REAL_HEADERS_DIR, "jansson.expected.pxd")
+        if not os.path.exists(expected_path):
+            pytest.skip("jansson.expected.pxd not found")
+
+        with open(expected_path, encoding="utf-8") as f:
+            expected = f.read()
+
+        actual = write_pxd(jansson_header)
+
+        assert actual == expected, (
+            f"\n{'='*60}\nEXPECTED ({os.path.basename(expected_path)}):\n{'='*60}\n{repr(expected)}\n"
+            f"{'='*60}\nACTUAL:\n{'='*60}\n{repr(actual)}\n{'='*60}"
+        )
+        # NO Cython validation - see docstring for why
 
 
 class TestSimpleCHeader:
@@ -198,8 +233,6 @@ class TestSimpleCHeader:
     @pytest.fixture
     def simple_c_header(self):
         """Parse simple_c.h with pycparser and return the IR."""
-        from autopxd.backends import get_backend
-
         c_path = os.path.join(REAL_HEADERS_DIR, "simple_c.h")
         if not os.path.exists(c_path):
             pytest.skip("simple_c.h not found in test/real_headers/")
@@ -215,17 +248,17 @@ class TestSimpleCHeader:
         assert simple_c_header is not None
         assert len(simple_c_header.declarations) > 0
 
-    def test_pxd_matches_expected(self, simple_c_header):
-        """Verify generated pxd matches expected output."""
+    def test_pxd_matches_expected(self, simple_c_header, tmp_path):
+        """Verify generated pxd matches expected output and compiles."""
         expected_path = os.path.join(REAL_HEADERS_DIR, "simple_c.expected.pxd")
         if not os.path.exists(expected_path):
             pytest.skip("simple_c.expected.pxd not found")
 
-        with open(expected_path, encoding="utf-8") as f:
-            expected = f.read()
-
-        actual = write_pxd(simple_c_header)
-        assert actual == expected, f"\nEXPECTED:\n{expected}\n\nACTUAL:\n{actual}"
+        assert_header_pxd_equals(
+            simple_c_header,
+            expected_path,
+            tmp_path,
+        )
 
     def test_finds_enums(self, simple_c_header):
         """Verify we find both enums."""
@@ -276,39 +309,18 @@ class TestCppHeaders:
         assert simple_cpp_header is not None
         assert len(simple_cpp_header.declarations) > 0
 
-    def test_generates_valid_pxd(self, simple_cpp_header):
-        """Verify we can generate pxd output from C++."""
-        pxd = write_pxd(simple_cpp_header)
-        assert len(pxd) > 0
-        assert "cdef extern from" in pxd
-
-    def test_pxd_matches_expected(self, simple_cpp_header):
-        """Verify generated pxd matches expected output."""
+    def test_pxd_matches_expected(self, simple_cpp_header, tmp_path):
+        """Verify generated pxd matches expected output and compiles."""
         expected_path = os.path.join(REAL_HEADERS_DIR, "simple_cpp.expected.pxd")
         if not os.path.exists(expected_path):
             pytest.skip("simple_cpp.expected.pxd not found")
 
-        with open(expected_path, encoding="utf-8") as f:
-            expected = f.read()
-
-        actual = write_pxd(simple_cpp_header)
-        assert actual == expected, f"\nEXPECTED:\n{expected}\n\nACTUAL:\n{actual}"
-
-    def test_cpp_class_is_cppclass(self, simple_cpp_header):
-        """Verify C++ classes use cppclass in output."""
-        pxd = write_pxd(simple_cpp_header)
-        assert "cdef cppclass Widget:" in pxd
-
-    def test_cpp_struct_is_struct(self, simple_cpp_header):
-        """Verify C++ structs use struct (not cppclass) in output."""
-        pxd = write_pxd(simple_cpp_header)
-        assert "cdef struct Point:" in pxd
-
-    def test_cpp_methods_included(self, simple_cpp_header):
-        """Verify C++ class methods are included in output."""
-        pxd = write_pxd(simple_cpp_header)
-        assert "void resize(int w, int h)" in pxd
-        assert "bool isValid()" in pxd
+        assert_header_pxd_equals(
+            simple_cpp_header,
+            expected_path,
+            tmp_path,
+            cplus=True,
+        )
 
 
 class TestHeaderDiscovery:

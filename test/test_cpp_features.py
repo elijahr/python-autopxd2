@@ -7,7 +7,7 @@ from autopxd.ir import (
     Function,
     Struct,
 )
-from autopxd.ir_writer import write_pxd
+from test.assertions import assert_pxd_equals
 
 # These tests require libclang - exclude with: pytest -m "not libclang"
 pytestmark = pytest.mark.libclang
@@ -60,22 +60,30 @@ class TestCppClasses:
         assert method.name == "resize"
         assert len(method.parameters) == 2
 
-    def test_cpp_class_generates_cppclass_pxd(self, libclang_backend):
+    def test_cpp_class_generates_cppclass_pxd(self, libclang_backend, tmp_path):
         """Generated pxd should use 'cppclass' for C++ classes."""
-        code = """
-        class Widget {
-        public:
-            int width;
-            int height;
-            void resize(int w, int h);
-        };
-        """
-        header = libclang_backend.parse(code, "test.hpp", extra_args=["-x", "c++"])
-        pxd = write_pxd(header)
-        assert "cdef cppclass Widget:" in pxd
-        assert "int width" in pxd
-        assert "int height" in pxd
-        assert "void resize(int w, int h)" in pxd
+        assert_pxd_equals(
+            """
+            class Widget {
+            public:
+                int width;
+                int height;
+                void resize(int w, int h);
+            };
+            """,
+            """cdef extern from "test.hpp":
+
+    cdef cppclass Widget:
+        int width
+        int height
+        void resize(int w, int h)
+""",
+            tmp_path,
+            backend="libclang",
+            filename="test.hpp",
+            cplus=True,
+            extra_args=["-x", "c++"],
+        )
 
     def test_cpp_struct_is_not_cppclass(self, libclang_backend):
         """C++ structs should NOT have is_cppclass=True (they're just structs)."""

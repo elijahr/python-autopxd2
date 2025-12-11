@@ -33,8 +33,7 @@ CYTHON_STDLIB_HEADERS: dict[str, tuple[str, set[str]]] = {
             "uint64_t",
             "intptr_t",
             "uintptr_t",
-            "size_t",
-            "ssize_t",
+            # Note: size_t and ssize_t are Cython built-ins, not in libc.stdint
             "ptrdiff_t",
             "intmax_t",
             "uintmax_t",

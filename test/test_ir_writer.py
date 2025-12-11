@@ -15,33 +15,41 @@ from autopxd.ir import (
     Typedef,
     Variable,
 )
-from autopxd.ir_writer import (
-    write_pxd,
-)
+from test.assertions import assert_ir_to_pxd_equals
 
 
 class TestWriteFunction:
     """Test the write_pxd convenience function."""
 
-    def test_empty_header(self):
+    def test_empty_header(self, tmp_path):
         header = Header("test.h", [])
-        result = write_pxd(header)
-        assert 'cdef extern from "test.h":' in result
-        assert "pass" in result
+        assert_ir_to_pxd_equals(
+            header,
+            """cdef extern from "test.h":
+    pass
+""",
+            tmp_path,
+        )
 
-    def test_simple_function(self):
+    def test_simple_function(self, tmp_path):
         header = Header(
             "test.h",
             [Function("foo", CType("int"), [])],
         )
-        result = write_pxd(header)
-        assert "int foo()" in result
+        assert_ir_to_pxd_equals(
+            header,
+            """cdef extern from "test.h":
+
+    int foo()
+""",
+            tmp_path,
+        )
 
 
 class TestPxdWriterBasic:
     """Test basic PxdWriter functionality."""
 
-    def test_struct(self):
+    def test_struct(self, tmp_path):
         header = Header(
             "test.h",
             [
@@ -51,12 +59,18 @@ class TestPxdWriterBasic:
                 )
             ],
         )
-        result = write_pxd(header)
-        assert "cdef struct Point:" in result
-        assert "int x" in result
-        assert "int y" in result
+        assert_ir_to_pxd_equals(
+            header,
+            """cdef extern from "test.h":
 
-    def test_union(self):
+    cdef struct Point:
+        int x
+        int y
+""",
+            tmp_path,
+        )
+
+    def test_union(self, tmp_path):
         header = Header(
             "test.h",
             [
@@ -67,10 +81,18 @@ class TestPxdWriterBasic:
                 )
             ],
         )
-        result = write_pxd(header)
-        assert "cdef union Data:" in result
+        assert_ir_to_pxd_equals(
+            header,
+            """cdef extern from "test.h":
 
-    def test_enum(self):
+    cdef union Data:
+        int i
+        float f
+""",
+            tmp_path,
+        )
+
+    def test_enum(self, tmp_path):
         header = Header(
             "test.h",
             [
@@ -84,13 +106,19 @@ class TestPxdWriterBasic:
                 )
             ],
         )
-        result = write_pxd(header)
-        assert "cpdef enum Color:" in result
-        assert "RED" in result
-        assert "GREEN" in result
-        assert "BLUE" in result
+        assert_ir_to_pxd_equals(
+            header,
+            """cdef extern from "test.h":
 
-    def test_function(self):
+    cpdef enum Color:
+        RED
+        GREEN
+        BLUE
+""",
+            tmp_path,
+        )
+
+    def test_function(self, tmp_path):
         header = Header(
             "test.h",
             [
@@ -101,10 +129,16 @@ class TestPxdWriterBasic:
                 )
             ],
         )
-        result = write_pxd(header)
-        assert "int add(int a, int b)" in result
+        assert_ir_to_pxd_equals(
+            header,
+            """cdef extern from "test.h":
 
-    def test_variadic_function(self):
+    int add(int a, int b)
+""",
+            tmp_path,
+        )
+
+    def test_variadic_function(self, tmp_path):
         header = Header(
             "test.h",
             [
@@ -116,82 +150,136 @@ class TestPxdWriterBasic:
                 )
             ],
         )
-        result = write_pxd(header)
-        assert "int printf(const char* fmt, ...)" in result
+        assert_ir_to_pxd_equals(
+            header,
+            """cdef extern from "test.h":
 
-    def test_typedef(self):
+    int printf(const char* fmt, ...)
+""",
+            tmp_path,
+        )
+
+    def test_typedef(self, tmp_path):
         header = Header(
             "test.h",
             [Typedef("myint", CType("int"))],
         )
-        result = write_pxd(header)
-        assert "ctypedef int myint" in result
+        assert_ir_to_pxd_equals(
+            header,
+            """cdef extern from "test.h":
 
-    def test_variable(self):
+    ctypedef int myint
+""",
+            tmp_path,
+        )
+
+    def test_variable(self, tmp_path):
         header = Header(
             "test.h",
             [Variable("count", CType("int"))],
         )
-        result = write_pxd(header)
-        assert "int count" in result
+        assert_ir_to_pxd_equals(
+            header,
+            """cdef extern from "test.h":
+
+    int count
+""",
+            tmp_path,
+        )
 
 
 class TestPointerTypes:
     """Test pointer type formatting."""
 
-    def test_simple_pointer(self):
+    def test_simple_pointer(self, tmp_path):
         header = Header(
             "test.h",
             [Variable("ptr", Pointer(CType("int")))],
         )
-        result = write_pxd(header)
-        assert "int* ptr" in result
+        assert_ir_to_pxd_equals(
+            header,
+            """cdef extern from "test.h":
 
-    def test_double_pointer(self):
+    int* ptr
+""",
+            tmp_path,
+        )
+
+    def test_double_pointer(self, tmp_path):
         header = Header(
             "test.h",
             [Variable("ptr", Pointer(Pointer(CType("char"))))],
         )
-        result = write_pxd(header)
-        assert "char** ptr" in result
+        assert_ir_to_pxd_equals(
+            header,
+            """cdef extern from "test.h":
 
-    def test_const_pointer(self):
+    char** ptr
+""",
+            tmp_path,
+        )
+
+    def test_const_pointer(self, tmp_path):
         header = Header(
             "test.h",
-            [Variable("str", Pointer(CType("char", ["const"])))],
+            [Variable("str_", Pointer(CType("char", ["const"])))],
         )
-        result = write_pxd(header)
-        assert "const char* str" in result
+        assert_ir_to_pxd_equals(
+            header,
+            """cdef extern from "test.h":
+
+    const char* str_
+""",
+            tmp_path,
+        )
 
 
 class TestArrayTypes:
     """Test array type formatting."""
 
-    def test_simple_array(self):
+    def test_simple_array(self, tmp_path):
         header = Header(
             "test.h",
             [Variable("arr", Array(CType("int"), 10))],
         )
-        result = write_pxd(header)
-        assert "int arr[10]" in result
+        assert_ir_to_pxd_equals(
+            header,
+            """cdef extern from "test.h":
 
-    def test_flexible_array(self):
+    int arr[10]
+""",
+            tmp_path,
+        )
+
+    def test_flexible_array(self, tmp_path):
         header = Header(
             "test.h",
             [Variable("arr", Array(CType("int"), None))],
         )
-        result = write_pxd(header)
-        assert "int arr[]" in result
+        assert_ir_to_pxd_equals(
+            header,
+            """cdef extern from "test.h":
 
-    def test_array_of_pointers(self):
+    int arr[]
+""",
+            tmp_path,
+        )
+
+    def test_array_of_pointers(self, tmp_path):
         header = Header(
             "test.h",
             [Variable("ptrs", Array(Pointer(CType("char")), 10))],
         )
-        result = write_pxd(header)
-        assert "char* ptrs[10]" in result
+        assert_ir_to_pxd_equals(
+            header,
+            """cdef extern from "test.h":
 
-    def test_array_in_struct(self):
+    char* ptrs[10]
+""",
+            tmp_path,
+        )
+
+    def test_array_in_struct(self, tmp_path):
         header = Header(
             "test.h",
             [
@@ -201,14 +289,21 @@ class TestArrayTypes:
                 )
             ],
         )
-        result = write_pxd(header)
-        assert "char data[256]" in result
+        assert_ir_to_pxd_equals(
+            header,
+            """cdef extern from "test.h":
+
+    cdef struct Buffer:
+        char data[256]
+""",
+            tmp_path,
+        )
 
 
 class TestFunctionPointers:
     """Test function pointer formatting."""
 
-    def test_function_pointer_typedef(self):
+    def test_function_pointer_typedef(self, tmp_path):
         header = Header(
             "test.h",
             [
@@ -223,38 +318,64 @@ class TestFunctionPointers:
                 )
             ],
         )
-        result = write_pxd(header)
-        assert "ctypedef int (*callback)(int)" in result
+        assert_ir_to_pxd_equals(
+            header,
+            """cdef extern from "test.h":
+
+    ctypedef int (*callback)(int)
+""",
+            tmp_path,
+        )
 
 
 class TestKeywordEscaping:
     """Test Python keyword escaping."""
 
-    def test_escape_struct_name(self):
+    def test_escape_struct_name(self, tmp_path):
         header = Header(
             "test.h",
             [Struct("class", [Field("value", CType("int"))])],
         )
-        result = write_pxd(header)
-        assert 'class_ "class"' in result
+        assert_ir_to_pxd_equals(
+            header,
+            """cdef extern from "test.h":
 
-    def test_escape_function_name(self):
+    cdef struct class_ "class":
+        int value
+""",
+            tmp_path,
+        )
+
+    def test_escape_function_name(self, tmp_path):
         header = Header(
             "test.h",
             [Function("import", CType("void"), [])],
         )
-        result = write_pxd(header)
-        assert "import_" in result
+        assert_ir_to_pxd_equals(
+            header,
+            """cdef extern from "test.h":
 
-    def test_escape_field_name(self):
+    void import_ "import"()
+""",
+            tmp_path,
+        )
+
+    def test_escape_field_name(self, tmp_path):
         header = Header(
             "test.h",
             [Struct("Foo", [Field("class", CType("int"))])],
         )
-        result = write_pxd(header)
-        assert "class_" in result
+        assert_ir_to_pxd_equals(
+            header,
+            """cdef extern from "test.h":
 
-    def test_escape_param_name(self):
+    cdef struct Foo:
+        int class_ "class"
+""",
+            tmp_path,
+        )
+
+    def test_escape_param_name(self, tmp_path):
         header = Header(
             "test.h",
             [
@@ -265,30 +386,51 @@ class TestKeywordEscaping:
                 )
             ],
         )
-        result = write_pxd(header)
-        assert "from_" in result
+        assert_ir_to_pxd_equals(
+            header,
+            """cdef extern from "test.h":
 
-    def test_escape_enum_value(self):
+    void foo(int from_)
+""",
+            tmp_path,
+        )
+
+    def test_escape_enum_value(self, tmp_path):
         header = Header(
             "test.h",
             [Enum("Keywords", [EnumValue("None", 0)])],
         )
-        result = write_pxd(header)
-        assert 'None_ "None"' in result
+        assert_ir_to_pxd_equals(
+            header,
+            """cdef extern from "test.h":
+
+    cpdef enum Keywords:
+        None_ "None"
+""",
+            tmp_path,
+        )
 
 
 class TestStdintTypes:
     """Test stdint type handling."""
 
-    def test_stdint_import(self):
+    def test_stdint_import(self, tmp_path):
         header = Header(
             "test.h",
             [Variable("val", CType("uint32_t"))],
         )
-        result = write_pxd(header)
-        assert "from libc.stdint cimport uint32_t" in result
+        assert_ir_to_pxd_equals(
+            header,
+            """from libc.stdint cimport uint32_t
 
-    def test_multiple_stdint_imports(self):
+cdef extern from "test.h":
+
+    uint32_t val
+""",
+            tmp_path,
+        )
+
+    def test_multiple_stdint_imports(self, tmp_path):
         header = Header(
             "test.h",
             [
@@ -296,22 +438,36 @@ class TestStdintTypes:
                 Variable("b", CType("uint64_t")),
             ],
         )
-        result = write_pxd(header)
-        assert "from libc.stdint cimport" in result
-        assert "int8_t" in result
-        assert "uint64_t" in result
+        assert_ir_to_pxd_equals(
+            header,
+            """from libc.stdint cimport int8_t, uint64_t
 
-    def test_stdint_in_struct(self):
+cdef extern from "test.h":
+
+    int8_t a
+
+    uint64_t b
+""",
+            tmp_path,
+        )
+
+    def test_stdint_in_struct(self, tmp_path):
         header = Header(
             "test.h",
             [Struct("Data", [Field("val", CType("size_t"))])],
         )
-        result = write_pxd(header)
-        # size_t is not in STDINT_DECLARATIONS, so no import needed
-        assert "from libc.stdint cimport" not in result
-        assert "size_t val" in result
+        # size_t is a Cython built-in, so no cimport needed
+        assert_ir_to_pxd_equals(
+            header,
+            """cdef extern from "test.h":
 
-    def test_stdint_in_function_param(self):
+    cdef struct Data:
+        size_t val
+""",
+            tmp_path,
+        )
+
+    def test_stdint_in_function_param(self, tmp_path):
         header = Header(
             "test.h",
             [
@@ -322,34 +478,54 @@ class TestStdintTypes:
                 )
             ],
         )
-        result = write_pxd(header)
-        assert "from libc.stdint cimport uint16_t" in result
+        assert_ir_to_pxd_equals(
+            header,
+            """from libc.stdint cimport uint16_t
+
+cdef extern from "test.h":
+
+    void foo(uint16_t n)
+""",
+            tmp_path,
+        )
 
 
 class TestQualifiedTypes:
     """Test type qualifiers."""
 
-    def test_const_type(self):
+    def test_const_type(self, tmp_path):
         header = Header(
             "test.h",
             [Variable("val", CType("int", ["const"]))],
         )
-        result = write_pxd(header)
-        assert "const int val" in result
+        assert_ir_to_pxd_equals(
+            header,
+            """cdef extern from "test.h":
 
-    def test_volatile_type(self):
+    const int val
+""",
+            tmp_path,
+        )
+
+    def test_volatile_type(self, tmp_path):
         header = Header(
             "test.h",
             [Variable("flag", CType("int", ["volatile"]))],
         )
-        result = write_pxd(header)
-        assert "volatile int flag" in result
+        assert_ir_to_pxd_equals(
+            header,
+            """cdef extern from "test.h":
+
+    volatile int flag
+""",
+            tmp_path,
+        )
 
 
 class TestComplexCases:
     """Test complex declaration cases."""
 
-    def test_multiple_declarations(self):
+    def test_multiple_declarations(self, tmp_path):
         header = Header(
             "test.h",
             [
@@ -357,27 +533,45 @@ class TestComplexCases:
                 Function("get_point", CType("struct Point"), []),
             ],
         )
-        result = write_pxd(header)
-        assert "cdef struct Point:" in result
         # struct prefix is stripped because Point is a known type
-        assert "Point get_point()" in result
+        assert_ir_to_pxd_equals(
+            header,
+            """cdef extern from "test.h":
 
-    def test_empty_struct(self):
+    cdef struct Point:
+        int x
+
+    Point get_point()
+""",
+            tmp_path,
+        )
+
+    def test_empty_struct(self, tmp_path):
         """Empty struct is a forward declaration (no colon, no pass)."""
         header = Header(
             "test.h",
             [Struct("Empty", [])],
         )
-        result = write_pxd(header)
-        # Empty struct = forward declaration (no colon)
-        assert "cdef struct Empty" in result
-        assert "cdef struct Empty:" not in result
+        assert_ir_to_pxd_equals(
+            header,
+            """cdef extern from "test.h":
 
-    def test_anonymous_enum(self):
+    cdef struct Empty
+""",
+            tmp_path,
+        )
+
+    def test_anonymous_enum(self, tmp_path):
         header = Header(
             "test.h",
             [Enum(None, [EnumValue("VALUE", 42)])],
         )
-        result = write_pxd(header)
-        assert "cpdef enum:" in result
-        assert "VALUE" in result
+        assert_ir_to_pxd_equals(
+            header,
+            """cdef extern from "test.h":
+
+    cpdef enum:
+        VALUE
+""",
+            tmp_path,
+        )
