@@ -24,5 +24,5 @@ class TestBackendProperties:
     def test_libclang_properties(self, backend):
         if backend.name != "libclang":
             pytest.skip("libclang-specific test")
-        assert backend.supports_macros is True  # Now supports simple integer macros
+        assert backend.supports_macros is False  # Limited by Python bindings
         assert backend.supports_cpp is True
