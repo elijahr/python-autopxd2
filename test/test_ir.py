@@ -186,3 +186,31 @@ class TestSourceLocation:
     def test_location_without_column(self):
         loc = SourceLocation("test.h", 42)
         assert loc.column is None
+
+
+class TestHeaderIncludedHeaders:
+    """Tests for Header.included_headers attribute."""
+
+    def test_header_has_included_headers_attribute(self):
+        """Header should have included_headers attribute."""
+        header = Header(path="test.h", declarations=[])
+        assert hasattr(header, "included_headers")
+
+    def test_included_headers_defaults_to_empty_set(self):
+        """included_headers defaults to empty set."""
+        header = Header(path="test.h", declarations=[])
+        assert header.included_headers == set()
+
+    def test_included_headers_can_be_set(self):
+        """included_headers can be populated."""
+        header = Header(path="test.h", declarations=[])
+        header.included_headers = {"stdio.h", "stdlib.h", "stdint.h"}
+        assert "stdio.h" in header.included_headers
+        assert "stdlib.h" in header.included_headers
+        assert len(header.included_headers) == 3
+
+    def test_header_constructor_accepts_included_headers(self):
+        """Header constructor should accept included_headers parameter."""
+        included = {"stdio.h", "string.h"}
+        header = Header(path="test.h", declarations=[], included_headers=included)
+        assert header.included_headers == included

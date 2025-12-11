@@ -652,6 +652,8 @@ class Header:
 
     :param path: Path to the original header file.
     :param declarations: List of extracted declarations (structs, functions, etc.).
+    :param included_headers: Set of header file basenames included by this header
+                             (populated by libclang backend only).
 
     Example
     -------
@@ -672,6 +674,7 @@ class Header:
 
     path: str
     declarations: list[Declaration] = field(default_factory=list)
+    included_headers: set[str] = field(default_factory=set)
 
     def __str__(self) -> str:
         return f"Header({self.path}, {len(self.declarations)} declarations)"
