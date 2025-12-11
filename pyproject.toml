@@ -57,6 +57,7 @@ include = ["autopxd", "autopxd.*"]
 
 [tool.setuptools.package-data]
 autopxd = [
+  "stubs/*.pxd",
   "stubs/include/*",
   "stubs/include/**/*",
   "stubs/darwin-include/*",
