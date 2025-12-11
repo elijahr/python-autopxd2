@@ -23,7 +23,7 @@ class TestCythonStdlibRegistry:
         assert module == "libc.stdint"
         assert "uint32_t" in types
         assert "int64_t" in types
-        assert "size_t" in types
+        assert "ptrdiff_t" in types  # size_t/ssize_t are Cython built-ins, not in libc.stdint
 
     def test_stdio_header_mapping(self):
         """stdio.h maps to libc.stdio with FILE type."""
