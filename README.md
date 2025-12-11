@@ -64,6 +64,73 @@ Options:
   -h, --help                     Show this message and exit.
 ```
 
+## Automatic Imports
+
+autopxd2 automatically generates `cimport` statements for commonly used types when using the libclang backend.
+
+### Cython Standard Library Types
+
+When headers use types from C standard library headers, autopxd generates appropriate Cython cimports:
+
+```c
+// input.h
+#include <stdio.h>
+#include <stdint.h>
+
+uint32_t process(FILE *f);
+```
+
+```cython
+# Generated output
+from libc.stdint cimport uint32_t
+from libc.stdio cimport FILE
+
+cdef extern from "input.h":
+    uint32_t process(FILE* f)
+```
+
+### Bundled Stub Types
+
+For types not in Cython's standard library, autopxd provides bundled stub declarations:
+
+```c
+// input.h
+#include <stdarg.h>
+
+void log_message(const char *fmt, va_list args);
+```
+
+```cython
+# Generated output
+from autopxd.stubs.stdarg cimport va_list
+
+cdef extern from "input.h":
+    void log_message(const char* fmt, va_list args)
+```
+
+### C++ STL Types
+
+C++ standard library types are automatically imported from `libcpp`:
+
+```cpp
+// input.hpp
+#include <vector>
+#include <string>
+
+std::vector<std::string> get_items();
+```
+
+```cython
+# Generated output
+from libcpp.string cimport string
+from libcpp.vector cimport vector
+
+cdef extern from "input.hpp":
+    vector[string] get_items()
+```
+
+**Note:** Auto-import requires the libclang backend for header detection. The pycparser backend does not track included headers.
+
 ## Documentation
 
 Full documentation is available at [elijahr.github.io/python-autopxd2](https://elijahr.github.io/python-autopxd2/).
