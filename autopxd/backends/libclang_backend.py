@@ -103,15 +103,26 @@ class ClangASTConverter:
         self.declarations: list[Declaration] = []
         # Track seen declarations to avoid duplicates
         self._seen: dict[str, bool] = {}
+        # Current namespace context (for nested namespace support)
+        self._namespace_stack: list[str] = []
+
+    @property
+    def _current_namespace(self) -> str | None:
+        """Get current namespace as '::'-joined string, or None if global."""
+        return "::".join(self._namespace_stack) if self._namespace_stack else None
 
     def convert(self, tu: "clang.cindex.TranslationUnit") -> Header:
         """Convert a libclang TranslationUnit to our IR Header."""
-        for cursor in tu.cursor.get_children():
-            # Only process declarations from the target file
-            if not self._is_from_target_file(cursor):
-                continue
-            self._process_cursor(cursor)
+        self._process_children(tu.cursor)
         return Header(path=self.filename, declarations=self.declarations)
+
+    def _process_children(self, cursor: "clang.cindex.Cursor") -> None:
+        """Process all children of a cursor."""
+        for child in cursor.get_children():
+            # Only process declarations from the target file
+            if not self._is_from_target_file(child):
+                continue
+            self._process_cursor(child)
 
     def _is_from_target_file(self, cursor: "clang.cindex.Cursor") -> bool:
         """Check if cursor is from the target file."""
@@ -139,6 +150,17 @@ class ClangASTConverter:
         elif kind == CursorKind.CLASS_DECL:
             # C++ class - uses cppclass in Cython
             self._process_struct(cursor, is_union=False, is_cppclass=True)
+        elif kind == CursorKind.NAMESPACE:
+            # C++ namespace - recurse into it with namespace context
+            self._process_namespace(cursor)
+
+    def _process_namespace(self, cursor: "clang.cindex.Cursor") -> None:
+        """Process a C++ namespace declaration."""
+        ns_name = cursor.spelling
+        if ns_name:
+            self._namespace_stack.append(ns_name)
+            self._process_children(cursor)
+            self._namespace_stack.pop()
 
     def _process_struct(self, cursor: "clang.cindex.Cursor", is_union: bool, is_cppclass: bool = False) -> None:
         """Process a struct/union/class declaration."""
@@ -181,6 +203,7 @@ class ClangASTConverter:
             methods=methods,
             is_union=is_union,
             is_cppclass=is_cppclass,
+            namespace=self._current_namespace,
             location=self._get_location(cursor),
         )
         self.declarations.append(struct)
@@ -240,6 +263,7 @@ class ClangASTConverter:
             return_type=return_type,
             parameters=parameters,
             is_variadic=is_variadic,
+            namespace=self._current_namespace,
             location=self._get_location(cursor),
         )
         self.declarations.append(func)

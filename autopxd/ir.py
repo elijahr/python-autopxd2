@@ -451,6 +451,7 @@ class Struct:
     is_union: bool = False
     is_cppclass: bool = False
     is_typedef: bool = False
+    namespace: Optional[str] = None
     location: Optional[SourceLocation] = None
 
     def __str__(self) -> str:
@@ -505,6 +506,7 @@ class Function:
     return_type: TypeExpr
     parameters: list[Parameter] = field(default_factory=list)
     is_variadic: bool = False
+    namespace: Optional[str] = None
     location: Optional[SourceLocation] = None
 
     def __str__(self) -> str:

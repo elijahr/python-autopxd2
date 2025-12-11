@@ -24,6 +24,8 @@ Example
         f.write(pxd_content)
 """
 
+from collections import defaultdict
+
 from autopxd.cython_types import (
     get_cython_module_for_type,
     get_libcpp_module_for_type,
@@ -128,20 +130,39 @@ class PxdWriter:
         if lines:
             lines.append("")
 
-        # Add extern block
-        lines.append(f'cdef extern from "{self.header.path}":')
+        # Group declarations by namespace
+        by_namespace: dict[str | None, list[Declaration]] = defaultdict(list)
+        for decl in self.header.declarations:
+            ns = getattr(decl, "namespace", None)
+            by_namespace[ns].append(decl)
 
-        # Add declarations
-        if not self.header.declarations:
-            lines.append(f"{self.INDENT}pass")
-            lines.append("")
-        else:
-            lines.append("")
-            for decl in self.header.declarations:
-                decl_lines = self._write_declaration(decl)
-                for line in decl_lines:
-                    lines.append(f"{self.INDENT}{line}" if line else "")
+        # If no declarations at all, still output empty extern block
+        if not by_namespace:
+            by_namespace[None] = []
+
+        # Output non-namespaced declarations first, then namespaced (sorted)
+        namespace_order = sorted(by_namespace.keys(), key=lambda x: (x is not None, x or ""))
+
+        for namespace in namespace_order:
+            decls = by_namespace[namespace]
+
+            # Add extern block with optional namespace
+            if namespace:
+                lines.append(f'cdef extern from "{self.header.path}" namespace "{namespace}":')
+            else:
+                lines.append(f'cdef extern from "{self.header.path}":')
+
+            # Add declarations
+            if not decls:
+                lines.append(f"{self.INDENT}pass")
                 lines.append("")
+            else:
+                lines.append("")
+                for decl in decls:
+                    decl_lines = self._write_declaration(decl)
+                    for line in decl_lines:
+                        lines.append(f"{self.INDENT}{line}" if line else "")
+                    lines.append("")
 
         return "\n".join(lines)
 
