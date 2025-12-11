@@ -542,9 +542,22 @@ class LibclangBackend:
             if diag.severity >= clang.cindex.Diagnostic.Error:
                 raise RuntimeError(f"Parse error: {diag.spelling}")
 
+        # Collect included headers
+        included_headers: set[str] = set()
+        for inclusion in tu.get_includes():
+            # inclusion.include is a File with name attribute
+            header_path = str(inclusion.include.name)
+            # Store full path - caller can extract basename if needed
+            included_headers.add(header_path)
+
         # Convert to IR
         converter = ClangASTConverter(filename)
-        return converter.convert(tu)
+        header = converter.convert(tu)
+
+        # Attach included headers to the IR
+        header.included_headers = included_headers
+
+        return header
 
 
 # Only register this backend if system libclang is available
