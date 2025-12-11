@@ -63,3 +63,33 @@ cdef extern from "test.h":
         )
         # Cython may warn but shouldn't error on valid pxd
         assert result.returncode == 0, f"Cython failed: {result.stderr}"
+
+
+class TestSocketStubs:
+    """Tests for socket-related stub files."""
+
+    def test_sys_socket_stub_exists(self):
+        """sys_socket.pxd exists in stubs package."""
+        files = importlib.resources.files("autopxd.stubs")
+        path = files / "sys_socket.pxd"
+        assert path.is_file()
+
+    def test_sys_socket_contains_sockaddr(self):
+        """sys_socket.pxd declares sockaddr."""
+        files = importlib.resources.files("autopxd.stubs")
+        content = (files / "sys_socket.pxd").read_text()
+        assert "sockaddr" in content
+        assert "socklen_t" in content
+
+    def test_netinet_in_stub_exists(self):
+        """netinet_in.pxd exists in stubs package."""
+        files = importlib.resources.files("autopxd.stubs")
+        path = files / "netinet_in.pxd"
+        assert path.is_file()
+
+    def test_netinet_in_contains_sockaddr_in(self):
+        """netinet_in.pxd declares sockaddr_in."""
+        files = importlib.resources.files("autopxd.stubs")
+        content = (files / "netinet_in.pxd").read_text()
+        assert "sockaddr_in" in content
+        assert "in_addr" in content
