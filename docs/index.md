@@ -21,7 +21,7 @@ autopxd myheader.h > myheader.pxd
 autopxd --backend libclang myheader.hpp > myheader.pxd
 
 # Or use Docker for libclang without local installation
-docker run --rm -v $(pwd):/work autopxd2 autopxd /work/myheader.h
+docker run --rm -v $(pwd):/work -w /work ghcr.io/elijahr/python-autopxd2 autopxd myheader.h
 ```
 
 ## Installation

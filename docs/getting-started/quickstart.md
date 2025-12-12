@@ -39,10 +39,18 @@ cdef extern from "example.h":
 
 ## Include Directories
 
-If your header includes other headers, specify include directories:
+The libclang backend automatically detects system include paths, so standard headers like `<stddef.h>` and `<stdint.h>` work out of the box.
+
+For project-specific includes, use `-I`:
 
 ```bash
-autopxd -I /path/to/includes myheader.h
+autopxd -I ./include -I ./third_party myheader.h
+```
+
+To disable automatic system include detection (e.g., for cross-compilation), use `--no-default-includes`:
+
+```bash
+autopxd --no-default-includes -I /custom/sysroot/include myheader.h
 ```
 
 ## Choosing a Backend

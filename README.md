@@ -14,10 +14,12 @@ autopxd2 parses C header files and generates Cython `.pxd` files, enabling you t
 
 **Key features:**
 
-- Generates complete `.pxd` files from C headers
-- Handles structs, unions, enums, typedefs, and function declarations
+- Generates complete `.pxd` files from C/C++ headers
+- Full C++ support with libclang backend (classes, templates, namespaces)
+- Automatic system include path detection
+- Extracts `#define` macros as typed constants
+- Auto-generates `cimport` statements for standard library types
 - Cross-platform support (Linux, macOS, Windows)
-- Multiple parser backends (pycparser, libclang)
 
 ## Installation
 
@@ -35,8 +37,8 @@ See the [installation docs](https://elijahr.github.io/python-autopxd2/getting-st
 # Generate a .pxd file from a C header
 autopxd myheader.h myheader.pxd
 
-# Include additional directories
-autopxd -I /usr/include myheader.h myheader.pxd
+# Add project-specific include directories (system includes are auto-detected)
+autopxd -I ./include myheader.h myheader.pxd
 
 # Write to stdout (omit output file)
 autopxd myheader.h > myheader.pxd
@@ -47,21 +49,22 @@ autopxd myheader.h > myheader.pxd
 ```
 autopxd [OPTIONS] INFILE [OUTFILE]
 
+Options marked [libclang] require the libclang backend.
+
 Options:
-  -v, --version                  Print program version and exit.
-  -b, --backend <name>           Parser backend: auto (default), libclang, pycparser.
-  --list-backends                Show available backends and exit.
-  --json                         JSON output (for --list-backends).
-  -x, --cpp                      Parse as C++ (requires libclang).
-  --std <standard>               Language standard (e.g., c11, c++17).
-  -I, --include-dir <dir>        Add directory to preprocessor search path.
-  -D, --compiler-directive <d>   Pass directive to the C preprocessor.
-  -R, --regex <pattern>          Apply sed-style substitution (s/.../.../g).
-  -w, --whitelist <file>         Only generate from specified files.
-  --clang-arg <arg>              Pass argument to libclang.
-  -q, --quiet                    Suppress warnings.
-  --debug / --no-debug           Dump preprocessor output to stderr.
-  -h, --help                     Show this message and exit.
+  -v, --version              Print version and exit.
+  -b, --backend <name>       Parser backend (default: auto, prefers libclang).
+  --list-backends            List available backends and exit.
+  -q, --quiet                Suppress warnings.
+  --debug / --no-debug       Print debug info to stderr.
+  -I, --include-dir <dir>    Add include search path.
+  -D, --define <macro>       Define preprocessor macro.
+  -w, --whitelist <pattern>  Only emit from files matching pattern.
+  -x, --cpp                  [libclang] Parse as C++.
+  --std <std>                [libclang] Language standard (e.g., c11, c++17).
+  --clang-arg <arg>          [libclang] Pass argument to clang.
+  --no-default-includes      [libclang] Disable system include auto-detection.
+  -h, --help                 Show this message and exit.
 ```
 
 ## Automatic Imports
@@ -137,11 +140,13 @@ Full documentation is available at [elijahr.github.io/python-autopxd2](https://e
 
 ## Docker
 
-A Docker image is available for environments where installing dependencies is difficult:
+A Docker image with libclang pre-installed is available:
 
 ```shell
-docker run --rm -v $(pwd):/work ghcr.io/elijahr/autopxd2 myheader.h myheader.pxd
+docker run --rm -v $(pwd):/work -w /work ghcr.io/elijahr/python-autopxd2 autopxd myheader.h
 ```
+
+See [Docker Usage](https://elijahr.github.io/python-autopxd2/getting-started/docker/) for more examples.
 
 ## Contributing
 

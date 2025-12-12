@@ -33,7 +33,8 @@ Uses LLVM's clang library for parsing. Provides the same parser used by actual c
 **Pros:**
 
 - Full C++ support (classes, templates, namespaces)
-- Extracts simple numeric macros as constants
+- Extracts macros as constants (integers, floats, strings, expressions)
+- Automatic system include path detection
 - Handles comments and preprocessor directives directly
 - Better error messages
 - Handles complex headers reliably
@@ -43,7 +44,7 @@ Uses LLVM's clang library for parsing. Provides the same parser used by actual c
 - Requires libclang to be installed
 - Python `clang2` package version must match system libclang (these are official LLVM bindings)
 - Slightly slower startup time
-- Complex macros (expressions, function-like) are not extracted
+- Function-like macros are not extracted
 
 **Usage:**
 
@@ -52,6 +53,27 @@ autopxd --backend libclang myheader.h
 
 # For C++ headers
 autopxd --backend libclang myheader.hpp
+```
+
+## System Include Paths
+
+The libclang backend automatically detects system include directories by querying the system clang compiler. This means headers like `<stddef.h>` and `<stdint.h>` work without requiring manual `-I` flags.
+
+```bash
+# This works automatically - system includes are detected
+autopxd myheader.h
+```
+
+To disable automatic include detection:
+
+```bash
+autopxd --no-default-includes myheader.h
+```
+
+You can still add additional include directories:
+
+```bash
+autopxd -I /my/project/include myheader.h
 ```
 
 ## Choosing a Backend
@@ -179,7 +201,7 @@ The pycparser backend does not extract macros since it requires preprocessed inp
 If you don't want to install libclang locally, use the Docker image:
 
 ```bash
-docker run --rm -v $(pwd):/work autopxd2 autopxd --backend libclang /work/myheader.h
+docker run --rm -v $(pwd):/work -w /work ghcr.io/elijahr/python-autopxd2 autopxd myheader.h
 ```
 
 See [Docker Usage](../getting-started/docker.md) for details.

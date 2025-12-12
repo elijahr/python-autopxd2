@@ -77,6 +77,7 @@ def translate(
     extra_args: list[str] | None = None,
     whitelist: list[str] | None = None,
     debug: bool = False,
+    use_default_includes: bool = True,
 ) -> str:
     """Generate Cython .pxd from C/C++ header code.
 
@@ -88,6 +89,8 @@ def translate(
         whitelist: Only include declarations from files matching these patterns.
             Supports fnmatch patterns like "*.h", "include/*.h".
         debug: Print debug info to stderr.
+        use_default_includes: If True (default), automatically detect and add
+            system include directories when using the libclang backend.
 
     Returns:
         Cython .pxd file contents.
@@ -104,7 +107,16 @@ def translate(
 
     # Parse with backend
     backend_obj = get_backend(backend_name)
-    header = backend_obj.parse(code, hdrname, extra_args=extra_args or [])
+    # Check if backend supports use_default_includes (libclang only)
+    if hasattr(backend_obj.parse, "__code__") and "use_default_includes" in backend_obj.parse.__code__.co_varnames:
+        header = backend_obj.parse(
+            code,
+            hdrname,
+            extra_args=extra_args or [],
+            use_default_includes=use_default_includes,  # type: ignore[call-arg]
+        )
+    else:
+        header = backend_obj.parse(code, hdrname, extra_args=extra_args or [])
 
     if debug:
         _debug_print(f"Found {len(header.declarations)} declarations")
@@ -239,45 +251,31 @@ def validate_libclang_options(
 
 @click.command(
     context_settings=CONTEXT_SETTINGS,
-    help="Generate a Cython pxd file from a C header file.",
+    help="""Generate Cython .pxd declarations from C/C++ headers.
+
+\b
+Options marked [libclang] require the libclang backend.
+""",
 )
-@click.option("--version", "-v", is_flag=True, help="Print program version and exit.")
-@click.option(
-    "--include-dir",
-    "-I",
-    multiple=True,
-    metavar="<dir>",
-    help="Allow the C preprocessor to search for files in <dir>.",
-)
-@click.option(
-    "--compiler-directive",
-    "-D",
-    multiple=True,
-    help="Additional directives for the C compiler.",
-    metavar="<directive>",
-)
-@click.option(
-    "--debug/--no-debug",
-    default=False,
-    help="Dump preprocessor output to stderr.",
-)
-@click.option(
-    "--list-backends",
-    is_flag=True,
-    help="Show available backends and exit.",
-)
-@click.option(
-    "--json",
-    "json_output",
-    is_flag=True,
-    help="Output in JSON format (for --list-backends).",
-)
+# === General options ===
+@click.option("--version", "-v", is_flag=True, help="Print version and exit.")
 @click.option(
     "--backend",
     "-b",
     type=click.Choice(["auto", "libclang", "pycparser"], case_sensitive=False),
     default="auto",
-    help="Parser backend: auto (default), libclang, pycparser.",
+    help="Parser backend (default: auto, prefers libclang).",
+)
+@click.option(
+    "--list-backends",
+    is_flag=True,
+    help="List available backends and exit.",
+)
+@click.option(
+    "--json",
+    "json_output",
+    is_flag=True,
+    help="JSON output (with --list-backends).",
 )
 @click.option(
     "--quiet",
@@ -286,28 +284,62 @@ def validate_libclang_options(
     help="Suppress warnings.",
 )
 @click.option(
-    "--cpp",
-    "-x",
-    is_flag=True,
-    help="Parse as C++ (requires libclang backend).",
+    "--debug/--no-debug",
+    default=False,
+    help="Print debug info to stderr.",
 )
+# === Preprocessing options (both backends) ===
 @click.option(
-    "--std",
-    metavar="<standard>",
-    help="Language standard (e.g., c11, c++17). Requires libclang.",
-)
-@click.option(
-    "--clang-arg",
+    "--include-dir",
+    "-I",
     multiple=True,
-    metavar="<arg>",
-    help="Pass argument to libclang (can be repeated).",
+    metavar="<dir>",
+    help="Add include search path.",
+)
+@click.option(
+    "--define",
+    "-D",
+    "defines",
+    multiple=True,
+    metavar="<macro>",
+    help="Define preprocessor macro.",
 )
 @click.option(
     "--whitelist",
     "-w",
     multiple=True,
-    metavar="<file>",
-    help="Only generate declarations from specified files.",
+    metavar="<pattern>",
+    help="Only emit from files matching pattern.",
+)
+# === libclang-only options ===
+@click.option(
+    "--cpp",
+    "-x",
+    is_flag=True,
+    help="[libclang] Parse as C++.",
+)
+@click.option(
+    "--std",
+    metavar="<std>",
+    help="[libclang] Language standard (e.g., c11, c++17).",
+)
+@click.option(
+    "--clang-arg",
+    multiple=True,
+    metavar="<arg>",
+    help="[libclang] Pass argument to clang.",
+)
+@click.option(
+    "--no-default-includes",
+    is_flag=True,
+    help="[libclang] Disable system include auto-detection.",
+)
+# === Deprecated (hidden) ===
+@click.option(
+    "--compiler-directive",
+    "defines_deprecated",
+    multiple=True,
+    hidden=True,
 )
 @click.argument(
     "infile",
@@ -324,7 +356,8 @@ def cli(
     infile: IO[str] | None,
     outfile: IO[str],
     include_dir: tuple[str, ...],
-    compiler_directive: tuple[str, ...],
+    defines: tuple[str, ...],
+    defines_deprecated: tuple[str, ...],
     debug: bool,
     list_backends: bool,
     json_output: bool,
@@ -334,6 +367,7 @@ def cli(
     std: str | None,
     clang_arg: tuple[str, ...],
     whitelist: tuple[str, ...],
+    no_default_includes: bool,
 ) -> None:
     if version:
         print(__version__)
@@ -358,10 +392,18 @@ def cli(
     resolved_backend = resolve_backend(backend, cpp, quiet)
     validate_libclang_options(resolved_backend, std, clang_arg)
 
+    # Merge deprecated --compiler-directive into --define
+    all_defines = defines + defines_deprecated
+    if defines_deprecated and not quiet:
+        click.echo(
+            "Warning: --compiler-directive is deprecated, use --define or -D instead.",
+            err=True,
+        )
+
     # Build extra_args list from CLI options
     extra_args: list[str] = []
-    for directive in compiler_directive:
-        extra_args.append(f"-D{directive}")
+    for define in all_defines:
+        extra_args.append(f"-D{define}")
     for directory in include_dir:
         extra_args.append(f"-I{directory}")
     # Add --std if specified
@@ -381,5 +423,6 @@ def cli(
             extra_args=extra_args if extra_args else None,
             whitelist=whitelist_list,
             debug=debug,
+            use_default_includes=not no_default_includes,
         )
     )

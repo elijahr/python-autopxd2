@@ -3,18 +3,20 @@
 # This image provides a complete environment for generating Cython .pxd files
 # from C/C++ headers, including libclang for better header parsing.
 #
+# Pre-built image available at: ghcr.io/elijahr/python-autopxd2
+#
 # Usage:
-#   # Build the image
-#   docker build -t autopxd2 .
-#
 #   # Generate .pxd from a header file
-#   docker run --rm -v $(pwd):/work autopxd2 autopxd /work/myheader.h
+#   docker run --rm -v $(pwd):/work -w /work ghcr.io/elijahr/python-autopxd2 autopxd myheader.h
 #
-#   # Use libclang backend (better C++ support)
-#   docker run --rm -v $(pwd):/work autopxd2 autopxd --backend libclang /work/myheader.h
+#   # With include directories
+#   docker run --rm -v $(pwd):/work -w /work ghcr.io/elijahr/python-autopxd2 autopxd -I include myheader.h
+#
+#   # External includes (mount separately)
+#   docker run --rm -v $(pwd):/work -v ~/libs/foo:/foo -w /work ghcr.io/elijahr/python-autopxd2 autopxd -I /foo/include myheader.h
 #
 #   # Interactive shell
-#   docker run --rm -it -v $(pwd):/work autopxd2 bash
+#   docker run --rm -it -v $(pwd):/work -w /work ghcr.io/elijahr/python-autopxd2 bash
 
 FROM python:3.12-slim
 

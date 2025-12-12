@@ -33,8 +33,7 @@ pip install -e .[dev]
 Use the Docker image for libclang support without installing anything locally:
 
 ```bash
-docker build -t autopxd2 https://github.com/elijahr/python-autopxd2.git
-docker run --rm -v $(pwd):/work autopxd2 autopxd /work/myheader.h
+docker run --rm -v $(pwd):/work -w /work ghcr.io/elijahr/python-autopxd2 autopxd myheader.h
 ```
 
 See [Docker Usage](docker.md) for more details.

@@ -36,6 +36,9 @@ Example
     header = backend.parse(code, "myheader.hpp", extra_args=["-std=c++17"])
 """
 
+import subprocess
+import sys
+
 import clang.cindex
 from clang.cindex import (
     CursorKind,
@@ -81,6 +84,53 @@ def is_system_libclang_available() -> bool:
         return True
     except clang.cindex.LibclangError:
         return False
+
+
+# Cache for system include directories (computed once per process)
+_system_include_cache: list[str] | None = None
+
+
+def get_system_include_dirs() -> list[str]:
+    """Get system include directories by querying the system clang compiler.
+
+    This runs ``clang -v -x c -E /dev/null`` and parses the include paths
+    from its output. The result is cached for subsequent calls.
+
+    :returns: List of ``-I<path>`` arguments for system include directories.
+        Returns empty list if clang is not available or detection fails.
+    """
+    global _system_include_cache  # noqa: PLW0603
+
+    if _system_include_cache is not None:
+        return _system_include_cache
+
+    _system_include_cache = []
+
+    try:
+        # Use /dev/null on Unix, NUL on Windows
+        null_file = "NUL" if sys.platform == "win32" else "/dev/null"
+        result = subprocess.run(
+            ["clang", "-v", "-x", "c", "-E", null_file],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        # Parse the include paths from stderr
+        in_includes = False
+        for line in result.stderr.splitlines():
+            if "#include <...> search starts here:" in line:
+                in_includes = True
+                continue
+            if in_includes:
+                if line.startswith("End of search list"):
+                    break
+                path = line.strip()
+                if path and not path.endswith("(framework directory)"):
+                    _system_include_cache.append(f"-I{path}")
+    except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
+        pass
+
+    return _system_include_cache
 
 
 class ClangASTConverter:
@@ -719,6 +769,7 @@ class LibclangBackend:
         filename: str,
         include_dirs: list[str] | None = None,
         extra_args: list[str] | None = None,
+        use_default_includes: bool = True,
     ) -> Header:
         """Parse C/C++ code using libclang.
 
@@ -729,6 +780,9 @@ class LibclangBackend:
         :param filename: Source filename for error messages and location tracking.
         :param include_dirs: Additional include directories (converted to ``-I`` flags).
         :param extra_args: Additional compiler arguments (e.g., ``["-std=c++17"]``).
+        :param use_default_includes: If True (default), automatically detect and add
+            system include directories by querying the system clang compiler.
+            Set to False to disable this behavior.
         :returns: :class:`~autopxd.ir.Header` containing parsed declarations.
         :raises RuntimeError: If parsing fails with errors.
 
@@ -744,6 +798,12 @@ class LibclangBackend:
             )
         """
         args: list[str] = []
+
+        # Add system include directories if enabled and no -I flags provided
+        if use_default_includes:
+            has_include_flags = bool(include_dirs) or any(arg.startswith("-I") for arg in (extra_args or []))
+            if not has_include_flags:
+                args.extend(get_system_include_dirs())
 
         # Add include directories
         if include_dirs:

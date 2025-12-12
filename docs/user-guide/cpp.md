@@ -15,7 +15,7 @@ autopxd --backend libclang myclass.hpp > myclass.pxd
 Or with Docker:
 
 ```bash
-docker run --rm -v $(pwd):/work autopxd2 autopxd --backend libclang /work/myclass.hpp
+docker run --rm -v $(pwd):/work -w /work ghcr.io/elijahr/python-autopxd2 autopxd myclass.hpp
 ```
 
 ## Supported C++ Features

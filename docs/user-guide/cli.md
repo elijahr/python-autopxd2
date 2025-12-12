@@ -68,24 +68,18 @@ autopxd --std c++17 myclass.hpp
 
 Add a directory to the include search path. Can be specified multiple times.
 
+**Note:** The libclang backend automatically detects system include paths (e.g., `/usr/include`), so you typically only need `-I` for project-specific directories.
+
 ```bash
-autopxd -I /usr/include -I ./include myheader.h
+autopxd -I ./include -I ./third_party myheader.h
 ```
 
-### `-D, --compiler-directive <directive>`
+### `-D, --define <macro>`
 
-Pass a directive to the C preprocessor. Can be specified multiple times.
+Define a preprocessor macro. Can be specified multiple times.
 
 ```bash
 autopxd -D DEBUG -D VERSION=2 myheader.h
-```
-
-### `-R, --regex <pattern>`
-
-Apply a sed-style search/replace pattern after preprocessing. Useful for fixing problematic constructs.
-
-```bash
-autopxd -R 's/__attribute__.*//g' myheader.h
 ```
 
 ### `-w, --whitelist <file>`
@@ -96,12 +90,21 @@ Only generate declarations from specified files. Can be specified multiple times
 autopxd -w main.h -w types.h combined.h
 ```
 
-### `--clang-arg <arg>`
+### `--clang-arg <arg>` [libclang]
 
 Pass an argument directly to libclang. Can be specified multiple times.
 
 ```bash
 autopxd --clang-arg -DFOO --clang-arg -I/custom/include myheader.h
+```
+
+### `--no-default-includes` [libclang]
+
+Disable automatic detection of system include directories. By default, the libclang backend queries the system clang compiler to find standard include paths. Use this option if you need full control over include paths.
+
+```bash
+# Disable auto-detection and specify all paths manually
+autopxd --no-default-includes -I /my/custom/sysroot/include myheader.h
 ```
 
 ### `-q, --quiet`
@@ -184,7 +187,7 @@ brew install llvm
 
 **Or use Docker:**
 ```bash
-docker run --rm -v $(pwd):/work ghcr.io/elijahr/autopxd2 myheader.h myheader.pxd
+docker run --rm -v $(pwd):/work -w /work ghcr.io/elijahr/python-autopxd2 autopxd myheader.h
 ```
 
 ### C++ parsing fails

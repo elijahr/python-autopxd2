@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.1] - 2025-12-11
+
+### Added
+- **Automatic system include detection** - The libclang backend now automatically detects system include directories by querying the system clang compiler. Headers like `<stddef.h>` and `<stdint.h>` now work without requiring manual `-I` flags.
+- **`--no-default-includes` CLI option** - Disable automatic system include detection when needed.
+
+### Changed
+- **Renamed `--compiler-directive` to `--define`** - The `-D` flag now uses `--define` as its long form. `--compiler-directive` remains as a deprecated hidden alias.
+- **Reorganized CLI help** - Options are now grouped logically, with `[libclang]` markers clearly indicating backend-specific options.
+- **Improved documentation** - Docker examples now show proper volume mounting for include directories with `-w /work` for cleaner relative paths.
+
 ## [3.1.0] - 2025-12-11
 
 ### Added
@@ -127,7 +138,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - macOS support
 
-[Unreleased]: https://github.com/elijahr/python-autopxd2/compare/v3.1.0...HEAD
+[Unreleased]: https://github.com/elijahr/python-autopxd2/compare/v3.1.1...HEAD
+[3.1.1]: https://github.com/elijahr/python-autopxd2/compare/v3.1.0...v3.1.1
 [3.1.0]: https://github.com/elijahr/python-autopxd2/compare/v3.0.0...v3.1.0
 [3.0.0]: https://github.com/elijahr/python-autopxd2/compare/v2.5.0...v3.0.0
 [2.5.0]: https://github.com/elijahr/python-autopxd2/compare/v2.4.0...v2.5.0
