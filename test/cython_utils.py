@@ -125,10 +125,21 @@ def test_smoke():
     else:
         # Full compile to .so
         so_file = tmp_path / "test.so"
+
+        # Use platform-appropriate linker flags
+        if sys.platform == "darwin":
+            # macOS requires -bundle for Python extensions
+            linker_flags = ["-bundle", "-undefined", "dynamic_lookup"]
+        else:
+            # Linux and other platforms use -shared
+            linker_flags = ["-shared"]
+
         cmd = (
             [
                 compiler,
-                "-shared",
+            ]
+            + linker_flags
+            + [
                 "-fPIC",
                 str(c_file),
                 "-o",
