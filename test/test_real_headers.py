@@ -32,7 +32,6 @@ LIBRARY_CONFIGS = {
         "system_header": "zlib.h",
         "smoke_test": "zlibVersion()",
         "cplus": False,
-        "xfail": "libclang expands macros but Cython cannot resolve macro-based type aliases",
     },
     "jansson": {
         "pkg_config": "jansson",
@@ -45,21 +44,18 @@ LIBRARY_CONFIGS = {
         "system_header": "sqlite3.h",
         "smoke_test": "sqlite3_libversion()",
         "cplus": False,
-        "xfail": "libclang backend function pointer typedef bug",
     },
     "curl": {
         "pkg_config": "libcurl",
         "system_header": "curl/curl.h",
         "smoke_test": "curl_version()",
         "cplus": False,
-        "xfail": "missing transitive header includes",
     },
     "libuv": {
         "pkg_config": "libuv",
         "system_header": "uv.h",
         "smoke_test": "uv_version_string()",
         "cplus": False,
-        "xfail": "libclang backend function pointer typedef bug",
     },
 }
 
@@ -469,10 +465,6 @@ class TestFullCompilation:
         """Generate pxd from system header and compile against library."""
         config = LIBRARY_CONFIGS[library]
 
-        # Mark as xfail if configured
-        if "xfail" in config:
-            request.applymarker(pytest.mark.xfail(reason=config["xfail"]))
-
         # Skip if library not installed
         if not _check_pkg_config(config["pkg_config"]):
             pytest.skip(f"{config['pkg_config']} not installed (pkg-config)")
@@ -497,6 +489,12 @@ class TestFullCompilation:
         except (subprocess.CalledProcessError, FileNotFoundError):
             pkg_include_dirs = []
 
+        # Add the directory containing the header file to include paths
+        # This is needed for headers that use relative includes like #include "foo.h"
+        header_dir = os.path.dirname(header_path)
+        if header_dir and header_dir not in pkg_include_dirs:
+            pkg_include_dirs.insert(0, header_dir)
+
         # Parse header
         with open(header_path, encoding="utf-8", errors="replace") as f:
             code = f.read()
@@ -505,9 +503,12 @@ class TestFullCompilation:
         if config.get("cplus"):
             extra_args = ["-x", "c++", "-std=c++17"] + extra_args
 
+        # Use the system_header as the filename for the extern block
+        # This ensures #include directives match what's in the config
+        # (e.g., "curl/curl.h" not just "curl.h")
         header_ir = libclang_backend.parse(
             code,
-            os.path.basename(header_path),
+            config["system_header"],
             include_dirs=pkg_include_dirs,
             extra_args=extra_args,
         )
