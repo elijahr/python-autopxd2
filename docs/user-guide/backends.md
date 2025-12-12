@@ -196,6 +196,84 @@ Expression macros that consist of numeric literals, operators, and other macro r
 
 The pycparser backend does not extract macros since it requires preprocessed input.
 
+## C++ Template Support (libclang only)
+
+The libclang backend supports C++ templates, including primary templates and full specializations.
+
+### Primary Templates
+
+C++ class templates with type parameters are translated to Cython's template syntax:
+
+```cpp
+template<typename T>
+class Container {
+public:
+    T value;
+    T get();
+    void set(T v);
+};
+```
+
+Generates:
+
+```cython
+cdef cppclass Container[T]:
+    T value
+    T get()
+    void set(T v)
+```
+
+Multiple type parameters are supported:
+
+```cpp
+template<typename K, typename V>
+class Map {
+public:
+    V lookup(K key);
+    void insert(K key, V value);
+};
+```
+
+Generates:
+
+```cython
+cdef cppclass Map[K, V]:
+    V lookup(K key)
+    void insert(K key, V value)
+```
+
+### Template Specializations
+
+Full template specializations are emitted with mangled Python-safe names and the original C++ name as a string literal:
+
+```cpp
+template<>
+class Container<int> {
+public:
+    int special_value;
+    int get_special();
+};
+```
+
+Generates:
+
+```cython
+cdef cppclass Container_int "Container<int>":
+    int special_value
+    int get_special()
+```
+
+The mangling scheme converts special characters to valid Python identifiers:
+- `<` and `>` are removed, contents become underscore-separated
+- `*` becomes `_ptr`
+- `&` becomes `_ref`
+- `::` becomes `_`
+
+Examples:
+- `Container<int>` → `Container_int`
+- `Map<int, double>` → `Map_int_double`
+- `Foo<int*>` → `Foo_int_ptr`
+
 ## Using Docker for libclang
 
 If you don't want to install libclang locally, use the Docker image:
