@@ -18,6 +18,7 @@ from autopxd.backends import get_backend
 from autopxd.ir import Enum, Function, Struct
 from autopxd.ir_writer import write_pxd
 from test.assertions import assert_header_pxd_equals
+from test.cython_utils import validate_cython_compiles
 
 # Directory containing real header files
 REAL_HEADERS_DIR = os.path.join(os.path.dirname(__file__), "real_headers")
@@ -31,6 +32,7 @@ LIBRARY_CONFIGS = {
         "system_header": "zlib.h",
         "smoke_test": "zlibVersion()",
         "cplus": False,
+        "xfail": "libclang expands macros but Cython cannot resolve macro-based type aliases",
     },
     "jansson": {
         "pkg_config": "jansson",
@@ -43,18 +45,21 @@ LIBRARY_CONFIGS = {
         "system_header": "sqlite3.h",
         "smoke_test": "sqlite3_libversion()",
         "cplus": False,
+        "xfail": "libclang backend function pointer typedef bug",
     },
     "curl": {
         "pkg_config": "libcurl",
         "system_header": "curl/curl.h",
         "smoke_test": "curl_version()",
         "cplus": False,
+        "xfail": "missing transitive header includes",
     },
     "libuv": {
         "pkg_config": "libuv",
         "system_header": "uv.h",
         "smoke_test": "uv_version_string()",
         "cplus": False,
+        "xfail": "libclang backend function pointer typedef bug",
     },
 }
 
@@ -94,6 +99,18 @@ def _get_header_path(system_header: str, pkg_name: str) -> str | None:
         path = os.path.join(base, system_header)
         if os.path.exists(path):
             return path
+
+    # On macOS, try SDK path for system headers (pkg-config may not have -I flags)
+    if sys.platform == "darwin":
+        try:
+            sdk_path = subprocess.check_output(
+                ["xcrun", "--show-sdk-path"], text=True, stderr=subprocess.DEVNULL
+            ).strip()
+            path = os.path.join(sdk_path, "usr", "include", system_header)
+            if os.path.exists(path):
+                return path
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            pass
 
     return None
 
@@ -426,9 +443,13 @@ class TestFullCompilation:
     """Tests that compile generated pxd against real libraries."""
 
     @pytest.mark.parametrize("library", LIBRARY_CONFIGS.keys())
-    def test_library_compiles(self, library, libclang_backend, tmp_path):
+    def test_library_compiles(self, library, libclang_backend, tmp_path, request):
         """Generate pxd from system header and compile against library."""
         config = LIBRARY_CONFIGS[library]
+
+        # Mark as xfail if configured
+        if "xfail" in config:
+            request.applymarker(pytest.mark.xfail(reason=config["xfail"]))
 
         # Skip if library not installed
         if not _check_pkg_config(config["pkg_config"]):
@@ -474,8 +495,6 @@ class TestFullCompilation:
         assert pxd, f"Empty pxd generated for {library}"
 
         # Full compile with smoke test
-        from test.cython_utils import validate_cython_compiles
-
         validate_cython_compiles(
             pxd,
             tmp_path,
