@@ -2,6 +2,26 @@ from autopxd.stubs.stdarg cimport va_list
 
 cdef extern from "zlib.h":
 
+    ctypedef unsigned char Byte
+
+    ctypedef Byte Bytef
+
+    ctypedef unsigned int uInt
+
+    ctypedef unsigned long uLong
+
+    ctypedef uLong uLongf
+
+    ctypedef void* voidp
+
+    ctypedef const void* voidpc
+
+    ctypedef void* voidpf
+
+    ctypedef unsigned int z_crc_t
+
+    ctypedef size_t z_size_t
+
     const char* ZLIB_VERSION
 
     int ZLIB_VERNUM
@@ -189,7 +209,30 @@ cdef extern from "zlib.h":
 
     int uncompress2(Bytef* dest, uLongf* destLen, Bytef* source, uLong* sourceLen)
 
-    cdef struct gzFile_s
+    uLong adler32(uLong adler, Bytef* buf, uInt len)
+
+    uLong adler32_z(uLong adler, Bytef* buf, z_size_t len)
+
+    uLong crc32(uLong crc, Bytef* buf, uInt len)
+
+    uLong crc32_z(uLong crc, Bytef* buf, z_size_t len)
+
+    uLong crc32_combine_op(uLong crc1, uLong crc2, uLong op)
+
+    int deflateInit_(z_streamp strm, int level, const char* version, int stream_size)
+
+    int inflateInit_(z_streamp strm, const char* version, int stream_size)
+
+    int deflateInit2_(z_streamp strm, int level, int method, int windowBits, int memLevel, int strategy, const char* version, int stream_size)
+
+    int inflateInit2_(z_streamp strm, int windowBits, const char* version, int stream_size)
+
+    int inflateBackInit_(z_streamp strm, int windowBits, unsigned char* window, const char* version, int stream_size)
+
+    cdef struct gzFile_s:
+        unsigned int have
+        unsigned char* next
+        long pos
 
     ctypedef gzFile_s* gzFile
 
@@ -236,26 +279,6 @@ cdef extern from "zlib.h":
     const char* gzerror(gzFile file, int* errnum)
 
     void gzclearerr(gzFile file)
-
-    uLong adler32(uLong adler, Bytef* buf, uInt len)
-
-    uLong adler32_z(uLong adler, Bytef* buf, z_size_t len)
-
-    uLong crc32(uLong crc, Bytef* buf, uInt len)
-
-    uLong crc32_z(uLong crc, Bytef* buf, z_size_t len)
-
-    uLong crc32_combine_op(uLong crc1, uLong crc2, uLong op)
-
-    int deflateInit_(z_streamp strm, int level, const char* version, int stream_size)
-
-    int inflateInit_(z_streamp strm, const char* version, int stream_size)
-
-    int deflateInit2_(z_streamp strm, int level, int method, int windowBits, int memLevel, int strategy, const char* version, int stream_size)
-
-    int inflateInit2_(z_streamp strm, int windowBits, const char* version, int stream_size)
-
-    int inflateBackInit_(z_streamp strm, int windowBits, unsigned char* window, const char* version, int stream_size)
 
     int gzgetc_(gzFile file)
 
