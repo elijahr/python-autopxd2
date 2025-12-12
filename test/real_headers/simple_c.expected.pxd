@@ -5,7 +5,7 @@ cdef extern from "simple_c.h":
         ERR_INVALID
         ERR_NOMEM
 
-    cpdef enum LogLevel:
+    cdef enum LogLevel:
         LOG_DEBUG
         LOG_INFO
         LOG_WARN

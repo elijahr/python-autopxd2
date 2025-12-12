@@ -8,7 +8,7 @@ typedef enum my_enum {
 
 cdef extern from "typedef_enum.test":
 
-    cpdef enum my_enum:
+    cdef enum my_enum:
         C1
         C2
         C3

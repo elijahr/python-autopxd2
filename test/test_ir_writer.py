@@ -110,7 +110,7 @@ class TestPxdWriterBasic:
             header,
             """cdef extern from "test.h":
 
-    cpdef enum Color:
+    cdef enum Color:
         RED
         GREEN
         BLUE
@@ -404,7 +404,7 @@ class TestKeywordEscaping:
             header,
             """cdef extern from "test.h":
 
-    cpdef enum Keywords:
+    cdef enum Keywords:
         None_ "None"
 """,
             tmp_path,
@@ -570,7 +570,7 @@ class TestComplexCases:
             header,
             """cdef extern from "test.h":
 
-    cpdef enum:
+    cdef enum:
         VALUE
 """,
             tmp_path,

@@ -14,7 +14,7 @@ float my_array_c4[C4];
 
 cdef extern from "enum.test":
 
-    cpdef enum MyEnum:
+    cdef enum MyEnum:
         C1
         C2
         C3

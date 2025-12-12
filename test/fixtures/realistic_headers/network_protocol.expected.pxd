@@ -10,7 +10,7 @@ cdef extern from "network_protocol.h":
 
     ctypedef unsigned long long uint64_t
 
-    cpdef enum msg_type:
+    cdef enum msg_type:
         MSG_CONNECT
         MSG_DISCONNECT
         MSG_PING

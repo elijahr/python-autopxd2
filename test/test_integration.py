@@ -61,7 +61,7 @@ class TestIntegrationBasic:
             """,
             """cdef extern from "test.h":
 
-    cpdef enum Color:
+    cdef enum Color:
         RED
         GREEN
         BLUE
@@ -194,7 +194,7 @@ class TestIntegrationComplex:
             """,
             """cdef extern from "test.h":
 
-    cpdef enum Flags:
+    cdef enum Flags:
         FLAG_A
         FLAG_B
         FLAG_C
@@ -369,7 +369,7 @@ class TestLibclangIntegrationBasic:
             """,
             """cdef extern from "test.h":
 
-    cpdef enum Color:
+    cdef enum Color:
         RED
         GREEN
         BLUE
@@ -536,7 +536,7 @@ class TestBackendComparison:
         """
         expected = """cdef extern from "test.h":
 
-    cpdef enum Color:
+    cdef enum Color:
         RED
         GREEN
         BLUE

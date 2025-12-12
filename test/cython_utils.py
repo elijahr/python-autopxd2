@@ -153,7 +153,11 @@ def test_smoke():
             + shlex.split(python_cflags)
             + shlex.split(python_ldflags)
         )
-        subprocess.run(cmd, check=True, capture_output=True, text=True)
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"C compilation STDERR: {result.stderr}")
+            print(f"C compilation STDOUT: {result.stdout}")
+            result.check_returncode()
 
         # Import and run smoke test
         if smoke_test:

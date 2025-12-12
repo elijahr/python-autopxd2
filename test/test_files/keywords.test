@@ -56,7 +56,7 @@ cdef extern from "keywords.test":
         char* is_ "is"
         _class_global_ft global_ "global"
 
-    cpdef enum try_ "try":
+    cdef enum try_ "try":
         del_ "del"
         and_ "and"
 

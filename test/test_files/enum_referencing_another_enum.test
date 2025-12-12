@@ -19,11 +19,11 @@ float my_array_b4[B4];
 
 cdef extern from "enum_referencing_another_enum.test":
 
-    cpdef enum MyEnumA:
+    cdef enum MyEnumA:
         A1
         A2
 
-    cpdef enum MyEnumB:
+    cdef enum MyEnumB:
         B1
         B2
         B3

@@ -38,7 +38,7 @@ float my_array_c16[C16];
 
 cdef extern from "enum_integer_bases.test":
 
-    cpdef enum MyEnum:
+    cdef enum MyEnum:
         C1
         C2
         C3

@@ -36,6 +36,7 @@ Example
     header = backend.parse(code, "myheader.hpp", extra_args=["-std=c++17"])
 """
 
+import os
 import subprocess
 import sys
 
@@ -131,6 +132,121 @@ def get_system_include_dirs() -> list[str]:
         pass
 
     return _system_include_cache
+
+
+def _is_system_header(header_path: str) -> bool:
+    """Check if a header path is a system header.
+
+    System headers are identified by:
+    - Being in /usr/include, /usr/local/include
+    - Being in SDK paths (MacOSX.sdk, etc.)
+    - Being in compiler-specific paths (clang/include, gcc/include)
+    - Being in framework directories
+
+    :param header_path: Path to the header file
+    :returns: True if this is a system header
+    """
+    path_str = str(header_path).lower()
+
+    # Common system header locations
+    system_prefixes = (
+        "/usr/include",
+        "/usr/local/include",
+        "/opt/homebrew/",
+        "/opt/local/",
+        ".sdk/",
+        "/system/library/frameworks",
+        "/library/developer/commandlinetools",
+        "clang/include",
+        "gcc/include",
+        "g++/include",
+        "c++/include",
+    )
+
+    return any(prefix.lower() in path_str for prefix in system_prefixes)
+
+
+def _is_meta_header(header: Header, threshold: int = 3) -> bool:
+    """Detect if a header is a meta-header.
+
+    A meta-header is characterized by:
+    - Having multiple included headers (>= threshold)
+    - Having few or no declarations of its own (< threshold)
+
+    :param header: The parsed Header IR
+    :param threshold: Minimum number of includes to consider meta-header (default: 3)
+    :returns: True if this appears to be a meta-header
+    """
+    # Count non-system included headers
+    project_includes = [h for h in header.included_headers if not _is_system_header(h)]
+
+    # Meta-header criteria:
+    # 1. Multiple project includes (at least threshold)
+    # 2. Few or no declarations in the main file
+    return len(project_includes) >= threshold and len(header.declarations) < threshold
+
+
+def _deduplicate_declarations(declarations: list[Declaration]) -> list[Declaration]:
+    """Remove duplicate declarations, keeping the first occurrence.
+
+    Duplicates are identified by:
+    - Same type (Struct, Function, Typedef, etc.)
+    - Same name
+    - Same namespace (for C++)
+
+    Special handling for typedef struct pattern:
+    - `typedef struct Foo {...} Foo;` creates both Struct and Typedef
+    - We keep only the Struct (with typedef flag set) and remove the Typedef
+
+    :param declarations: List of declarations to deduplicate
+    :returns: List with duplicates removed, preserving order
+    """
+    seen: set[tuple[type, str | None, str | None]] = set()
+    unique: list[Declaration] = []
+
+    # First pass: collect struct names that have typedef'd versions
+    typedef_struct_names: set[str | None] = set()
+    for decl in declarations:
+        if isinstance(decl, Typedef):
+            # Check if this typedef aliases a struct with the same name
+            underlying = decl.underlying_type
+            if isinstance(underlying, CType):
+                # Handle both "struct Foo" and "Foo" patterns
+                type_name = underlying.name
+                if type_name.startswith("struct "):
+                    struct_name = type_name[7:]
+                else:
+                    struct_name = type_name
+
+                if struct_name == decl.name:
+                    typedef_struct_names.add(decl.name)
+
+    # Second pass: filter declarations and mark typedef'd structs
+    for decl in declarations:
+        # Build a key: (type, name, namespace)
+        decl_type = type(decl)
+        decl_name = getattr(decl, "name", None)
+        decl_ns = getattr(decl, "namespace", None)
+
+        key = (decl_type, decl_name, decl_ns)
+
+        # Skip typedef if it's a typedef struct pattern
+        if isinstance(decl, Typedef) and decl_name in typedef_struct_names:
+            continue
+
+        # Mark struct as typedef'd if it has a matching typedef
+        if isinstance(decl, Struct) and decl_name in typedef_struct_names:
+            # Create a new Struct with is_typedef=True
+            # (dataclasses are immutable by default, need to replace)
+            from dataclasses import replace
+
+            decl = replace(decl, is_typedef=True)
+
+        if key not in seen:
+            seen.add(key)
+            unique.append(decl)
+
+    return unique
 
 
 def _mangle_specialization_name(cpp_name: str) -> str:
@@ -1016,9 +1132,24 @@ class ClangASTConverter:
                     struct_key = f"{key_prefix}:{struct_name}"
                     definition_key = f"{struct_key}:definition"
 
-                    # Check if we already have a definition - if so, skip the struct
-                    # but still emit the typedef
-                    if definition_key not in self._seen:
+                    # Check if this is typedef struct Foo {...} Foo; pattern
+                    is_typedef_pattern = struct_name == name
+
+                    # Check if we already have a definition - if so, update it
+                    if definition_key in self._seen:
+                        # Struct was already processed - update its is_typedef flag if needed
+                        if is_typedef_pattern:
+                            # Find and update the existing struct
+                            from dataclasses import replace
+
+                            for i, existing_decl in enumerate(self.declarations):
+                                if isinstance(existing_decl, Struct) and existing_decl.name == struct_name:
+                                    # Replace with typedef'd version
+                                    self.declarations[i] = replace(existing_decl, is_typedef=True)
+                                    break
+                        # Don't create another struct, but might still need typedef
+                    else:
+                        # First time seeing this struct - create it
                         self._seen[struct_key] = True
                         self._seen[definition_key] = True  # Mark definition as seen
                         is_union = decl.kind == CursorKind.UNION_DECL
@@ -1038,24 +1169,23 @@ class ClangASTConverter:
                             is_cppclass=False,
                             namespace=self._current_namespace,
                             location=self._get_location(decl),
+                            is_typedef=is_typedef_pattern,
                         )
                         self.declarations.append(struct)
 
-                    # Now create the typedef pointing to the struct name
-                    if struct_name:
+                    # If struct name == typedef name, we've already handled it above
+                    # Only create separate typedef if names differ
+                    if struct_name and struct_name != name:
                         underlying_type: CType | Pointer | Array | FunctionPointer = CType(
                             name=struct_name
                         )  # Use just the name, not "struct name"
-                    else:
-                        # Anonymous struct - can't typedef easily
-                        return
 
-                    typedef = Typedef(
-                        name=name,
-                        underlying_type=underlying_type,
-                        location=self._get_location(cursor),
-                    )
-                    self.declarations.append(typedef)
+                        typedef = Typedef(
+                            name=name,
+                            underlying_type=underlying_type,
+                            location=self._get_location(cursor),
+                        )
+                        self.declarations.append(typedef)
                     return
 
         # Standard typedef handling
@@ -1245,6 +1375,10 @@ class LibclangBackend:
 
     def __init__(self) -> None:
         self._index: clang.cindex.Index | None = None
+        # Cache for parsed headers (path -> Header) to avoid re-parsing
+        self._parse_cache: dict[str, Header] = {}
+        # Visited set to prevent circular includes
+        self._visited: set[str] = set()
 
     @property
     def name(self) -> str:
@@ -1266,6 +1400,165 @@ class LibclangBackend:
             self._index = clang.cindex.Index.create()
         return self._index
 
+    def _resolve_include_path(
+        self,
+        include_path: str,
+        base_dir: str,
+        include_dirs: list[str],
+    ) -> str | None:
+        """Resolve an include path to an absolute path.
+
+        :param include_path: The include path as it appears in the header
+        :param base_dir: Directory of the including file
+        :param include_dirs: List of include search directories
+        :returns: Absolute path to the header file, or None if not found
+        """
+        # If already absolute, return as-is
+        if os.path.isabs(include_path):
+            if os.path.exists(include_path):
+                return os.path.abspath(include_path)
+            return None
+
+        # Try relative to base directory first
+        candidate = os.path.join(base_dir, include_path)
+        if os.path.exists(candidate):
+            return os.path.abspath(candidate)
+
+        # Try each include directory
+        for inc_dir in include_dirs:
+            candidate = os.path.join(inc_dir, include_path)
+            if os.path.exists(candidate):
+                return os.path.abspath(candidate)
+
+        return None
+
+    def _parse_header_file(
+        self,
+        header_path: str,
+        include_dirs: list[str],
+        extra_args: list[str],
+        use_default_includes: bool,
+    ) -> Header:
+        """Parse a single header file.
+
+        :param header_path: Absolute path to header file
+        :param include_dirs: Include directories
+        :param extra_args: Extra compiler arguments
+        :param use_default_includes: Whether to use system includes
+        :returns: Parsed Header IR
+        """
+        # Check cache
+        if header_path in self._parse_cache:
+            return self._parse_cache[header_path]
+
+        # Read the file
+        with open(header_path, encoding="utf-8", errors="replace") as f:
+            code = f.read()
+
+        # Parse using the main parse method
+        # Use the basename for the filename to match expected behavior
+        filename = os.path.basename(header_path)
+        header = self.parse(
+            code,
+            filename,
+            include_dirs=include_dirs,
+            extra_args=extra_args,
+            use_default_includes=use_default_includes,
+            recursive_includes=False,  # Prevent infinite recursion
+        )
+
+        # Cache the result
+        self._parse_cache[header_path] = header
+        return header
+
+    def _parse_recursively(
+        self,
+        main_header: Header,
+        main_path: str,
+        include_dirs: list[str],
+        extra_args: list[str],
+        use_default_includes: bool,
+        max_depth: int,
+        current_depth: int = 0,
+    ) -> Header:
+        """Recursively parse included headers and combine declarations.
+
+        :param main_header: The main header that was parsed
+        :param main_path: Path to the main header file
+        :param include_dirs: Include directories
+        :param extra_args: Extra compiler arguments
+        :param use_default_includes: Whether to use system includes
+        :param max_depth: Maximum recursion depth
+        :param current_depth: Current recursion depth
+        :returns: Combined Header with declarations from all includes
+        """
+        if current_depth >= max_depth:
+            return main_header
+
+        all_declarations: list[Declaration] = list(main_header.declarations)
+        main_dir = os.path.dirname(os.path.abspath(main_path))
+
+        # Process each included header
+        for include_path in main_header.included_headers:
+            # Skip system headers
+            if _is_system_header(include_path):
+                continue
+
+            # Get absolute path
+            abs_path = self._resolve_include_path(
+                include_path,
+                main_dir,
+                include_dirs,
+            )
+
+            if abs_path is None:
+                # Could not resolve - skip
+                continue
+
+            # Check if already visited (circular include)
+            if abs_path in self._visited:
+                continue
+
+            self._visited.add(abs_path)
+
+            try:
+                # Parse the included header
+                sub_header = self._parse_header_file(
+                    abs_path,
+                    include_dirs,
+                    extra_args,
+                    use_default_includes,
+                )
+
+                # Recursively process its includes
+                sub_header = self._parse_recursively(
+                    sub_header,
+                    abs_path,
+                    include_dirs,
+                    extra_args,
+                    use_default_includes,
+                    max_depth,
+                    current_depth + 1,
+                )
+
+                # Add declarations from sub-header
+                all_declarations.extend(sub_header.declarations)
+
+            except Exception:
+                # Skip headers that fail to parse
+                # This is common with complex system headers
+                continue
+
+        # Deduplicate declarations
+        unique_declarations = _deduplicate_declarations(all_declarations)
+
+        # Return combined header
+        return Header(
+            path=main_header.path,
+            declarations=unique_declarations,
+            included_headers=main_header.included_headers,
+        )
+
     def parse(
         self,
         code: str,
@@ -1273,11 +1566,17 @@ class LibclangBackend:
         include_dirs: list[str] | None = None,
         extra_args: list[str] | None = None,
         use_default_includes: bool = True,
+        recursive_includes: bool = True,
+        max_depth: int = 10,
     ) -> Header:
         """Parse C/C++ code using libclang.
 
         Unlike the pycparser backend, this method handles raw (unpreprocessed)
         code and performs preprocessing internally.
+
+        Meta-header support: If the header has few/no declarations but many
+        includes (meta-header pattern), this method can recursively parse the
+        included headers and combine their declarations.
 
         :param code: C/C++ source code to parse (raw, not preprocessed).
         :param filename: Source filename for error messages and location tracking.
@@ -1286,6 +1585,11 @@ class LibclangBackend:
         :param use_default_includes: If True (default), automatically detect and add
             system include directories by querying the system clang compiler.
             Set to False to disable this behavior.
+        :param recursive_includes: If True (default), detect meta-headers and
+            recursively parse included project headers. System headers are always
+            skipped. Set to False to only parse the main file.
+        :param max_depth: Maximum recursion depth for include processing (default 10).
+            Prevents infinite recursion from circular includes.
         :returns: :class:`~autopxd.ir.Header` containing parsed declarations.
         :raises RuntimeError: If parsing fails with errors.
 
@@ -1293,11 +1597,20 @@ class LibclangBackend:
         -------
         ::
 
+            # Basic usage
             header = backend.parse(
                 code,
                 "myheader.hpp",
                 include_dirs=["/usr/local/include"],
                 extra_args=["-std=c++17", "-DNDEBUG"]
+            )
+
+            # Meta-header (all-includes) pattern
+            header = backend.parse(
+                code,
+                "LibraryAll.h",
+                include_dirs=["./include"],
+                recursive_includes=True  # Auto-detect and expand includes
             )
         """
         args: list[str] = []
@@ -1345,6 +1658,28 @@ class LibclangBackend:
 
         # Attach included headers to the IR
         header.included_headers = included_headers
+
+        # Check if we should do recursive include processing
+        if recursive_includes and _is_meta_header(header):
+            # Reset visited set for each top-level parse
+            self._visited = set()
+            # Add current file to visited
+            if os.path.exists(filename):
+                abs_filename = os.path.abspath(filename)
+            else:
+                # For in-memory code, use filename as-is
+                abs_filename = filename
+            self._visited.add(abs_filename)
+
+            # Recursively parse included headers
+            header = self._parse_recursively(
+                header,
+                abs_filename,
+                include_dirs or [],
+                extra_args or [],
+                use_default_includes,
+                max_depth,
+            )
 
         return header
 
