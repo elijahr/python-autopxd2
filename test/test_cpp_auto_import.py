@@ -4,6 +4,9 @@ import pytest
 
 from autopxd import translate
 
+# Mark entire module as requiring libclang
+pytestmark = pytest.mark.libclang
+
 libclang = pytest.importorskip("clang.cindex")
 
 

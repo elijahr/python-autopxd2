@@ -9,15 +9,15 @@ import os
 import re
 
 import pytest
-from fixtures.realistic_headers import (
-    C_FIXTURES,
-    CPP_FIXTURES,
-)
 
 from autopxd.ir import (
     Function,
 )
 from test.assertions import assert_pxd_file_equals
+from test.fixtures.realistic_headers import (
+    C_FIXTURES,
+    CPP_FIXTURES,
+)
 
 EXPECTED_DIR = os.path.join(os.path.dirname(__file__), "fixtures", "realistic_headers")
 
