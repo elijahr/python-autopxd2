@@ -22,6 +22,81 @@ from test.assertions import assert_header_pxd_equals
 # Directory containing real header files
 REAL_HEADERS_DIR = os.path.join(os.path.dirname(__file__), "real_headers")
 
+# Library configurations for full compilation tests
+# Each library needs: pkg_config name, header path(s), smoke test expression
+LIBRARY_CONFIGS = {
+    # === C Libraries with pkg-config ===
+    "zlib": {
+        "pkg_config": "zlib",
+        "system_header": "zlib.h",
+        "smoke_test": "zlibVersion()",
+        "cplus": False,
+    },
+    "jansson": {
+        "pkg_config": "jansson",
+        "system_header": "jansson.h",
+        "smoke_test": "jansson_version_str()",
+        "cplus": False,
+    },
+    "sqlite": {
+        "pkg_config": "sqlite3",
+        "system_header": "sqlite3.h",
+        "smoke_test": "sqlite3_libversion()",
+        "cplus": False,
+    },
+    "curl": {
+        "pkg_config": "libcurl",
+        "system_header": "curl/curl.h",
+        "smoke_test": "curl_version()",
+        "cplus": False,
+    },
+    "libuv": {
+        "pkg_config": "libuv",
+        "system_header": "uv.h",
+        "smoke_test": "uv_version_string()",
+        "cplus": False,
+    },
+}
+
+
+def _check_pkg_config(pkg_name: str) -> bool:
+    """Check if a package is available via pkg-config."""
+    try:
+        subprocess.run(
+            ["pkg-config", "--exists", pkg_name],
+            check=True,
+            capture_output=True,
+        )
+        return True
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return False
+
+
+def _get_header_path(system_header: str, pkg_name: str) -> str | None:
+    """Get the full path to a system header using pkg-config."""
+    try:
+        result = subprocess.run(
+            ["pkg-config", "--cflags", pkg_name],
+            capture_output=True,
+            text=True,
+        )
+        # Parse -I flags to find include dir
+        for flag in result.stdout.split():
+            if flag.startswith("-I"):
+                path = os.path.join(flag[2:], system_header)
+                if os.path.exists(path):
+                    return path
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        pass
+
+    # Try standard locations
+    for base in ["/usr/include", "/usr/local/include", "/opt/homebrew/include"]:
+        path = os.path.join(base, system_header)
+        if os.path.exists(path):
+            return path
+
+    return None
+
 
 def _get_system_include_args() -> list[str]:
     """Get system include paths for libclang.
@@ -345,3 +420,66 @@ class TestHeaderDiscovery:
                 size = os.path.getsize(path)
                 # Real headers should be more than just a few bytes
                 assert size > 100, f"{filename} seems too small ({size} bytes)"
+
+
+class TestFullCompilation:
+    """Tests that compile generated pxd against real libraries."""
+
+    @pytest.mark.parametrize("library", LIBRARY_CONFIGS.keys())
+    def test_library_compiles(self, library, libclang_backend, tmp_path):
+        """Generate pxd from system header and compile against library."""
+        config = LIBRARY_CONFIGS[library]
+
+        # Skip if library not installed
+        if not _check_pkg_config(config["pkg_config"]):
+            pytest.skip(f"{config['pkg_config']} not installed (pkg-config)")
+
+        # Find header
+        header_path = _get_header_path(config["system_header"], config["pkg_config"])
+        if not header_path:
+            pytest.skip(f"Header {config['system_header']} not found")
+
+        # Get pkg-config include directories for parsing
+        try:
+            cflags_result = subprocess.run(
+                ["pkg-config", "--cflags", config["pkg_config"]],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            pkg_include_dirs = []
+            for flag in cflags_result.stdout.split():
+                if flag.startswith("-I"):
+                    pkg_include_dirs.append(flag[2:])
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            pkg_include_dirs = []
+
+        # Parse header
+        with open(header_path, encoding="utf-8", errors="replace") as f:
+            code = f.read()
+
+        extra_args = _get_system_include_args()
+        if config.get("cplus"):
+            extra_args = ["-x", "c++", "-std=c++17"] + extra_args
+
+        header_ir = libclang_backend.parse(
+            code,
+            os.path.basename(header_path),
+            include_dirs=pkg_include_dirs,
+            extra_args=extra_args,
+        )
+
+        # Generate pxd
+        pxd = write_pxd(header_ir)
+        assert pxd, f"Empty pxd generated for {library}"
+
+        # Full compile with smoke test
+        from test.cython_utils import validate_cython_compiles
+
+        validate_cython_compiles(
+            pxd,
+            tmp_path,
+            cplus=config.get("cplus", False),
+            pkg_config=config["pkg_config"],
+            smoke_test=config.get("smoke_test"),
+        )
