@@ -1607,11 +1607,27 @@ for decl in header.declarations:
             </td>
             <td>
               <div class="doc-md-description">
-                <p>List of extracted declarations (structs, functions, etc.).  Example -------</p>
+                <p>List of extracted declarations (structs, functions, etc.).</p>
               </div>
             </td>
             <td>
                   <code><span title="list">list</span>()</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>included_headers</code>
+            </td>
+            <td>
+                  <code><span title="set">set</span>[<span title="str">str</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Set of header file basenames included by this header (populated by libclang backend only).  Example -------</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="set">set</span>()</code>
             </td>
           </tr>
       </tbody>
@@ -1626,9 +1642,7 @@ for decl in header.declarations:
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>autopxd/ir.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-646">646</a></span>
-<span class="normal"><a href="#__codelineno-0-647">647</a></span>
-<span class="normal"><a href="#__codelineno-0-648">648</a></span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-648">648</a></span>
 <span class="normal"><a href="#__codelineno-0-649">649</a></span>
 <span class="normal"><a href="#__codelineno-0-650">650</a></span>
 <span class="normal"><a href="#__codelineno-0-651">651</a></span>
@@ -1657,38 +1671,46 @@ for decl in header.declarations:
 <span class="normal"><a href="#__codelineno-0-674">674</a></span>
 <span class="normal"><a href="#__codelineno-0-675">675</a></span>
 <span class="normal"><a href="#__codelineno-0-676">676</a></span>
-<span class="normal"><a href="#__codelineno-0-677">677</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-646" name="__codelineno-0-646"></a><span class="nd">@dataclass</span>
-<a id="__codelineno-0-647" name="__codelineno-0-647"></a><span class="k">class</span><span class="w"> </span><span class="nc">Header</span><span class="p">:</span>
-<a id="__codelineno-0-648" name="__codelineno-0-648"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Container for a parsed C/C++ header file.</span>
-<a id="__codelineno-0-649" name="__codelineno-0-649"></a>
-<a id="__codelineno-0-650" name="__codelineno-0-650"></a><span class="sd">    This is the top-level result returned by all parser backends.</span>
-<a id="__codelineno-0-651" name="__codelineno-0-651"></a><span class="sd">    It contains the file path and all extracted declarations.</span>
-<a id="__codelineno-0-652" name="__codelineno-0-652"></a>
-<a id="__codelineno-0-653" name="__codelineno-0-653"></a><span class="sd">    :param path: Path to the original header file.</span>
-<a id="__codelineno-0-654" name="__codelineno-0-654"></a><span class="sd">    :param declarations: List of extracted declarations (structs, functions, etc.).</span>
-<a id="__codelineno-0-655" name="__codelineno-0-655"></a>
-<a id="__codelineno-0-656" name="__codelineno-0-656"></a><span class="sd">    Example</span>
-<a id="__codelineno-0-657" name="__codelineno-0-657"></a><span class="sd">    -------</span>
-<a id="__codelineno-0-658" name="__codelineno-0-658"></a><span class="sd">    ::</span>
+<span class="normal"><a href="#__codelineno-0-677">677</a></span>
+<span class="normal"><a href="#__codelineno-0-678">678</a></span>
+<span class="normal"><a href="#__codelineno-0-679">679</a></span>
+<span class="normal"><a href="#__codelineno-0-680">680</a></span>
+<span class="normal"><a href="#__codelineno-0-681">681</a></span>
+<span class="normal"><a href="#__codelineno-0-682">682</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-648" name="__codelineno-0-648"></a><span class="nd">@dataclass</span>
+<a id="__codelineno-0-649" name="__codelineno-0-649"></a><span class="k">class</span><span class="w"> </span><span class="nc">Header</span><span class="p">:</span>
+<a id="__codelineno-0-650" name="__codelineno-0-650"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Container for a parsed C/C++ header file.</span>
+<a id="__codelineno-0-651" name="__codelineno-0-651"></a>
+<a id="__codelineno-0-652" name="__codelineno-0-652"></a><span class="sd">    This is the top-level result returned by all parser backends.</span>
+<a id="__codelineno-0-653" name="__codelineno-0-653"></a><span class="sd">    It contains the file path and all extracted declarations.</span>
+<a id="__codelineno-0-654" name="__codelineno-0-654"></a>
+<a id="__codelineno-0-655" name="__codelineno-0-655"></a><span class="sd">    :param path: Path to the original header file.</span>
+<a id="__codelineno-0-656" name="__codelineno-0-656"></a><span class="sd">    :param declarations: List of extracted declarations (structs, functions, etc.).</span>
+<a id="__codelineno-0-657" name="__codelineno-0-657"></a><span class="sd">    :param included_headers: Set of header file basenames included by this header</span>
+<a id="__codelineno-0-658" name="__codelineno-0-658"></a><span class="sd">                             (populated by libclang backend only).</span>
 <a id="__codelineno-0-659" name="__codelineno-0-659"></a>
-<a id="__codelineno-0-660" name="__codelineno-0-660"></a><span class="sd">        from autopxd.backends import get_backend</span>
-<a id="__codelineno-0-661" name="__codelineno-0-661"></a><span class="sd">        from autopxd.ir import Struct, Function</span>
-<a id="__codelineno-0-662" name="__codelineno-0-662"></a>
-<a id="__codelineno-0-663" name="__codelineno-0-663"></a><span class="sd">        backend = get_backend()</span>
-<a id="__codelineno-0-664" name="__codelineno-0-664"></a><span class="sd">        header = backend.parse(code, &quot;myheader.h&quot;)</span>
-<a id="__codelineno-0-665" name="__codelineno-0-665"></a>
-<a id="__codelineno-0-666" name="__codelineno-0-666"></a><span class="sd">        print(f&quot;Parsed {len(header.declarations)} declarations from {header.path}&quot;)</span>
-<a id="__codelineno-0-667" name="__codelineno-0-667"></a>
-<a id="__codelineno-0-668" name="__codelineno-0-668"></a><span class="sd">        for decl in header.declarations:</span>
-<a id="__codelineno-0-669" name="__codelineno-0-669"></a><span class="sd">            if isinstance(decl, Function):</span>
-<a id="__codelineno-0-670" name="__codelineno-0-670"></a><span class="sd">                print(f&quot;  Function: {decl.name}&quot;)</span>
-<a id="__codelineno-0-671" name="__codelineno-0-671"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-672" name="__codelineno-0-672"></a>
-<a id="__codelineno-0-673" name="__codelineno-0-673"></a>    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span>
-<a id="__codelineno-0-674" name="__codelineno-0-674"></a>    <span class="n">declarations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Declaration</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
-<a id="__codelineno-0-675" name="__codelineno-0-675"></a>
-<a id="__codelineno-0-676" name="__codelineno-0-676"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<a id="__codelineno-0-677" name="__codelineno-0-677"></a>        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Header(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">declarations</span><span class="p">)</span><span class="si">}</span><span class="s2"> declarations)&quot;</span>
+<a id="__codelineno-0-660" name="__codelineno-0-660"></a><span class="sd">    Example</span>
+<a id="__codelineno-0-661" name="__codelineno-0-661"></a><span class="sd">    -------</span>
+<a id="__codelineno-0-662" name="__codelineno-0-662"></a><span class="sd">    ::</span>
+<a id="__codelineno-0-663" name="__codelineno-0-663"></a>
+<a id="__codelineno-0-664" name="__codelineno-0-664"></a><span class="sd">        from autopxd.backends import get_backend</span>
+<a id="__codelineno-0-665" name="__codelineno-0-665"></a><span class="sd">        from autopxd.ir import Struct, Function</span>
+<a id="__codelineno-0-666" name="__codelineno-0-666"></a>
+<a id="__codelineno-0-667" name="__codelineno-0-667"></a><span class="sd">        backend = get_backend()</span>
+<a id="__codelineno-0-668" name="__codelineno-0-668"></a><span class="sd">        header = backend.parse(code, &quot;myheader.h&quot;)</span>
+<a id="__codelineno-0-669" name="__codelineno-0-669"></a>
+<a id="__codelineno-0-670" name="__codelineno-0-670"></a><span class="sd">        print(f&quot;Parsed {len(header.declarations)} declarations from {header.path}&quot;)</span>
+<a id="__codelineno-0-671" name="__codelineno-0-671"></a>
+<a id="__codelineno-0-672" name="__codelineno-0-672"></a><span class="sd">        for decl in header.declarations:</span>
+<a id="__codelineno-0-673" name="__codelineno-0-673"></a><span class="sd">            if isinstance(decl, Function):</span>
+<a id="__codelineno-0-674" name="__codelineno-0-674"></a><span class="sd">                print(f&quot;  Function: {decl.name}&quot;)</span>
+<a id="__codelineno-0-675" name="__codelineno-0-675"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-676" name="__codelineno-0-676"></a>
+<a id="__codelineno-0-677" name="__codelineno-0-677"></a>    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span>
+<a id="__codelineno-0-678" name="__codelineno-0-678"></a>    <span class="n">declarations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Declaration</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+<a id="__codelineno-0-679" name="__codelineno-0-679"></a>    <span class="n">included_headers</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">set</span><span class="p">)</span>
+<a id="__codelineno-0-680" name="__codelineno-0-680"></a>
+<a id="__codelineno-0-681" name="__codelineno-0-681"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<a id="__codelineno-0-682" name="__codelineno-0-682"></a>        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Header(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">declarations</span><span class="p">)</span><span class="si">}</span><span class="s2"> declarations)&quot;</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -3466,7 +3488,8 @@ IR class with <code>is_union</code> distinguishing between them.</p>
 <span class="normal"><a href="#__codelineno-0-461">461</a></span>
 <span class="normal"><a href="#__codelineno-0-462">462</a></span>
 <span class="normal"><a href="#__codelineno-0-463">463</a></span>
-<span class="normal"><a href="#__codelineno-0-464">464</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-401" name="__codelineno-0-401"></a><span class="nd">@dataclass</span>
+<span class="normal"><a href="#__codelineno-0-464">464</a></span>
+<span class="normal"><a href="#__codelineno-0-465">465</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-401" name="__codelineno-0-401"></a><span class="nd">@dataclass</span>
 <a id="__codelineno-0-402" name="__codelineno-0-402"></a><span class="k">class</span><span class="w"> </span><span class="nc">Struct</span><span class="p">:</span>
 <a id="__codelineno-0-403" name="__codelineno-0-403"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Struct or union declaration.</span>
 <a id="__codelineno-0-404" name="__codelineno-0-404"></a>
@@ -3519,17 +3542,18 @@ IR class with <code>is_union</code> distinguishing between them.</p>
 <a id="__codelineno-0-451" name="__codelineno-0-451"></a>    <span class="n">is_union</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 <a id="__codelineno-0-452" name="__codelineno-0-452"></a>    <span class="n">is_cppclass</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 <a id="__codelineno-0-453" name="__codelineno-0-453"></a>    <span class="n">is_typedef</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
-<a id="__codelineno-0-454" name="__codelineno-0-454"></a>    <span class="n">location</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SourceLocation</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-<a id="__codelineno-0-455" name="__codelineno-0-455"></a>
-<a id="__codelineno-0-456" name="__codelineno-0-456"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<a id="__codelineno-0-457" name="__codelineno-0-457"></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_cppclass</span><span class="p">:</span>
-<a id="__codelineno-0-458" name="__codelineno-0-458"></a>            <span class="n">kind</span> <span class="o">=</span> <span class="s2">&quot;cppclass&quot;</span>
-<a id="__codelineno-0-459" name="__codelineno-0-459"></a>        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_union</span><span class="p">:</span>
-<a id="__codelineno-0-460" name="__codelineno-0-460"></a>            <span class="n">kind</span> <span class="o">=</span> <span class="s2">&quot;union&quot;</span>
-<a id="__codelineno-0-461" name="__codelineno-0-461"></a>        <span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-0-462" name="__codelineno-0-462"></a>            <span class="n">kind</span> <span class="o">=</span> <span class="s2">&quot;struct&quot;</span>
-<a id="__codelineno-0-463" name="__codelineno-0-463"></a>        <span class="n">name_str</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="ow">or</span> <span class="s2">&quot;(anonymous)&quot;</span>
-<a id="__codelineno-0-464" name="__codelineno-0-464"></a>        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">name_str</span><span class="si">}</span><span class="s2">&quot;</span>
+<a id="__codelineno-0-454" name="__codelineno-0-454"></a>    <span class="n">namespace</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-455" name="__codelineno-0-455"></a>    <span class="n">location</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SourceLocation</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-456" name="__codelineno-0-456"></a>
+<a id="__codelineno-0-457" name="__codelineno-0-457"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<a id="__codelineno-0-458" name="__codelineno-0-458"></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_cppclass</span><span class="p">:</span>
+<a id="__codelineno-0-459" name="__codelineno-0-459"></a>            <span class="n">kind</span> <span class="o">=</span> <span class="s2">&quot;cppclass&quot;</span>
+<a id="__codelineno-0-460" name="__codelineno-0-460"></a>        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_union</span><span class="p">:</span>
+<a id="__codelineno-0-461" name="__codelineno-0-461"></a>            <span class="n">kind</span> <span class="o">=</span> <span class="s2">&quot;union&quot;</span>
+<a id="__codelineno-0-462" name="__codelineno-0-462"></a>        <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-0-463" name="__codelineno-0-463"></a>            <span class="n">kind</span> <span class="o">=</span> <span class="s2">&quot;struct&quot;</span>
+<a id="__codelineno-0-464" name="__codelineno-0-464"></a>        <span class="n">name_str</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="ow">or</span> <span class="s2">&quot;(anonymous)&quot;</span>
+<a id="__codelineno-0-465" name="__codelineno-0-465"></a>        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">name_str</span><span class="si">}</span><span class="s2">&quot;</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -3691,8 +3715,7 @@ the function body (declarations only).</p>
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>autopxd/ir.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-467">467</a></span>
-<span class="normal"><a href="#__codelineno-0-468">468</a></span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-468">468</a></span>
 <span class="normal"><a href="#__codelineno-0-469">469</a></span>
 <span class="normal"><a href="#__codelineno-0-470">470</a></span>
 <span class="normal"><a href="#__codelineno-0-471">471</a></span>
@@ -3738,54 +3761,57 @@ the function body (declarations only).</p>
 <span class="normal"><a href="#__codelineno-0-511">511</a></span>
 <span class="normal"><a href="#__codelineno-0-512">512</a></span>
 <span class="normal"><a href="#__codelineno-0-513">513</a></span>
-<span class="normal"><a href="#__codelineno-0-514">514</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-467" name="__codelineno-0-467"></a><span class="nd">@dataclass</span>
-<a id="__codelineno-0-468" name="__codelineno-0-468"></a><span class="k">class</span><span class="w"> </span><span class="nc">Function</span><span class="p">:</span>
-<a id="__codelineno-0-469" name="__codelineno-0-469"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Function declaration.</span>
-<a id="__codelineno-0-470" name="__codelineno-0-470"></a>
-<a id="__codelineno-0-471" name="__codelineno-0-471"></a><span class="sd">    Represents a C function prototype or declaration. Does not include</span>
-<a id="__codelineno-0-472" name="__codelineno-0-472"></a><span class="sd">    the function body (declarations only).</span>
-<a id="__codelineno-0-473" name="__codelineno-0-473"></a>
-<a id="__codelineno-0-474" name="__codelineno-0-474"></a><span class="sd">    :param name: The function name.</span>
-<a id="__codelineno-0-475" name="__codelineno-0-475"></a><span class="sd">    :param return_type: The function&#39;s return type.</span>
-<a id="__codelineno-0-476" name="__codelineno-0-476"></a><span class="sd">    :param parameters: List of function parameters.</span>
-<a id="__codelineno-0-477" name="__codelineno-0-477"></a><span class="sd">    :param is_variadic: True if the function accepts variable arguments.</span>
-<a id="__codelineno-0-478" name="__codelineno-0-478"></a><span class="sd">    :param location: Source location for error reporting.</span>
-<a id="__codelineno-0-479" name="__codelineno-0-479"></a>
-<a id="__codelineno-0-480" name="__codelineno-0-480"></a><span class="sd">    Examples</span>
-<a id="__codelineno-0-481" name="__codelineno-0-481"></a><span class="sd">    --------</span>
-<a id="__codelineno-0-482" name="__codelineno-0-482"></a><span class="sd">    Simple function::</span>
-<a id="__codelineno-0-483" name="__codelineno-0-483"></a>
-<a id="__codelineno-0-484" name="__codelineno-0-484"></a><span class="sd">        exit_fn = Function(&quot;exit&quot;, CType(&quot;void&quot;), [</span>
-<a id="__codelineno-0-485" name="__codelineno-0-485"></a><span class="sd">            Parameter(&quot;status&quot;, CType(&quot;int&quot;))</span>
-<a id="__codelineno-0-486" name="__codelineno-0-486"></a><span class="sd">        ])</span>
-<a id="__codelineno-0-487" name="__codelineno-0-487"></a>
-<a id="__codelineno-0-488" name="__codelineno-0-488"></a><span class="sd">    With return value::</span>
-<a id="__codelineno-0-489" name="__codelineno-0-489"></a>
-<a id="__codelineno-0-490" name="__codelineno-0-490"></a><span class="sd">        strlen_fn = Function(&quot;strlen&quot;, CType(&quot;size_t&quot;), [</span>
-<a id="__codelineno-0-491" name="__codelineno-0-491"></a><span class="sd">            Parameter(&quot;s&quot;, Pointer(CType(&quot;char&quot;, [&quot;const&quot;])))</span>
-<a id="__codelineno-0-492" name="__codelineno-0-492"></a><span class="sd">        ])</span>
-<a id="__codelineno-0-493" name="__codelineno-0-493"></a>
-<a id="__codelineno-0-494" name="__codelineno-0-494"></a><span class="sd">    Variadic function::</span>
-<a id="__codelineno-0-495" name="__codelineno-0-495"></a>
-<a id="__codelineno-0-496" name="__codelineno-0-496"></a><span class="sd">        printf_fn = Function(</span>
-<a id="__codelineno-0-497" name="__codelineno-0-497"></a><span class="sd">            &quot;printf&quot;,</span>
-<a id="__codelineno-0-498" name="__codelineno-0-498"></a><span class="sd">            CType(&quot;int&quot;),</span>
-<a id="__codelineno-0-499" name="__codelineno-0-499"></a><span class="sd">            [Parameter(&quot;fmt&quot;, Pointer(CType(&quot;char&quot;, [&quot;const&quot;])))],</span>
-<a id="__codelineno-0-500" name="__codelineno-0-500"></a><span class="sd">            is_variadic=True</span>
-<a id="__codelineno-0-501" name="__codelineno-0-501"></a><span class="sd">        )</span>
-<a id="__codelineno-0-502" name="__codelineno-0-502"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-503" name="__codelineno-0-503"></a>
-<a id="__codelineno-0-504" name="__codelineno-0-504"></a>    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
-<a id="__codelineno-0-505" name="__codelineno-0-505"></a>    <span class="n">return_type</span><span class="p">:</span> <span class="n">TypeExpr</span>
-<a id="__codelineno-0-506" name="__codelineno-0-506"></a>    <span class="n">parameters</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Parameter</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
-<a id="__codelineno-0-507" name="__codelineno-0-507"></a>    <span class="n">is_variadic</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
-<a id="__codelineno-0-508" name="__codelineno-0-508"></a>    <span class="n">location</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SourceLocation</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-<a id="__codelineno-0-509" name="__codelineno-0-509"></a>
-<a id="__codelineno-0-510" name="__codelineno-0-510"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<a id="__codelineno-0-511" name="__codelineno-0-511"></a>        <span class="n">params</span> <span class="o">=</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span>
-<a id="__codelineno-0-512" name="__codelineno-0-512"></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_variadic</span><span class="p">:</span>
-<a id="__codelineno-0-513" name="__codelineno-0-513"></a>            <span class="n">params</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">params</span><span class="si">}</span><span class="s2">, ...&quot;</span> <span class="k">if</span> <span class="n">params</span> <span class="k">else</span> <span class="s2">&quot;...&quot;</span>
-<a id="__codelineno-0-514" name="__codelineno-0-514"></a>        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">return_type</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">(</span><span class="si">{</span><span class="n">params</span><span class="si">}</span><span class="s2">)&quot;</span>
+<span class="normal"><a href="#__codelineno-0-514">514</a></span>
+<span class="normal"><a href="#__codelineno-0-515">515</a></span>
+<span class="normal"><a href="#__codelineno-0-516">516</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-468" name="__codelineno-0-468"></a><span class="nd">@dataclass</span>
+<a id="__codelineno-0-469" name="__codelineno-0-469"></a><span class="k">class</span><span class="w"> </span><span class="nc">Function</span><span class="p">:</span>
+<a id="__codelineno-0-470" name="__codelineno-0-470"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Function declaration.</span>
+<a id="__codelineno-0-471" name="__codelineno-0-471"></a>
+<a id="__codelineno-0-472" name="__codelineno-0-472"></a><span class="sd">    Represents a C function prototype or declaration. Does not include</span>
+<a id="__codelineno-0-473" name="__codelineno-0-473"></a><span class="sd">    the function body (declarations only).</span>
+<a id="__codelineno-0-474" name="__codelineno-0-474"></a>
+<a id="__codelineno-0-475" name="__codelineno-0-475"></a><span class="sd">    :param name: The function name.</span>
+<a id="__codelineno-0-476" name="__codelineno-0-476"></a><span class="sd">    :param return_type: The function&#39;s return type.</span>
+<a id="__codelineno-0-477" name="__codelineno-0-477"></a><span class="sd">    :param parameters: List of function parameters.</span>
+<a id="__codelineno-0-478" name="__codelineno-0-478"></a><span class="sd">    :param is_variadic: True if the function accepts variable arguments.</span>
+<a id="__codelineno-0-479" name="__codelineno-0-479"></a><span class="sd">    :param location: Source location for error reporting.</span>
+<a id="__codelineno-0-480" name="__codelineno-0-480"></a>
+<a id="__codelineno-0-481" name="__codelineno-0-481"></a><span class="sd">    Examples</span>
+<a id="__codelineno-0-482" name="__codelineno-0-482"></a><span class="sd">    --------</span>
+<a id="__codelineno-0-483" name="__codelineno-0-483"></a><span class="sd">    Simple function::</span>
+<a id="__codelineno-0-484" name="__codelineno-0-484"></a>
+<a id="__codelineno-0-485" name="__codelineno-0-485"></a><span class="sd">        exit_fn = Function(&quot;exit&quot;, CType(&quot;void&quot;), [</span>
+<a id="__codelineno-0-486" name="__codelineno-0-486"></a><span class="sd">            Parameter(&quot;status&quot;, CType(&quot;int&quot;))</span>
+<a id="__codelineno-0-487" name="__codelineno-0-487"></a><span class="sd">        ])</span>
+<a id="__codelineno-0-488" name="__codelineno-0-488"></a>
+<a id="__codelineno-0-489" name="__codelineno-0-489"></a><span class="sd">    With return value::</span>
+<a id="__codelineno-0-490" name="__codelineno-0-490"></a>
+<a id="__codelineno-0-491" name="__codelineno-0-491"></a><span class="sd">        strlen_fn = Function(&quot;strlen&quot;, CType(&quot;size_t&quot;), [</span>
+<a id="__codelineno-0-492" name="__codelineno-0-492"></a><span class="sd">            Parameter(&quot;s&quot;, Pointer(CType(&quot;char&quot;, [&quot;const&quot;])))</span>
+<a id="__codelineno-0-493" name="__codelineno-0-493"></a><span class="sd">        ])</span>
+<a id="__codelineno-0-494" name="__codelineno-0-494"></a>
+<a id="__codelineno-0-495" name="__codelineno-0-495"></a><span class="sd">    Variadic function::</span>
+<a id="__codelineno-0-496" name="__codelineno-0-496"></a>
+<a id="__codelineno-0-497" name="__codelineno-0-497"></a><span class="sd">        printf_fn = Function(</span>
+<a id="__codelineno-0-498" name="__codelineno-0-498"></a><span class="sd">            &quot;printf&quot;,</span>
+<a id="__codelineno-0-499" name="__codelineno-0-499"></a><span class="sd">            CType(&quot;int&quot;),</span>
+<a id="__codelineno-0-500" name="__codelineno-0-500"></a><span class="sd">            [Parameter(&quot;fmt&quot;, Pointer(CType(&quot;char&quot;, [&quot;const&quot;])))],</span>
+<a id="__codelineno-0-501" name="__codelineno-0-501"></a><span class="sd">            is_variadic=True</span>
+<a id="__codelineno-0-502" name="__codelineno-0-502"></a><span class="sd">        )</span>
+<a id="__codelineno-0-503" name="__codelineno-0-503"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-504" name="__codelineno-0-504"></a>
+<a id="__codelineno-0-505" name="__codelineno-0-505"></a>    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+<a id="__codelineno-0-506" name="__codelineno-0-506"></a>    <span class="n">return_type</span><span class="p">:</span> <span class="n">TypeExpr</span>
+<a id="__codelineno-0-507" name="__codelineno-0-507"></a>    <span class="n">parameters</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Parameter</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+<a id="__codelineno-0-508" name="__codelineno-0-508"></a>    <span class="n">is_variadic</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<a id="__codelineno-0-509" name="__codelineno-0-509"></a>    <span class="n">namespace</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-510" name="__codelineno-0-510"></a>    <span class="n">location</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SourceLocation</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-511" name="__codelineno-0-511"></a>
+<a id="__codelineno-0-512" name="__codelineno-0-512"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<a id="__codelineno-0-513" name="__codelineno-0-513"></a>        <span class="n">params</span> <span class="o">=</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span>
+<a id="__codelineno-0-514" name="__codelineno-0-514"></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_variadic</span><span class="p">:</span>
+<a id="__codelineno-0-515" name="__codelineno-0-515"></a>            <span class="n">params</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">params</span><span class="si">}</span><span class="s2">, ...&quot;</span> <span class="k">if</span> <span class="n">params</span> <span class="k">else</span> <span class="s2">&quot;...&quot;</span>
+<a id="__codelineno-0-516" name="__codelineno-0-516"></a>        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">return_type</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">(</span><span class="si">{</span><span class="n">params</span><span class="si">}</span><span class="s2">)&quot;</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -3911,9 +3937,7 @@ function pointer types.</p>
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>autopxd/ir.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-517">517</a></span>
-<span class="normal"><a href="#__codelineno-0-518">518</a></span>
-<span class="normal"><a href="#__codelineno-0-519">519</a></span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-519">519</a></span>
 <span class="normal"><a href="#__codelineno-0-520">520</a></span>
 <span class="normal"><a href="#__codelineno-0-521">521</a></span>
 <span class="normal"><a href="#__codelineno-0-522">522</a></span>
@@ -3946,42 +3970,44 @@ function pointer types.</p>
 <span class="normal"><a href="#__codelineno-0-549">549</a></span>
 <span class="normal"><a href="#__codelineno-0-550">550</a></span>
 <span class="normal"><a href="#__codelineno-0-551">551</a></span>
-<span class="normal"><a href="#__codelineno-0-552">552</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-517" name="__codelineno-0-517"></a><span class="nd">@dataclass</span>
-<a id="__codelineno-0-518" name="__codelineno-0-518"></a><span class="k">class</span><span class="w"> </span><span class="nc">Typedef</span><span class="p">:</span>
-<a id="__codelineno-0-519" name="__codelineno-0-519"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Type alias declaration.</span>
-<a id="__codelineno-0-520" name="__codelineno-0-520"></a>
-<a id="__codelineno-0-521" name="__codelineno-0-521"></a><span class="sd">    Represents a C typedef that creates an alias for another type.</span>
-<a id="__codelineno-0-522" name="__codelineno-0-522"></a><span class="sd">    Common patterns include aliasing primitives, struct tags, and</span>
-<a id="__codelineno-0-523" name="__codelineno-0-523"></a><span class="sd">    function pointer types.</span>
-<a id="__codelineno-0-524" name="__codelineno-0-524"></a>
-<a id="__codelineno-0-525" name="__codelineno-0-525"></a><span class="sd">    :param name: The new type name being defined.</span>
-<a id="__codelineno-0-526" name="__codelineno-0-526"></a><span class="sd">    :param underlying_type: The type being aliased.</span>
-<a id="__codelineno-0-527" name="__codelineno-0-527"></a><span class="sd">    :param location: Source location for error reporting.</span>
-<a id="__codelineno-0-528" name="__codelineno-0-528"></a>
-<a id="__codelineno-0-529" name="__codelineno-0-529"></a><span class="sd">    Examples</span>
-<a id="__codelineno-0-530" name="__codelineno-0-530"></a><span class="sd">    --------</span>
-<a id="__codelineno-0-531" name="__codelineno-0-531"></a><span class="sd">    Simple alias::</span>
-<a id="__codelineno-0-532" name="__codelineno-0-532"></a>
-<a id="__codelineno-0-533" name="__codelineno-0-533"></a><span class="sd">        size_t = Typedef(&quot;size_t&quot;, CType(&quot;long&quot;, [&quot;unsigned&quot;]))</span>
+<span class="normal"><a href="#__codelineno-0-552">552</a></span>
+<span class="normal"><a href="#__codelineno-0-553">553</a></span>
+<span class="normal"><a href="#__codelineno-0-554">554</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-519" name="__codelineno-0-519"></a><span class="nd">@dataclass</span>
+<a id="__codelineno-0-520" name="__codelineno-0-520"></a><span class="k">class</span><span class="w"> </span><span class="nc">Typedef</span><span class="p">:</span>
+<a id="__codelineno-0-521" name="__codelineno-0-521"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Type alias declaration.</span>
+<a id="__codelineno-0-522" name="__codelineno-0-522"></a>
+<a id="__codelineno-0-523" name="__codelineno-0-523"></a><span class="sd">    Represents a C typedef that creates an alias for another type.</span>
+<a id="__codelineno-0-524" name="__codelineno-0-524"></a><span class="sd">    Common patterns include aliasing primitives, struct tags, and</span>
+<a id="__codelineno-0-525" name="__codelineno-0-525"></a><span class="sd">    function pointer types.</span>
+<a id="__codelineno-0-526" name="__codelineno-0-526"></a>
+<a id="__codelineno-0-527" name="__codelineno-0-527"></a><span class="sd">    :param name: The new type name being defined.</span>
+<a id="__codelineno-0-528" name="__codelineno-0-528"></a><span class="sd">    :param underlying_type: The type being aliased.</span>
+<a id="__codelineno-0-529" name="__codelineno-0-529"></a><span class="sd">    :param location: Source location for error reporting.</span>
+<a id="__codelineno-0-530" name="__codelineno-0-530"></a>
+<a id="__codelineno-0-531" name="__codelineno-0-531"></a><span class="sd">    Examples</span>
+<a id="__codelineno-0-532" name="__codelineno-0-532"></a><span class="sd">    --------</span>
+<a id="__codelineno-0-533" name="__codelineno-0-533"></a><span class="sd">    Simple alias::</span>
 <a id="__codelineno-0-534" name="__codelineno-0-534"></a>
-<a id="__codelineno-0-535" name="__codelineno-0-535"></a><span class="sd">    Struct typedef::</span>
+<a id="__codelineno-0-535" name="__codelineno-0-535"></a><span class="sd">        size_t = Typedef(&quot;size_t&quot;, CType(&quot;long&quot;, [&quot;unsigned&quot;]))</span>
 <a id="__codelineno-0-536" name="__codelineno-0-536"></a>
-<a id="__codelineno-0-537" name="__codelineno-0-537"></a><span class="sd">        point_t = Typedef(&quot;Point&quot;, CType(&quot;struct Point&quot;))</span>
+<a id="__codelineno-0-537" name="__codelineno-0-537"></a><span class="sd">    Struct typedef::</span>
 <a id="__codelineno-0-538" name="__codelineno-0-538"></a>
-<a id="__codelineno-0-539" name="__codelineno-0-539"></a><span class="sd">    Function pointer typedef::</span>
+<a id="__codelineno-0-539" name="__codelineno-0-539"></a><span class="sd">        point_t = Typedef(&quot;Point&quot;, CType(&quot;struct Point&quot;))</span>
 <a id="__codelineno-0-540" name="__codelineno-0-540"></a>
-<a id="__codelineno-0-541" name="__codelineno-0-541"></a><span class="sd">        callback_t = Typedef(&quot;Callback&quot;, FunctionPointer(</span>
-<a id="__codelineno-0-542" name="__codelineno-0-542"></a><span class="sd">            CType(&quot;void&quot;),</span>
-<a id="__codelineno-0-543" name="__codelineno-0-543"></a><span class="sd">            [Parameter(&quot;data&quot;, Pointer(CType(&quot;void&quot;)))]</span>
-<a id="__codelineno-0-544" name="__codelineno-0-544"></a><span class="sd">        ))</span>
-<a id="__codelineno-0-545" name="__codelineno-0-545"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-546" name="__codelineno-0-546"></a>
-<a id="__codelineno-0-547" name="__codelineno-0-547"></a>    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
-<a id="__codelineno-0-548" name="__codelineno-0-548"></a>    <span class="n">underlying_type</span><span class="p">:</span> <span class="n">TypeExpr</span>
-<a id="__codelineno-0-549" name="__codelineno-0-549"></a>    <span class="n">location</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SourceLocation</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-<a id="__codelineno-0-550" name="__codelineno-0-550"></a>
-<a id="__codelineno-0-551" name="__codelineno-0-551"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<a id="__codelineno-0-552" name="__codelineno-0-552"></a>        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;typedef </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">underlying_type</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span>
+<a id="__codelineno-0-541" name="__codelineno-0-541"></a><span class="sd">    Function pointer typedef::</span>
+<a id="__codelineno-0-542" name="__codelineno-0-542"></a>
+<a id="__codelineno-0-543" name="__codelineno-0-543"></a><span class="sd">        callback_t = Typedef(&quot;Callback&quot;, FunctionPointer(</span>
+<a id="__codelineno-0-544" name="__codelineno-0-544"></a><span class="sd">            CType(&quot;void&quot;),</span>
+<a id="__codelineno-0-545" name="__codelineno-0-545"></a><span class="sd">            [Parameter(&quot;data&quot;, Pointer(CType(&quot;void&quot;)))]</span>
+<a id="__codelineno-0-546" name="__codelineno-0-546"></a><span class="sd">        ))</span>
+<a id="__codelineno-0-547" name="__codelineno-0-547"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-548" name="__codelineno-0-548"></a>
+<a id="__codelineno-0-549" name="__codelineno-0-549"></a>    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+<a id="__codelineno-0-550" name="__codelineno-0-550"></a>    <span class="n">underlying_type</span><span class="p">:</span> <span class="n">TypeExpr</span>
+<a id="__codelineno-0-551" name="__codelineno-0-551"></a>    <span class="n">location</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SourceLocation</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-552" name="__codelineno-0-552"></a>
+<a id="__codelineno-0-553" name="__codelineno-0-553"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<a id="__codelineno-0-554" name="__codelineno-0-554"></a>        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;typedef </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">underlying_type</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -4106,9 +4132,7 @@ include local variables (which are not exposed in header files).</p>
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>autopxd/ir.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-555">555</a></span>
-<span class="normal"><a href="#__codelineno-0-556">556</a></span>
-<span class="normal"><a href="#__codelineno-0-557">557</a></span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-557">557</a></span>
 <span class="normal"><a href="#__codelineno-0-558">558</a></span>
 <span class="normal"><a href="#__codelineno-0-559">559</a></span>
 <span class="normal"><a href="#__codelineno-0-560">560</a></span>
@@ -4137,38 +4161,40 @@ include local variables (which are not exposed in header files).</p>
 <span class="normal"><a href="#__codelineno-0-583">583</a></span>
 <span class="normal"><a href="#__codelineno-0-584">584</a></span>
 <span class="normal"><a href="#__codelineno-0-585">585</a></span>
-<span class="normal"><a href="#__codelineno-0-586">586</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-555" name="__codelineno-0-555"></a><span class="nd">@dataclass</span>
-<a id="__codelineno-0-556" name="__codelineno-0-556"></a><span class="k">class</span><span class="w"> </span><span class="nc">Variable</span><span class="p">:</span>
-<a id="__codelineno-0-557" name="__codelineno-0-557"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Global variable declaration.</span>
-<a id="__codelineno-0-558" name="__codelineno-0-558"></a>
-<a id="__codelineno-0-559" name="__codelineno-0-559"></a><span class="sd">    Represents a global or extern variable declaration. Does not</span>
-<a id="__codelineno-0-560" name="__codelineno-0-560"></a><span class="sd">    include local variables (which are not exposed in header files).</span>
-<a id="__codelineno-0-561" name="__codelineno-0-561"></a>
-<a id="__codelineno-0-562" name="__codelineno-0-562"></a><span class="sd">    :param name: The variable name.</span>
-<a id="__codelineno-0-563" name="__codelineno-0-563"></a><span class="sd">    :param type: The variable&#39;s type.</span>
-<a id="__codelineno-0-564" name="__codelineno-0-564"></a><span class="sd">    :param location: Source location for error reporting.</span>
-<a id="__codelineno-0-565" name="__codelineno-0-565"></a>
-<a id="__codelineno-0-566" name="__codelineno-0-566"></a><span class="sd">    Examples</span>
-<a id="__codelineno-0-567" name="__codelineno-0-567"></a><span class="sd">    --------</span>
-<a id="__codelineno-0-568" name="__codelineno-0-568"></a><span class="sd">    Extern variable::</span>
-<a id="__codelineno-0-569" name="__codelineno-0-569"></a>
-<a id="__codelineno-0-570" name="__codelineno-0-570"></a><span class="sd">        errno_var = Variable(&quot;errno&quot;, CType(&quot;int&quot;))</span>
+<span class="normal"><a href="#__codelineno-0-586">586</a></span>
+<span class="normal"><a href="#__codelineno-0-587">587</a></span>
+<span class="normal"><a href="#__codelineno-0-588">588</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-557" name="__codelineno-0-557"></a><span class="nd">@dataclass</span>
+<a id="__codelineno-0-558" name="__codelineno-0-558"></a><span class="k">class</span><span class="w"> </span><span class="nc">Variable</span><span class="p">:</span>
+<a id="__codelineno-0-559" name="__codelineno-0-559"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Global variable declaration.</span>
+<a id="__codelineno-0-560" name="__codelineno-0-560"></a>
+<a id="__codelineno-0-561" name="__codelineno-0-561"></a><span class="sd">    Represents a global or extern variable declaration. Does not</span>
+<a id="__codelineno-0-562" name="__codelineno-0-562"></a><span class="sd">    include local variables (which are not exposed in header files).</span>
+<a id="__codelineno-0-563" name="__codelineno-0-563"></a>
+<a id="__codelineno-0-564" name="__codelineno-0-564"></a><span class="sd">    :param name: The variable name.</span>
+<a id="__codelineno-0-565" name="__codelineno-0-565"></a><span class="sd">    :param type: The variable&#39;s type.</span>
+<a id="__codelineno-0-566" name="__codelineno-0-566"></a><span class="sd">    :param location: Source location for error reporting.</span>
+<a id="__codelineno-0-567" name="__codelineno-0-567"></a>
+<a id="__codelineno-0-568" name="__codelineno-0-568"></a><span class="sd">    Examples</span>
+<a id="__codelineno-0-569" name="__codelineno-0-569"></a><span class="sd">    --------</span>
+<a id="__codelineno-0-570" name="__codelineno-0-570"></a><span class="sd">    Extern variable::</span>
 <a id="__codelineno-0-571" name="__codelineno-0-571"></a>
-<a id="__codelineno-0-572" name="__codelineno-0-572"></a><span class="sd">    Const string::</span>
+<a id="__codelineno-0-572" name="__codelineno-0-572"></a><span class="sd">        errno_var = Variable(&quot;errno&quot;, CType(&quot;int&quot;))</span>
 <a id="__codelineno-0-573" name="__codelineno-0-573"></a>
-<a id="__codelineno-0-574" name="__codelineno-0-574"></a><span class="sd">        version = Variable(&quot;version&quot;, Pointer(CType(&quot;char&quot;, [&quot;const&quot;])))</span>
+<a id="__codelineno-0-574" name="__codelineno-0-574"></a><span class="sd">    Const string::</span>
 <a id="__codelineno-0-575" name="__codelineno-0-575"></a>
-<a id="__codelineno-0-576" name="__codelineno-0-576"></a><span class="sd">    Array variable::</span>
+<a id="__codelineno-0-576" name="__codelineno-0-576"></a><span class="sd">        version = Variable(&quot;version&quot;, Pointer(CType(&quot;char&quot;, [&quot;const&quot;])))</span>
 <a id="__codelineno-0-577" name="__codelineno-0-577"></a>
-<a id="__codelineno-0-578" name="__codelineno-0-578"></a><span class="sd">        lookup_table = Variable(&quot;table&quot;, Array(CType(&quot;int&quot;), 256))</span>
-<a id="__codelineno-0-579" name="__codelineno-0-579"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-580" name="__codelineno-0-580"></a>
-<a id="__codelineno-0-581" name="__codelineno-0-581"></a>    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
-<a id="__codelineno-0-582" name="__codelineno-0-582"></a>    <span class="nb">type</span><span class="p">:</span> <span class="n">TypeExpr</span>
-<a id="__codelineno-0-583" name="__codelineno-0-583"></a>    <span class="n">location</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SourceLocation</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-<a id="__codelineno-0-584" name="__codelineno-0-584"></a>
-<a id="__codelineno-0-585" name="__codelineno-0-585"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<a id="__codelineno-0-586" name="__codelineno-0-586"></a>        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span>
+<a id="__codelineno-0-578" name="__codelineno-0-578"></a><span class="sd">    Array variable::</span>
+<a id="__codelineno-0-579" name="__codelineno-0-579"></a>
+<a id="__codelineno-0-580" name="__codelineno-0-580"></a><span class="sd">        lookup_table = Variable(&quot;table&quot;, Array(CType(&quot;int&quot;), 256))</span>
+<a id="__codelineno-0-581" name="__codelineno-0-581"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-582" name="__codelineno-0-582"></a>
+<a id="__codelineno-0-583" name="__codelineno-0-583"></a>    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+<a id="__codelineno-0-584" name="__codelineno-0-584"></a>    <span class="nb">type</span><span class="p">:</span> <span class="n">TypeExpr</span>
+<a id="__codelineno-0-585" name="__codelineno-0-585"></a>    <span class="n">location</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SourceLocation</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-586" name="__codelineno-0-586"></a>
+<a id="__codelineno-0-587" name="__codelineno-0-587"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<a id="__codelineno-0-588" name="__codelineno-0-588"></a>        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -4331,9 +4357,7 @@ variable declarations. Only backends that support macro extraction
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>autopxd/ir.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-589">589</a></span>
-<span class="normal"><a href="#__codelineno-0-590">590</a></span>
-<span class="normal"><a href="#__codelineno-0-591">591</a></span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-591">591</a></span>
 <span class="normal"><a href="#__codelineno-0-592">592</a></span>
 <span class="normal"><a href="#__codelineno-0-593">593</a></span>
 <span class="normal"><a href="#__codelineno-0-594">594</a></span>
@@ -4376,52 +4400,54 @@ variable declarations. Only backends that support macro extraction
 <span class="normal"><a href="#__codelineno-0-631">631</a></span>
 <span class="normal"><a href="#__codelineno-0-632">632</a></span>
 <span class="normal"><a href="#__codelineno-0-633">633</a></span>
-<span class="normal"><a href="#__codelineno-0-634">634</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-589" name="__codelineno-0-589"></a><span class="nd">@dataclass</span>
-<a id="__codelineno-0-590" name="__codelineno-0-590"></a><span class="k">class</span><span class="w"> </span><span class="nc">Constant</span><span class="p">:</span>
-<a id="__codelineno-0-591" name="__codelineno-0-591"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Compile-time constant declaration.</span>
-<a id="__codelineno-0-592" name="__codelineno-0-592"></a>
-<a id="__codelineno-0-593" name="__codelineno-0-593"></a><span class="sd">    Represents ``#define`` macros with constant values or ``const``</span>
-<a id="__codelineno-0-594" name="__codelineno-0-594"></a><span class="sd">    variable declarations. Only backends that support macro extraction</span>
-<a id="__codelineno-0-595" name="__codelineno-0-595"></a><span class="sd">    (e.g., libclang) can populate macro constants.</span>
-<a id="__codelineno-0-596" name="__codelineno-0-596"></a>
-<a id="__codelineno-0-597" name="__codelineno-0-597"></a><span class="sd">    :param name: The constant name.</span>
-<a id="__codelineno-0-598" name="__codelineno-0-598"></a><span class="sd">    :param value: The constant&#39;s value - an integer, float, or string</span>
-<a id="__codelineno-0-599" name="__codelineno-0-599"></a><span class="sd">        expression. None if the value cannot be determined.</span>
-<a id="__codelineno-0-600" name="__codelineno-0-600"></a><span class="sd">    :param type: For typed constants (``const int``), the C type.</span>
-<a id="__codelineno-0-601" name="__codelineno-0-601"></a><span class="sd">        None for macros.</span>
-<a id="__codelineno-0-602" name="__codelineno-0-602"></a><span class="sd">    :param is_macro: True if this is a ``#define`` macro, False for</span>
-<a id="__codelineno-0-603" name="__codelineno-0-603"></a><span class="sd">        ``const`` declarations.</span>
-<a id="__codelineno-0-604" name="__codelineno-0-604"></a><span class="sd">    :param location: Source location for error reporting.</span>
-<a id="__codelineno-0-605" name="__codelineno-0-605"></a>
-<a id="__codelineno-0-606" name="__codelineno-0-606"></a><span class="sd">    Examples</span>
-<a id="__codelineno-0-607" name="__codelineno-0-607"></a><span class="sd">    --------</span>
-<a id="__codelineno-0-608" name="__codelineno-0-608"></a><span class="sd">    Numeric macro::</span>
-<a id="__codelineno-0-609" name="__codelineno-0-609"></a>
-<a id="__codelineno-0-610" name="__codelineno-0-610"></a><span class="sd">        size = Constant(&quot;SIZE&quot;, 100, is_macro=True)</span>
+<span class="normal"><a href="#__codelineno-0-634">634</a></span>
+<span class="normal"><a href="#__codelineno-0-635">635</a></span>
+<span class="normal"><a href="#__codelineno-0-636">636</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-591" name="__codelineno-0-591"></a><span class="nd">@dataclass</span>
+<a id="__codelineno-0-592" name="__codelineno-0-592"></a><span class="k">class</span><span class="w"> </span><span class="nc">Constant</span><span class="p">:</span>
+<a id="__codelineno-0-593" name="__codelineno-0-593"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Compile-time constant declaration.</span>
+<a id="__codelineno-0-594" name="__codelineno-0-594"></a>
+<a id="__codelineno-0-595" name="__codelineno-0-595"></a><span class="sd">    Represents ``#define`` macros with constant values or ``const``</span>
+<a id="__codelineno-0-596" name="__codelineno-0-596"></a><span class="sd">    variable declarations. Only backends that support macro extraction</span>
+<a id="__codelineno-0-597" name="__codelineno-0-597"></a><span class="sd">    (e.g., libclang) can populate macro constants.</span>
+<a id="__codelineno-0-598" name="__codelineno-0-598"></a>
+<a id="__codelineno-0-599" name="__codelineno-0-599"></a><span class="sd">    :param name: The constant name.</span>
+<a id="__codelineno-0-600" name="__codelineno-0-600"></a><span class="sd">    :param value: The constant&#39;s value - an integer, float, or string</span>
+<a id="__codelineno-0-601" name="__codelineno-0-601"></a><span class="sd">        expression. None if the value cannot be determined.</span>
+<a id="__codelineno-0-602" name="__codelineno-0-602"></a><span class="sd">    :param type: For typed constants (``const int``), the C type.</span>
+<a id="__codelineno-0-603" name="__codelineno-0-603"></a><span class="sd">        None for macros.</span>
+<a id="__codelineno-0-604" name="__codelineno-0-604"></a><span class="sd">    :param is_macro: True if this is a ``#define`` macro, False for</span>
+<a id="__codelineno-0-605" name="__codelineno-0-605"></a><span class="sd">        ``const`` declarations.</span>
+<a id="__codelineno-0-606" name="__codelineno-0-606"></a><span class="sd">    :param location: Source location for error reporting.</span>
+<a id="__codelineno-0-607" name="__codelineno-0-607"></a>
+<a id="__codelineno-0-608" name="__codelineno-0-608"></a><span class="sd">    Examples</span>
+<a id="__codelineno-0-609" name="__codelineno-0-609"></a><span class="sd">    --------</span>
+<a id="__codelineno-0-610" name="__codelineno-0-610"></a><span class="sd">    Numeric macro::</span>
 <a id="__codelineno-0-611" name="__codelineno-0-611"></a>
-<a id="__codelineno-0-612" name="__codelineno-0-612"></a><span class="sd">    Expression macro::</span>
+<a id="__codelineno-0-612" name="__codelineno-0-612"></a><span class="sd">        size = Constant(&quot;SIZE&quot;, 100, is_macro=True)</span>
 <a id="__codelineno-0-613" name="__codelineno-0-613"></a>
-<a id="__codelineno-0-614" name="__codelineno-0-614"></a><span class="sd">        mask = Constant(&quot;MASK&quot;, &quot;1 &lt;&lt; 4&quot;, is_macro=True)</span>
+<a id="__codelineno-0-614" name="__codelineno-0-614"></a><span class="sd">    Expression macro::</span>
 <a id="__codelineno-0-615" name="__codelineno-0-615"></a>
-<a id="__codelineno-0-616" name="__codelineno-0-616"></a><span class="sd">    Typed const::</span>
+<a id="__codelineno-0-616" name="__codelineno-0-616"></a><span class="sd">        mask = Constant(&quot;MASK&quot;, &quot;1 &lt;&lt; 4&quot;, is_macro=True)</span>
 <a id="__codelineno-0-617" name="__codelineno-0-617"></a>
-<a id="__codelineno-0-618" name="__codelineno-0-618"></a><span class="sd">        max_val = Constant(&quot;MAX_VALUE&quot;, 255, type=CType(&quot;int&quot;))</span>
+<a id="__codelineno-0-618" name="__codelineno-0-618"></a><span class="sd">    Typed const::</span>
 <a id="__codelineno-0-619" name="__codelineno-0-619"></a>
-<a id="__codelineno-0-620" name="__codelineno-0-620"></a><span class="sd">    String macro::</span>
+<a id="__codelineno-0-620" name="__codelineno-0-620"></a><span class="sd">        max_val = Constant(&quot;MAX_VALUE&quot;, 255, type=CType(&quot;int&quot;))</span>
 <a id="__codelineno-0-621" name="__codelineno-0-621"></a>
-<a id="__codelineno-0-622" name="__codelineno-0-622"></a><span class="sd">        version = Constant(&quot;VERSION&quot;, &#39;&quot;1.0.0&quot;&#39;, is_macro=True)</span>
-<a id="__codelineno-0-623" name="__codelineno-0-623"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-624" name="__codelineno-0-624"></a>
-<a id="__codelineno-0-625" name="__codelineno-0-625"></a>    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
-<a id="__codelineno-0-626" name="__codelineno-0-626"></a>    <span class="n">value</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># None if complex/unknown</span>
-<a id="__codelineno-0-627" name="__codelineno-0-627"></a>    <span class="nb">type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">CType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-<a id="__codelineno-0-628" name="__codelineno-0-628"></a>    <span class="n">is_macro</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
-<a id="__codelineno-0-629" name="__codelineno-0-629"></a>    <span class="n">location</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SourceLocation</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-<a id="__codelineno-0-630" name="__codelineno-0-630"></a>
-<a id="__codelineno-0-631" name="__codelineno-0-631"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<a id="__codelineno-0-632" name="__codelineno-0-632"></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_macro</span><span class="p">:</span>
-<a id="__codelineno-0-633" name="__codelineno-0-633"></a>            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;#define </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span>
-<a id="__codelineno-0-634" name="__codelineno-0-634"></a>        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;const </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span>
+<a id="__codelineno-0-622" name="__codelineno-0-622"></a><span class="sd">    String macro::</span>
+<a id="__codelineno-0-623" name="__codelineno-0-623"></a>
+<a id="__codelineno-0-624" name="__codelineno-0-624"></a><span class="sd">        version = Constant(&quot;VERSION&quot;, &#39;&quot;1.0.0&quot;&#39;, is_macro=True)</span>
+<a id="__codelineno-0-625" name="__codelineno-0-625"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-626" name="__codelineno-0-626"></a>
+<a id="__codelineno-0-627" name="__codelineno-0-627"></a>    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+<a id="__codelineno-0-628" name="__codelineno-0-628"></a>    <span class="n">value</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># None if complex/unknown</span>
+<a id="__codelineno-0-629" name="__codelineno-0-629"></a>    <span class="nb">type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">CType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-630" name="__codelineno-0-630"></a>    <span class="n">is_macro</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<a id="__codelineno-0-631" name="__codelineno-0-631"></a>    <span class="n">location</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SourceLocation</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-632" name="__codelineno-0-632"></a>
+<a id="__codelineno-0-633" name="__codelineno-0-633"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<a id="__codelineno-0-634" name="__codelineno-0-634"></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_macro</span><span class="p">:</span>
+<a id="__codelineno-0-635" name="__codelineno-0-635"></a>            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;#define </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span>
+<a id="__codelineno-0-636" name="__codelineno-0-636"></a>        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;const </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -4671,12 +4697,7 @@ header = backend.parse(&quot;int foo(void);&quot;, &quot;test.h&quot;)
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>autopxd/ir.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-685">685</a></span>
-<span class="normal"><a href="#__codelineno-0-686">686</a></span>
-<span class="normal"><a href="#__codelineno-0-687">687</a></span>
-<span class="normal"><a href="#__codelineno-0-688">688</a></span>
-<span class="normal"><a href="#__codelineno-0-689">689</a></span>
-<span class="normal"><a href="#__codelineno-0-690">690</a></span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-690">690</a></span>
 <span class="normal"><a href="#__codelineno-0-691">691</a></span>
 <span class="normal"><a href="#__codelineno-0-692">692</a></span>
 <span class="normal"><a href="#__codelineno-0-693">693</a></span>
@@ -4735,71 +4756,76 @@ header = backend.parse(&quot;int foo(void);&quot;, &quot;test.h&quot;)
 <span class="normal"><a href="#__codelineno-0-746">746</a></span>
 <span class="normal"><a href="#__codelineno-0-747">747</a></span>
 <span class="normal"><a href="#__codelineno-0-748">748</a></span>
-<span class="normal"><a href="#__codelineno-0-749">749</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-685" name="__codelineno-0-685"></a><span class="k">class</span><span class="w"> </span><span class="nc">ParserBackend</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>  <span class="c1"># pylint: disable=too-few-public-methods</span>
-<a id="__codelineno-0-686" name="__codelineno-0-686"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Protocol defining the interface for parser backends.</span>
-<a id="__codelineno-0-687" name="__codelineno-0-687"></a>
-<a id="__codelineno-0-688" name="__codelineno-0-688"></a><span class="sd">    All parser backends must implement this protocol to be usable with autopxd2.</span>
-<a id="__codelineno-0-689" name="__codelineno-0-689"></a><span class="sd">    Backends are responsible for translating from their native AST format</span>
-<a id="__codelineno-0-690" name="__codelineno-0-690"></a><span class="sd">    (pycparser, libclang, etc.) to the common :class:`Header` IR format.</span>
-<a id="__codelineno-0-691" name="__codelineno-0-691"></a>
-<a id="__codelineno-0-692" name="__codelineno-0-692"></a><span class="sd">    Available Backends</span>
-<a id="__codelineno-0-693" name="__codelineno-0-693"></a><span class="sd">    ------------------</span>
-<a id="__codelineno-0-694" name="__codelineno-0-694"></a><span class="sd">    * ``pycparser`` - Pure Python C99 parser (default)</span>
-<a id="__codelineno-0-695" name="__codelineno-0-695"></a><span class="sd">    * ``libclang`` - LLVM clang-based parser with C++ support</span>
+<span class="normal"><a href="#__codelineno-0-749">749</a></span>
+<span class="normal"><a href="#__codelineno-0-750">750</a></span>
+<span class="normal"><a href="#__codelineno-0-751">751</a></span>
+<span class="normal"><a href="#__codelineno-0-752">752</a></span>
+<span class="normal"><a href="#__codelineno-0-753">753</a></span>
+<span class="normal"><a href="#__codelineno-0-754">754</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-690" name="__codelineno-0-690"></a><span class="k">class</span><span class="w"> </span><span class="nc">ParserBackend</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>  <span class="c1"># pylint: disable=too-few-public-methods</span>
+<a id="__codelineno-0-691" name="__codelineno-0-691"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Protocol defining the interface for parser backends.</span>
+<a id="__codelineno-0-692" name="__codelineno-0-692"></a>
+<a id="__codelineno-0-693" name="__codelineno-0-693"></a><span class="sd">    All parser backends must implement this protocol to be usable with autopxd2.</span>
+<a id="__codelineno-0-694" name="__codelineno-0-694"></a><span class="sd">    Backends are responsible for translating from their native AST format</span>
+<a id="__codelineno-0-695" name="__codelineno-0-695"></a><span class="sd">    (pycparser, libclang, etc.) to the common :class:`Header` IR format.</span>
 <a id="__codelineno-0-696" name="__codelineno-0-696"></a>
-<a id="__codelineno-0-697" name="__codelineno-0-697"></a><span class="sd">    Example</span>
-<a id="__codelineno-0-698" name="__codelineno-0-698"></a><span class="sd">    -------</span>
-<a id="__codelineno-0-699" name="__codelineno-0-699"></a><span class="sd">    ::</span>
-<a id="__codelineno-0-700" name="__codelineno-0-700"></a>
-<a id="__codelineno-0-701" name="__codelineno-0-701"></a><span class="sd">        from autopxd.backends import get_backend</span>
-<a id="__codelineno-0-702" name="__codelineno-0-702"></a>
-<a id="__codelineno-0-703" name="__codelineno-0-703"></a><span class="sd">        # Get default backend</span>
-<a id="__codelineno-0-704" name="__codelineno-0-704"></a><span class="sd">        backend = get_backend()</span>
+<a id="__codelineno-0-697" name="__codelineno-0-697"></a><span class="sd">    Available Backends</span>
+<a id="__codelineno-0-698" name="__codelineno-0-698"></a><span class="sd">    ------------------</span>
+<a id="__codelineno-0-699" name="__codelineno-0-699"></a><span class="sd">    * ``pycparser`` - Pure Python C99 parser (default)</span>
+<a id="__codelineno-0-700" name="__codelineno-0-700"></a><span class="sd">    * ``libclang`` - LLVM clang-based parser with C++ support</span>
+<a id="__codelineno-0-701" name="__codelineno-0-701"></a>
+<a id="__codelineno-0-702" name="__codelineno-0-702"></a><span class="sd">    Example</span>
+<a id="__codelineno-0-703" name="__codelineno-0-703"></a><span class="sd">    -------</span>
+<a id="__codelineno-0-704" name="__codelineno-0-704"></a><span class="sd">    ::</span>
 <a id="__codelineno-0-705" name="__codelineno-0-705"></a>
-<a id="__codelineno-0-706" name="__codelineno-0-706"></a><span class="sd">        # Get specific backend</span>
-<a id="__codelineno-0-707" name="__codelineno-0-707"></a><span class="sd">        libclang = get_backend(&quot;libclang&quot;)</span>
-<a id="__codelineno-0-708" name="__codelineno-0-708"></a>
-<a id="__codelineno-0-709" name="__codelineno-0-709"></a><span class="sd">        # Parse code</span>
-<a id="__codelineno-0-710" name="__codelineno-0-710"></a><span class="sd">        header = backend.parse(&quot;int foo(void);&quot;, &quot;test.h&quot;)</span>
-<a id="__codelineno-0-711" name="__codelineno-0-711"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-712" name="__codelineno-0-712"></a>
-<a id="__codelineno-0-713" name="__codelineno-0-713"></a>    <span class="c1"># pylint: disable=unnecessary-ellipsis</span>
-<a id="__codelineno-0-714" name="__codelineno-0-714"></a>
-<a id="__codelineno-0-715" name="__codelineno-0-715"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">parse</span><span class="p">(</span>
-<a id="__codelineno-0-716" name="__codelineno-0-716"></a>        <span class="bp">self</span><span class="p">,</span>
-<a id="__codelineno-0-717" name="__codelineno-0-717"></a>        <span class="n">code</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<a id="__codelineno-0-718" name="__codelineno-0-718"></a>        <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<a id="__codelineno-0-719" name="__codelineno-0-719"></a>        <span class="n">include_dirs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-720" name="__codelineno-0-720"></a>        <span class="n">extra_args</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-721" name="__codelineno-0-721"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Header</span><span class="p">:</span>
-<a id="__codelineno-0-722" name="__codelineno-0-722"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse C/C++ code and return the IR representation.</span>
-<a id="__codelineno-0-723" name="__codelineno-0-723"></a>
-<a id="__codelineno-0-724" name="__codelineno-0-724"></a><span class="sd">        :param code: Source code to parse.</span>
-<a id="__codelineno-0-725" name="__codelineno-0-725"></a><span class="sd">        :param filename: Name of the source file. Used for error messages</span>
-<a id="__codelineno-0-726" name="__codelineno-0-726"></a><span class="sd">            and ``#line`` directives. Does not need to exist on disk.</span>
-<a id="__codelineno-0-727" name="__codelineno-0-727"></a><span class="sd">        :param include_dirs: Directories to search for ``#include`` files.</span>
-<a id="__codelineno-0-728" name="__codelineno-0-728"></a><span class="sd">            Only used by backends that handle preprocessing.</span>
-<a id="__codelineno-0-729" name="__codelineno-0-729"></a><span class="sd">        :param extra_args: Additional arguments for the preprocessor/compiler.</span>
-<a id="__codelineno-0-730" name="__codelineno-0-730"></a><span class="sd">            Format is backend-specific.</span>
-<a id="__codelineno-0-731" name="__codelineno-0-731"></a><span class="sd">        :returns: Parsed header containing all extracted declarations.</span>
-<a id="__codelineno-0-732" name="__codelineno-0-732"></a><span class="sd">        :raises RuntimeError: If parsing fails due to syntax errors.</span>
-<a id="__codelineno-0-733" name="__codelineno-0-733"></a><span class="sd">        &quot;&quot;&quot;</span>
-<a id="__codelineno-0-734" name="__codelineno-0-734"></a>        <span class="o">...</span>
-<a id="__codelineno-0-735" name="__codelineno-0-735"></a>
-<a id="__codelineno-0-736" name="__codelineno-0-736"></a>    <span class="nd">@property</span>
-<a id="__codelineno-0-737" name="__codelineno-0-737"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<a id="__codelineno-0-738" name="__codelineno-0-738"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Human-readable name of this backend (e.g., ``&quot;pycparser&quot;``).&quot;&quot;&quot;</span>
+<a id="__codelineno-0-706" name="__codelineno-0-706"></a><span class="sd">        from autopxd.backends import get_backend</span>
+<a id="__codelineno-0-707" name="__codelineno-0-707"></a>
+<a id="__codelineno-0-708" name="__codelineno-0-708"></a><span class="sd">        # Get default backend</span>
+<a id="__codelineno-0-709" name="__codelineno-0-709"></a><span class="sd">        backend = get_backend()</span>
+<a id="__codelineno-0-710" name="__codelineno-0-710"></a>
+<a id="__codelineno-0-711" name="__codelineno-0-711"></a><span class="sd">        # Get specific backend</span>
+<a id="__codelineno-0-712" name="__codelineno-0-712"></a><span class="sd">        libclang = get_backend(&quot;libclang&quot;)</span>
+<a id="__codelineno-0-713" name="__codelineno-0-713"></a>
+<a id="__codelineno-0-714" name="__codelineno-0-714"></a><span class="sd">        # Parse code</span>
+<a id="__codelineno-0-715" name="__codelineno-0-715"></a><span class="sd">        header = backend.parse(&quot;int foo(void);&quot;, &quot;test.h&quot;)</span>
+<a id="__codelineno-0-716" name="__codelineno-0-716"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-717" name="__codelineno-0-717"></a>
+<a id="__codelineno-0-718" name="__codelineno-0-718"></a>    <span class="c1"># pylint: disable=unnecessary-ellipsis</span>
+<a id="__codelineno-0-719" name="__codelineno-0-719"></a>
+<a id="__codelineno-0-720" name="__codelineno-0-720"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">parse</span><span class="p">(</span>
+<a id="__codelineno-0-721" name="__codelineno-0-721"></a>        <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-0-722" name="__codelineno-0-722"></a>        <span class="n">code</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-0-723" name="__codelineno-0-723"></a>        <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-0-724" name="__codelineno-0-724"></a>        <span class="n">include_dirs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-725" name="__codelineno-0-725"></a>        <span class="n">extra_args</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-726" name="__codelineno-0-726"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Header</span><span class="p">:</span>
+<a id="__codelineno-0-727" name="__codelineno-0-727"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse C/C++ code and return the IR representation.</span>
+<a id="__codelineno-0-728" name="__codelineno-0-728"></a>
+<a id="__codelineno-0-729" name="__codelineno-0-729"></a><span class="sd">        :param code: Source code to parse.</span>
+<a id="__codelineno-0-730" name="__codelineno-0-730"></a><span class="sd">        :param filename: Name of the source file. Used for error messages</span>
+<a id="__codelineno-0-731" name="__codelineno-0-731"></a><span class="sd">            and ``#line`` directives. Does not need to exist on disk.</span>
+<a id="__codelineno-0-732" name="__codelineno-0-732"></a><span class="sd">        :param include_dirs: Directories to search for ``#include`` files.</span>
+<a id="__codelineno-0-733" name="__codelineno-0-733"></a><span class="sd">            Only used by backends that handle preprocessing.</span>
+<a id="__codelineno-0-734" name="__codelineno-0-734"></a><span class="sd">        :param extra_args: Additional arguments for the preprocessor/compiler.</span>
+<a id="__codelineno-0-735" name="__codelineno-0-735"></a><span class="sd">            Format is backend-specific.</span>
+<a id="__codelineno-0-736" name="__codelineno-0-736"></a><span class="sd">        :returns: Parsed header containing all extracted declarations.</span>
+<a id="__codelineno-0-737" name="__codelineno-0-737"></a><span class="sd">        :raises RuntimeError: If parsing fails due to syntax errors.</span>
+<a id="__codelineno-0-738" name="__codelineno-0-738"></a><span class="sd">        &quot;&quot;&quot;</span>
 <a id="__codelineno-0-739" name="__codelineno-0-739"></a>        <span class="o">...</span>
 <a id="__codelineno-0-740" name="__codelineno-0-740"></a>
 <a id="__codelineno-0-741" name="__codelineno-0-741"></a>    <span class="nd">@property</span>
-<a id="__codelineno-0-742" name="__codelineno-0-742"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">supports_macros</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<a id="__codelineno-0-743" name="__codelineno-0-743"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Whether this backend can extract ``#define`` constants.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-742" name="__codelineno-0-742"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<a id="__codelineno-0-743" name="__codelineno-0-743"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Human-readable name of this backend (e.g., ``&quot;pycparser&quot;``).&quot;&quot;&quot;</span>
 <a id="__codelineno-0-744" name="__codelineno-0-744"></a>        <span class="o">...</span>
 <a id="__codelineno-0-745" name="__codelineno-0-745"></a>
 <a id="__codelineno-0-746" name="__codelineno-0-746"></a>    <span class="nd">@property</span>
-<a id="__codelineno-0-747" name="__codelineno-0-747"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">supports_cpp</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<a id="__codelineno-0-748" name="__codelineno-0-748"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Whether this backend can parse C++ code.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-747" name="__codelineno-0-747"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">supports_macros</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<a id="__codelineno-0-748" name="__codelineno-0-748"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Whether this backend can extract ``#define`` constants.&quot;&quot;&quot;</span>
 <a id="__codelineno-0-749" name="__codelineno-0-749"></a>        <span class="o">...</span>
+<a id="__codelineno-0-750" name="__codelineno-0-750"></a>
+<a id="__codelineno-0-751" name="__codelineno-0-751"></a>    <span class="nd">@property</span>
+<a id="__codelineno-0-752" name="__codelineno-0-752"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">supports_cpp</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<a id="__codelineno-0-753" name="__codelineno-0-753"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Whether this backend can parse C++ code.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-754" name="__codelineno-0-754"></a>        <span class="o">...</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -5028,12 +5054,7 @@ header = backend.parse(&quot;int foo(void);&quot;, &quot;test.h&quot;)
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>autopxd/ir.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-715">715</a></span>
-<span class="normal"><a href="#__codelineno-0-716">716</a></span>
-<span class="normal"><a href="#__codelineno-0-717">717</a></span>
-<span class="normal"><a href="#__codelineno-0-718">718</a></span>
-<span class="normal"><a href="#__codelineno-0-719">719</a></span>
-<span class="normal"><a href="#__codelineno-0-720">720</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-720">720</a></span>
 <span class="normal"><a href="#__codelineno-0-721">721</a></span>
 <span class="normal"><a href="#__codelineno-0-722">722</a></span>
 <span class="normal"><a href="#__codelineno-0-723">723</a></span>
@@ -5047,26 +5068,31 @@ header = backend.parse(&quot;int foo(void);&quot;, &quot;test.h&quot;)
 <span class="normal"><a href="#__codelineno-0-731">731</a></span>
 <span class="normal"><a href="#__codelineno-0-732">732</a></span>
 <span class="normal"><a href="#__codelineno-0-733">733</a></span>
-<span class="normal"><a href="#__codelineno-0-734">734</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-715" name="__codelineno-0-715"></a><span class="k">def</span><span class="w"> </span><span class="nf">parse</span><span class="p">(</span>
-<a id="__codelineno-0-716" name="__codelineno-0-716"></a>    <span class="bp">self</span><span class="p">,</span>
-<a id="__codelineno-0-717" name="__codelineno-0-717"></a>    <span class="n">code</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<a id="__codelineno-0-718" name="__codelineno-0-718"></a>    <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<a id="__codelineno-0-719" name="__codelineno-0-719"></a>    <span class="n">include_dirs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-720" name="__codelineno-0-720"></a>    <span class="n">extra_args</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-721" name="__codelineno-0-721"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Header</span><span class="p">:</span>
-<a id="__codelineno-0-722" name="__codelineno-0-722"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse C/C++ code and return the IR representation.</span>
-<a id="__codelineno-0-723" name="__codelineno-0-723"></a>
-<a id="__codelineno-0-724" name="__codelineno-0-724"></a><span class="sd">    :param code: Source code to parse.</span>
-<a id="__codelineno-0-725" name="__codelineno-0-725"></a><span class="sd">    :param filename: Name of the source file. Used for error messages</span>
-<a id="__codelineno-0-726" name="__codelineno-0-726"></a><span class="sd">        and ``#line`` directives. Does not need to exist on disk.</span>
-<a id="__codelineno-0-727" name="__codelineno-0-727"></a><span class="sd">    :param include_dirs: Directories to search for ``#include`` files.</span>
-<a id="__codelineno-0-728" name="__codelineno-0-728"></a><span class="sd">        Only used by backends that handle preprocessing.</span>
-<a id="__codelineno-0-729" name="__codelineno-0-729"></a><span class="sd">    :param extra_args: Additional arguments for the preprocessor/compiler.</span>
-<a id="__codelineno-0-730" name="__codelineno-0-730"></a><span class="sd">        Format is backend-specific.</span>
-<a id="__codelineno-0-731" name="__codelineno-0-731"></a><span class="sd">    :returns: Parsed header containing all extracted declarations.</span>
-<a id="__codelineno-0-732" name="__codelineno-0-732"></a><span class="sd">    :raises RuntimeError: If parsing fails due to syntax errors.</span>
-<a id="__codelineno-0-733" name="__codelineno-0-733"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-734" name="__codelineno-0-734"></a>    <span class="o">...</span>
+<span class="normal"><a href="#__codelineno-0-734">734</a></span>
+<span class="normal"><a href="#__codelineno-0-735">735</a></span>
+<span class="normal"><a href="#__codelineno-0-736">736</a></span>
+<span class="normal"><a href="#__codelineno-0-737">737</a></span>
+<span class="normal"><a href="#__codelineno-0-738">738</a></span>
+<span class="normal"><a href="#__codelineno-0-739">739</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-720" name="__codelineno-0-720"></a><span class="k">def</span><span class="w"> </span><span class="nf">parse</span><span class="p">(</span>
+<a id="__codelineno-0-721" name="__codelineno-0-721"></a>    <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-0-722" name="__codelineno-0-722"></a>    <span class="n">code</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-0-723" name="__codelineno-0-723"></a>    <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-0-724" name="__codelineno-0-724"></a>    <span class="n">include_dirs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-725" name="__codelineno-0-725"></a>    <span class="n">extra_args</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-726" name="__codelineno-0-726"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Header</span><span class="p">:</span>
+<a id="__codelineno-0-727" name="__codelineno-0-727"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse C/C++ code and return the IR representation.</span>
+<a id="__codelineno-0-728" name="__codelineno-0-728"></a>
+<a id="__codelineno-0-729" name="__codelineno-0-729"></a><span class="sd">    :param code: Source code to parse.</span>
+<a id="__codelineno-0-730" name="__codelineno-0-730"></a><span class="sd">    :param filename: Name of the source file. Used for error messages</span>
+<a id="__codelineno-0-731" name="__codelineno-0-731"></a><span class="sd">        and ``#line`` directives. Does not need to exist on disk.</span>
+<a id="__codelineno-0-732" name="__codelineno-0-732"></a><span class="sd">    :param include_dirs: Directories to search for ``#include`` files.</span>
+<a id="__codelineno-0-733" name="__codelineno-0-733"></a><span class="sd">        Only used by backends that handle preprocessing.</span>
+<a id="__codelineno-0-734" name="__codelineno-0-734"></a><span class="sd">    :param extra_args: Additional arguments for the preprocessor/compiler.</span>
+<a id="__codelineno-0-735" name="__codelineno-0-735"></a><span class="sd">        Format is backend-specific.</span>
+<a id="__codelineno-0-736" name="__codelineno-0-736"></a><span class="sd">    :returns: Parsed header containing all extracted declarations.</span>
+<a id="__codelineno-0-737" name="__codelineno-0-737"></a><span class="sd">    :raises RuntimeError: If parsing fails due to syntax errors.</span>
+<a id="__codelineno-0-738" name="__codelineno-0-738"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-739" name="__codelineno-0-739"></a>    <span class="o">...</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>

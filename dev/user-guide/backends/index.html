@@ -641,6 +641,78 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#macro-extraction-libclang-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Macro Extraction (libclang only)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Macro Extraction (libclang only)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#integer-macros" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Integer Macros
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#floating-point-macros" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Floating-Point Macros
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#string-macros" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        String Macros
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#expression-macros" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Expression Macros
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#unsupported-macros-silently-ignored" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unsupported Macros (silently ignored)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#using-docker-for-libclang" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -966,6 +1038,78 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#macro-extraction-libclang-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Macro Extraction (libclang only)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Macro Extraction (libclang only)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#integer-macros" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Integer Macros
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#floating-point-macros" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Floating-Point Macros
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#string-macros" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        String Macros
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#expression-macros" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Expression Macros
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#unsupported-macros-silently-ignored" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unsupported Macros (silently ignored)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#using-docker-for-libclang" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1031,7 +1175,8 @@
 <p>Uses LLVM's clang library for parsing. Provides the same parser used by actual compilers.</p>
 <p><strong>Pros:</strong></p>
 <ul>
-<li>Full C++ support</li>
+<li>Full C++ support (classes, templates, namespaces)</li>
+<li>Extracts simple numeric macros as constants</li>
 <li>Handles comments and preprocessor directives directly</li>
 <li>Better error messages</li>
 <li>Handles complex headers reliably</li>
@@ -1041,6 +1186,7 @@
 <li>Requires libclang to be installed</li>
 <li>Python <code>clang2</code> package version must match system libclang (these are official LLVM bindings)</li>
 <li>Slightly slower startup time</li>
+<li>Complex macros (expressions, function-like) are not extracted</li>
 </ul>
 <p><strong>Usage:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>autopxd<span class="w"> </span>--backend<span class="w"> </span>libclang<span class="w"> </span>myheader.h
@@ -1098,22 +1244,78 @@
 <a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
 <a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    <span class="nb">int</span> <span class="n">distance</span><span class="p">(</span><span class="n">Point</span> <span class="n">a</span><span class="p">,</span> <span class="n">Point</span> <span class="n">b</span><span class="p">)</span>
 </code></pre></div>
+<h2 id="macro-extraction-libclang-only">Macro Extraction (libclang only)<a class="headerlink" href="#macro-extraction-libclang-only" title="Permanent link">&para;</a></h2>
+<p>The libclang backend extracts <code>#define</code> macros as Cython constant declarations. The type is automatically detected from the macro value.</p>
+<h3 id="integer-macros">Integer Macros<a class="headerlink" href="#integer-macros" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="cp">#define SIZE 100</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="cp">#define MASK 0xFF</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="cp">#define MODE 0755</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="cp">#define FLAGS 0b1010</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="cp">#define BIG_NUM 100ULL</span>
+</code></pre></div>
+<p>Generates <code>int</code> declarations:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>    <span class="nb">int</span> <span class="n">SIZE</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    <span class="nb">int</span> <span class="n">MASK</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="nb">int</span> <span class="n">MODE</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="nb">int</span> <span class="n">FLAGS</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    <span class="nb">int</span> <span class="n">BIG_NUM</span>
+</code></pre></div>
+<p>Supported formats: decimal, hex (<code>0x</code>), octal (<code>0</code>), binary (<code>0b</code>), with optional type suffixes (<code>U</code>, <code>L</code>, <code>UL</code>, <code>LL</code>, <code>ULL</code>).</p>
+<h3 id="floating-point-macros">Floating-Point Macros<a class="headerlink" href="#floating-point-macros" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="cp">#define PI 3.14159</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="cp">#define EPSILON 1e-10</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="cp">#define FACTOR 2.5f</span>
+</code></pre></div>
+<p>Generates <code>double</code> declarations:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>    <span class="n">double</span> <span class="n">PI</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    <span class="n">double</span> <span class="n">EPSILON</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    <span class="n">double</span> <span class="n">FACTOR</span>
+</code></pre></div>
+<h3 id="string-macros">String Macros<a class="headerlink" href="#string-macros" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="cp">#define VERSION &quot;1.0.0&quot;</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="cp">#define APP_NAME &quot;myapp&quot;</span>
+</code></pre></div>
+<p>Generates <code>const char*</code> declarations:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>    <span class="n">const</span> <span class="n">char</span><span class="o">*</span> <span class="n">VERSION</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>    <span class="n">const</span> <span class="n">char</span><span class="o">*</span> <span class="n">APP_NAME</span>
+</code></pre></div>
+<h3 id="expression-macros">Expression Macros<a class="headerlink" href="#expression-macros" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="cp">#define A 10</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="cp">#define B 20</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="cp">#define TOTAL (A + B)</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="cp">#define FLAGS (0x01 | 0x02)</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="cp">#define NEGATIVE -1</span>
+</code></pre></div>
+<p>Expression macros that consist of numeric literals, operators, and other macro references are detected and declared with appropriate types:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>    <span class="nb">int</span> <span class="n">A</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>    <span class="nb">int</span> <span class="n">B</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>    <span class="nb">int</span> <span class="n">TOTAL</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>    <span class="nb">int</span> <span class="n">FLAGS</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>    <span class="nb">int</span> <span class="n">NEGATIVE</span>
+</code></pre></div>
+<h3 id="unsupported-macros-silently-ignored">Unsupported Macros (silently ignored)<a class="headerlink" href="#unsupported-macros-silently-ignored" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Function-like macros:</strong> <code>#define MAX(a, b) ((a) &gt; (b) ? (a) : (b))</code></li>
+<li><strong>Empty macros:</strong> <code>#define EMPTY</code></li>
+<li><strong>String concatenation:</strong> <code>#define CONCAT "hello" "world"</code></li>
+</ul>
+<p>The pycparser backend does not extract macros since it requires preprocessed input.</p>
 <h2 id="using-docker-for-libclang">Using Docker for libclang<a class="headerlink" href="#using-docker-for-libclang" title="Permanent link">&para;</a></h2>
 <p>If you don't want to install libclang locally, use the Docker image:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>-v<span class="w"> </span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>:/work<span class="w"> </span>autopxd2<span class="w"> </span>autopxd<span class="w"> </span>--backend<span class="w"> </span>libclang<span class="w"> </span>/work/myheader.h
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>-v<span class="w"> </span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>:/work<span class="w"> </span>autopxd2<span class="w"> </span>autopxd<span class="w"> </span>--backend<span class="w"> </span>libclang<span class="w"> </span>/work/myheader.h
 </code></pre></div>
 <p>See <a href="../../getting-started/docker/">Docker Usage</a> for details.</p>
 <h2 id="programmatic-backend-selection">Programmatic Backend Selection<a class="headerlink" href="#programmatic-backend-selection" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">autopxd.backends</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_backend</span><span class="p">,</span> <span class="n">list_backends</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="c1"># List available backends</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="nb">print</span><span class="p">(</span><span class="n">list_backends</span><span class="p">())</span>  <span class="c1"># [&#39;pycparser&#39;, &#39;libclang&#39;] (if libclang installed)</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="c1"># Get a specific backend</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="n">backend</span> <span class="o">=</span> <span class="n">get_backend</span><span class="p">(</span><span class="s2">&quot;libclang&quot;</span><span class="p">)</span>
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="c1"># Parse a header</span>
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="n">header</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="s2">&quot;myheader.h&quot;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">autopxd.backends</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_backend</span><span class="p">,</span> <span class="n">list_backends</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="c1"># List available backends</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="nb">print</span><span class="p">(</span><span class="n">list_backends</span><span class="p">())</span>  <span class="c1"># [&#39;pycparser&#39;, &#39;libclang&#39;] (if libclang installed)</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="c1"># Get a specific backend</span>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="n">backend</span> <span class="o">=</span> <span class="n">get_backend</span><span class="p">(</span><span class="s2">&quot;libclang&quot;</span><span class="p">)</span>
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a><span class="c1"># Parse a header</span>
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="n">header</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="s2">&quot;myheader.h&quot;</span><span class="p">)</span>
 </code></pre></div>
 
 
