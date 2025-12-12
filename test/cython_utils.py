@@ -99,7 +99,10 @@ def test_smoke():
         ).strip()
     except (subprocess.CalledProcessError, FileNotFoundError):
         # Fallback for systems without python3-config
-        python_cflags = f"-I{sys.prefix}/include/python{sys.version_info.major}.{sys.version_info.minor}"
+        # Use sysconfig to get the correct include path (works in venvs too)
+        import sysconfig
+
+        python_cflags = f"-I{sysconfig.get_path('include')}"
         python_ldflags = ""
 
     # Compile
