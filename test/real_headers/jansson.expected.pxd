@@ -3,6 +3,56 @@ from autopxd.stubs.stdarg cimport va_list
 
 cdef extern from "jansson.h":
 
+    int JANSSON_MAJOR_VERSION
+
+    int JANSSON_MINOR_VERSION
+
+    int JANSSON_MICRO_VERSION
+
+    const char* JANSSON_VERSION
+
+    int JANSSON_VERSION_HEX
+
+    int JANSSON_THREAD_SAFE_REFCOUNT
+
+    const char* JSON_INTEGER_FORMAT
+
+    int json_auto_t
+
+    int JSON_ERROR_TEXT_LENGTH
+
+    int JSON_ERROR_SOURCE_LENGTH
+
+    int JSON_VALIDATE_ONLY
+
+    int JSON_STRICT
+
+    int JSON_REJECT_DUPLICATES
+
+    int JSON_DISABLE_EOF_CHECK
+
+    int JSON_DECODE_ANY
+
+    int JSON_DECODE_INT_AS_REAL
+
+    int JSON_ALLOW_NUL
+
+    int JSON_MAX_INDENT
+
+    int JSON_COMPACT
+
+    int JSON_ENSURE_ASCII
+
+    int JSON_SORT_KEYS
+
+    int JSON_PRESERVE_ORDER
+
+    int JSON_ENCODE_ANY
+
+    int JSON_ESCAPE_SLASH
+
+    int JSON_EMBED
+
     cpdef enum json_type:
         JSON_OBJECT
         JSON_ARRAY

@@ -256,8 +256,22 @@ class PxdWriter:
     def _check_template_args(self, type_str: str) -> None:
         """Recursively check template arguments for types that need cimports.
 
+        Parses template arguments from type strings like ``map<string, vector<int>>``
+        and registers any nested types that need cimports.
+
+        Note:
+            This parser handles common template patterns but has limitations:
+
+            - Assumes well-formed template syntax (balanced angle brackets)
+            - Does not handle ``operator<`` or ``operator>>`` in type names
+            - Does not parse default template arguments with comparison operators
+              (e.g., ``template<int N = (5>3)>``)
+
+            These edge cases are rare in typical type names and the parser will
+            silently skip malformed input rather than raising errors.
+
         Args:
-            type_str: Type string potentially containing template args (e.g., "map<string, vector<int>>")
+            type_str: Type string potentially containing template args.
         """
         # Extract content between first < and last >
         start = type_str.find("<")
@@ -425,16 +439,20 @@ class PxdWriter:
     def _write_constant(self, const: Constant) -> list[str]:
         """Write a constant declaration.
 
-        Constants are written as Cython enum values for macros,
-        or typed constants for const declarations.
+        Constants are written with their detected type (int, double, const char*)
+        or as int if type is unknown.
         """
         name = self._escape_name(const.name, include_c_name=True)
-        if const.is_macro:
-            # Macros become anonymous enum values
-            return [f"int {name}"]
+
+        # Use detected type if available
         if const.type:
             type_str = self._format_ctype(const.type)
+            # For string macros, need pointer
+            if const.type.name == "char" and "const" in const.type.qualifiers:
+                return [f"const char* {name}"]
             return [f"{type_str} {name}"]
+
+        # Default to int for macros without detected type
         return [f"int {name}"]
 
     def _format_type(self, type_expr: TypeExpr) -> str:

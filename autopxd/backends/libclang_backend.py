@@ -47,6 +47,7 @@ from autopxd.backends import (
 )
 from autopxd.ir import (
     Array,
+    Constant,
     CType,
     Declaration,
     Enum,
@@ -153,6 +154,9 @@ class ClangASTConverter:
         elif kind == CursorKind.NAMESPACE:
             # C++ namespace - recurse into it with namespace context
             self._process_namespace(cursor)
+        elif kind == CursorKind.MACRO_DEFINITION:
+            # #define macro - extract numeric constants
+            self._process_macro(cursor)
 
     def _process_namespace(self, cursor: "clang.cindex.Cursor") -> None:
         """Process a C++ namespace declaration."""
@@ -162,13 +166,201 @@ class ClangASTConverter:
             self._process_children(cursor)
             self._namespace_stack.pop()
 
+    def _process_macro(self, cursor: "clang.cindex.Cursor") -> None:
+        """Process a #define macro declaration.
+
+        Extracts various macro types as Constants:
+        - Simple integers: ``#define SIZE 100``
+        - Integers with suffixes: ``#define SIZE 100ULL``
+        - Hex/octal/binary: ``#define MASK 0xFF``
+        - Floating point: ``#define PI 3.14159``
+        - String literals: ``#define VERSION "1.0"``
+        - Expression macros: ``#define TOTAL (A + B)``
+
+        Function-like macros (with parameters) are skipped.
+        """
+        name = cursor.spelling
+        if not name:
+            return
+
+        # Skip if already processed
+        key = f"macro:{name}"
+        if key in self._seen:
+            return
+        self._seen[key] = True
+
+        # Get tokens - first token is the macro name, rest is the value
+        tokens = list(cursor.get_tokens())
+        if len(tokens) < 2:
+            # No value (e.g., #define EMPTY)
+            return
+
+        # Check for function-like macro: name followed by '('
+        # Function-like macros have the pattern: NAME ( params ) body
+        if len(tokens) >= 2 and tokens[1].spelling == "(":
+            # Could be function-like macro OR expression starting with paren
+            # Function-like: #define MAX(a,b) ...
+            # Expression: #define X (1+2)
+            # Check if there's an identifier after the opening paren
+            if len(tokens) >= 3:
+                third = tokens[2].spelling
+                # If it's an identifier followed by comma or close paren, it's function-like
+                if third.isidentifier() or third == ")":
+                    # Look ahead for comma or close paren pattern
+                    for i, tok in enumerate(tokens[2:], start=2):
+                        if tok.spelling == ")":
+                            # Check if this closes the parameter list (more tokens after)
+                            if i + 1 < len(tokens):
+                                # Has body after params - function-like macro
+                                return
+                            break
+                        if tok.spelling == ",":
+                            # Has comma in parens - function-like macro
+                            return
+
+        # Determine macro type from tokens
+        macro_type, value = self._analyze_macro_tokens(tokens[1:])
+        if macro_type is None:
+            return
+
+        loc = cursor.location
+        location = SourceLocation(
+            file=loc.file.name if loc.file else self.filename,
+            line=loc.line,
+            column=loc.column,
+        )
+
+        self.declarations.append(
+            Constant(
+                name=name,
+                value=value,
+                type=macro_type,
+                is_macro=True,
+                location=location,
+            )
+        )
+
+    def _analyze_macro_tokens(
+        self, tokens: list["clang.cindex.Token"]
+    ) -> tuple[CType | None, int | float | str | None]:
+        """Analyze macro value tokens to determine type.
+
+        Returns:
+            Tuple of (CType, value) or (None, None) if unsupported.
+        """
+        if len(tokens) == 1:
+            return self._analyze_single_token(tokens[0].spelling)
+
+        # Multiple tokens - analyze as expression
+        return self._analyze_expression_tokens(tokens)
+
+    def _analyze_single_token(self, token: str) -> tuple[CType | None, int | float | str | None]:
+        """Analyze a single-token macro value."""
+        # String literal
+        if token.startswith('"') and token.endswith('"'):
+            return CType("char", ["const"]), token
+
+        # Character literal
+        if token.startswith("'") and token.endswith("'"):
+            return CType("char"), token
+
+        # Try numeric with suffix stripping
+        value, is_float = self._parse_numeric_with_suffix(token)
+        if value is not None:
+            if is_float:
+                return CType("double"), value
+            return CType("int"), value
+
+        return None, None
+
+    def _parse_numeric_with_suffix(self, token: str) -> tuple[int | float | None, bool]:
+        """Parse a numeric token, stripping type suffixes.
+
+        Returns:
+            Tuple of (value, is_float) or (None, False) if not numeric.
+        """
+        # Check for float first (has decimal point or exponent)
+        if "." in token or "e" in token.lower():
+            # Strip float suffixes: f, F, l, L
+            if token.endswith(("f", "F", "l", "L")):
+                token = token[:-1]
+            try:
+                return float(token), True
+            except ValueError:
+                return None, False
+
+        # Integer - strip suffixes: ULL, LL, UL, LU, U, L (case insensitive)
+        upper = token.upper()
+        for suffix in ("ULL", "LLU", "LL", "UL", "LU", "U", "L"):
+            if upper.endswith(suffix):
+                token = token[: -len(suffix)]
+                break
+
+        # Try to parse as integer
+        try:
+            if token.startswith(("0x", "0X")):
+                return int(token, 16), False
+            if token.startswith(("0b", "0B")):
+                return int(token, 2), False
+            if token.startswith("0") and len(token) > 1 and token[1:].isdigit():
+                return int(token, 8), False
+            return int(token), False
+        except ValueError:
+            return None, False
+
+    def _analyze_expression_tokens(
+        self, tokens: list["clang.cindex.Token"]
+    ) -> tuple[CType | None, int | float | str | None]:
+        """Analyze a multi-token expression macro.
+
+        For expressions like (A + B), we detect if it looks like an integer
+        or float expression and declare the appropriate type.
+        """
+        # Collect all token spellings
+        spellings = [t.spelling for t in tokens]
+
+        # Check for string concatenation or complex string expressions
+        has_string = any(s.startswith('"') for s in spellings)
+        if has_string:
+            # String expression - skip for now (complex to handle)
+            return None, None
+
+        # Check if expression contains float indicators
+        has_float = False
+        for s in spellings:
+            if "." in s or "e" in s.lower():
+                # Could be a float literal
+                val, is_float = self._parse_numeric_with_suffix(s)
+                if is_float:
+                    has_float = True
+                    break
+
+        # Valid expression tokens for integer/float expressions
+        valid_operators = {"+", "-", "*", "/", "%", "&", "|", "^", "~", "<<", ">>", "(", ")", "<", ">", "!", "?", ":"}
+
+        for spelling in spellings:
+            # Skip operators and parentheses
+            if spelling in valid_operators:
+                continue
+            # Skip numeric literals (including with suffixes)
+            val, _ = self._parse_numeric_with_suffix(spelling)
+            if val is not None:
+                continue
+            # Skip identifiers (other macro references)
+            if spelling.isidentifier():
+                continue
+            # Unknown token - not a simple expression
+            return None, None
+
+        # Expression looks valid - determine type
+        # We don't evaluate, just declare the existence
+        if has_float:
+            return CType("double"), None
+        return CType("int"), None
+
     def _process_struct(self, cursor: "clang.cindex.Cursor", is_union: bool, is_cppclass: bool = False) -> None:
         """Process a struct/union/class declaration."""
         name = cursor.spelling or None
-
-        # Skip forward declarations
-        if not cursor.is_definition():
-            return
 
         # Determine the key prefix for deduplication
         if is_cppclass:
@@ -185,17 +377,21 @@ class ClangASTConverter:
         if name:
             self._seen[key] = True
 
+        # Forward declarations have no definition - output as opaque type
+        is_forward_decl = not cursor.is_definition()
+
         fields: list[Field] = []
         methods: list[Function] = []
-        for child in cursor.get_children():
-            if child.kind == CursorKind.FIELD_DECL:
-                field = self._convert_field(child)
-                if field:
-                    fields.append(field)
-            elif child.kind == CursorKind.CXX_METHOD and is_cppclass:
-                method = self._convert_method(child)
-                if method:
-                    methods.append(method)
+        if not is_forward_decl:
+            for child in cursor.get_children():
+                if child.kind == CursorKind.FIELD_DECL:
+                    field = self._convert_field(child)
+                    if field:
+                        fields.append(field)
+                elif child.kind == CursorKind.CXX_METHOD and is_cppclass:
+                    method = self._convert_method(child)
+                    if method:
+                        methods.append(method)
 
         struct = Struct(
             name=name,
@@ -503,8 +699,9 @@ class LibclangBackend:
 
     @property
     def supports_macros(self) -> bool:
-        # Limited macro support due to Python bindings
-        return False
+        # Supports simple numeric macros (#define NAME 123)
+        # Complex macros (expressions, function-like) are not supported
+        return True
 
     @property
     def supports_cpp(self) -> bool:
@@ -557,9 +754,14 @@ class LibclangBackend:
         if extra_args:
             args.extend(extra_args)
 
-        # Parse the code
+        # Parse the code with detailed preprocessing record for macro extraction
         index = self._get_index()
-        tu = index.parse(filename, args=args, unsaved_files=[(filename, code)])
+        tu = index.parse(
+            filename,
+            args=args,
+            unsaved_files=[(filename, code)],
+            options=clang.cindex.TranslationUnit.PARSE_DETAILED_PROCESSING_RECORD,
+        )
 
         # Check for fatal errors
         for diag in tu.diagnostics:

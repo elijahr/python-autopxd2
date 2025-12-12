@@ -8,12 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- **Auto-import `libc.stdio` types** - `FILE` and `fpos_t` types are now automatically imported from `libc.stdio` when detected in headers.
-- **Auto-declare `va_list`** - When `va_list` is detected, autopxd now generates an opaque type declaration from `<stdarg.h>` since Cython doesn't include this type.
+- **Auto-import Cython standard library types** - Types from `libc` (stdio, stdint, stdlib, string, time, math, etc.), `posix` (unistd, stat, types), and `cpython` modules are now automatically imported when detected in headers.
+- **Auto-import C++ STL types** - C++ standard library types (`std::vector`, `std::string`, `std::map`, `std::shared_ptr`, etc.) are automatically imported from Cython's `libcpp` modules.
+- **Bundled stub declarations** - Types not included in Cython's standard library (`va_list`, socket types like `sockaddr`, `socklen_t`, `sockaddr_in`) are now provided via bundled stub files.
+- **C++ namespace support** - libclang backend now properly handles C++ namespaces, including nested namespaces. Declarations are grouped by namespace in the output.
+- **Macro extraction** - The libclang backend now extracts `#define` macros with automatic type detection:
+  - Integer macros (decimal, hex, octal, binary) with optional suffixes (ULL, L, etc.) → `int`
+  - Floating-point macros (including scientific notation) → `double`
+  - String literal macros → `const char*`
+  - Expression macros (arithmetic, bitwise, macro references) → `int` or `double`
 
 ### Fixed
 - **Forward declarations now emitted** - Struct, union, and class forward declarations (e.g., `struct internal_state;`) are now properly emitted in the generated pxd, fixing Cython compilation errors when opaque pointers reference forward-declared types.
-- **`_Atomic` type qualifier handling** - The C11 `_Atomic` type qualifier is now properly stripped from generated pxd output. Both `_Atomic type` and `_Atomic(type)` syntaxes are handled, fixing Cython compilation errors for headers using C11 atomics (e.g., pyrime's use of librime).
+- **`_Atomic` type qualifier handling** - The C11 `_Atomic` type qualifier is now properly stripped from generated pxd output. Both `_Atomic type` and `_Atomic(type)` syntaxes are handled, fixing Cython compilation errors for headers using C11 atomics.
 
 ## [3.0.0] - 2025-12-10
 

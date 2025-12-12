@@ -32,7 +32,8 @@ Uses LLVM's clang library for parsing. Provides the same parser used by actual c
 
 **Pros:**
 
-- Full C++ support
+- Full C++ support (classes, templates, namespaces)
+- Extracts simple numeric macros as constants
 - Handles comments and preprocessor directives directly
 - Better error messages
 - Handles complex headers reliably
@@ -42,6 +43,7 @@ Uses LLVM's clang library for parsing. Provides the same parser used by actual c
 - Requires libclang to be installed
 - Python `clang2` package version must match system libclang (these are official LLVM bindings)
 - Slightly slower startup time
+- Complex macros (expressions, function-like) are not extracted
 
 **Usage:**
 
@@ -87,6 +89,90 @@ cdef extern from "input.h":
 
     int distance(Point a, Point b)
 ```
+
+## Macro Extraction (libclang only)
+
+The libclang backend extracts `#define` macros as Cython constant declarations. The type is automatically detected from the macro value.
+
+### Integer Macros
+
+```c
+#define SIZE 100
+#define MASK 0xFF
+#define MODE 0755
+#define FLAGS 0b1010
+#define BIG_NUM 100ULL
+```
+
+Generates `int` declarations:
+
+```cython
+    int SIZE
+    int MASK
+    int MODE
+    int FLAGS
+    int BIG_NUM
+```
+
+Supported formats: decimal, hex (`0x`), octal (`0`), binary (`0b`), with optional type suffixes (`U`, `L`, `UL`, `LL`, `ULL`).
+
+### Floating-Point Macros
+
+```c
+#define PI 3.14159
+#define EPSILON 1e-10
+#define FACTOR 2.5f
+```
+
+Generates `double` declarations:
+
+```cython
+    double PI
+    double EPSILON
+    double FACTOR
+```
+
+### String Macros
+
+```c
+#define VERSION "1.0.0"
+#define APP_NAME "myapp"
+```
+
+Generates `const char*` declarations:
+
+```cython
+    const char* VERSION
+    const char* APP_NAME
+```
+
+### Expression Macros
+
+```c
+#define A 10
+#define B 20
+#define TOTAL (A + B)
+#define FLAGS (0x01 | 0x02)
+#define NEGATIVE -1
+```
+
+Expression macros that consist of numeric literals, operators, and other macro references are detected and declared with appropriate types:
+
+```cython
+    int A
+    int B
+    int TOTAL
+    int FLAGS
+    int NEGATIVE
+```
+
+### Unsupported Macros (silently ignored)
+
+- **Function-like macros:** `#define MAX(a, b) ((a) > (b) ? (a) : (b))`
+- **Empty macros:** `#define EMPTY`
+- **String concatenation:** `#define CONCAT "hello" "world"`
+
+The pycparser backend does not extract macros since it requires preprocessed input.
 
 ## Using Docker for libclang
 

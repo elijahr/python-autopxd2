@@ -2,9 +2,85 @@ from autopxd.stubs.stdarg cimport va_list
 
 cdef extern from "zlib.h":
 
+    const char* ZLIB_VERSION
+
+    int ZLIB_VERNUM
+
+    int ZLIB_VER_MAJOR
+
+    int ZLIB_VER_MINOR
+
+    int ZLIB_VER_REVISION
+
+    int ZLIB_VER_SUBREVISION
+
+    int Z_NO_FLUSH
+
+    int Z_PARTIAL_FLUSH
+
+    int Z_SYNC_FLUSH
+
+    int Z_FULL_FLUSH
+
+    int Z_FINISH
+
+    int Z_BLOCK
+
+    int Z_TREES
+
+    int Z_OK
+
+    int Z_STREAM_END
+
+    int Z_NEED_DICT
+
+    int Z_ERRNO
+
+    int Z_STREAM_ERROR
+
+    int Z_DATA_ERROR
+
+    int Z_MEM_ERROR
+
+    int Z_BUF_ERROR
+
+    int Z_VERSION_ERROR
+
+    int Z_NO_COMPRESSION
+
+    int Z_BEST_SPEED
+
+    int Z_BEST_COMPRESSION
+
+    int Z_DEFAULT_COMPRESSION
+
+    int Z_FILTERED
+
+    int Z_HUFFMAN_ONLY
+
+    int Z_RLE
+
+    int Z_FIXED
+
+    int Z_DEFAULT_STRATEGY
+
+    int Z_BINARY
+
+    int Z_TEXT
+
+    int Z_UNKNOWN
+
+    int Z_DEFLATED
+
+    int Z_NULL
+
+    int zlib_version
+
     ctypedef voidpf (*alloc_func)(voidpf, uInt, uInt)
 
     ctypedef void (*free_func)(voidpf, voidpf)
+
+    cdef struct internal_state
 
     cdef struct z_stream_s:
         Bytef* next_in
@@ -14,7 +90,7 @@ cdef extern from "zlib.h":
         uInt avail_out
         uLong total_out
         char* msg
-        struct internal_state* state
+        internal_state* state
         alloc_func zalloc
         free_func zfree
         voidpf opaque
@@ -113,6 +189,8 @@ cdef extern from "zlib.h":
 
     int uncompress2(Bytef* dest, uLongf* destLen, Bytef* source, uLong* sourceLen)
 
+    cdef struct gzFile_s
+
     ctypedef gzFile_s* gzFile
 
     gzFile gzdopen(int fd, const char* mode)
@@ -178,11 +256,6 @@ cdef extern from "zlib.h":
     int inflateInit2_(z_streamp strm, int windowBits, const char* version, int stream_size)
 
     int inflateBackInit_(z_streamp strm, int windowBits, unsigned char* window, const char* version, int stream_size)
-
-    cdef struct gzFile_s:
-        unsigned int have
-        unsigned char* next
-        long pos
 
     int gzgetc_(gzFile file)
 
