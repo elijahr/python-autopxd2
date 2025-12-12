@@ -133,6 +133,39 @@ def get_system_include_dirs() -> list[str]:
     return _system_include_cache
 
 
+def is_system_header(path: str) -> bool:
+    """Check if a header path is a system header.
+
+    System headers are identified by common system include directory patterns.
+    These are filtered out during recursive include processing.
+
+    :param path: Absolute path to a header file.
+    :returns: True if the path appears to be a system header.
+    """
+    # Common system header path patterns
+    system_patterns = [
+        "/usr/include",
+        "/usr/local/include",
+        "/Library/Developer",
+        "/Applications/Xcode",
+        "/System/Library",
+        "/opt/homebrew",
+        "/opt/local",
+        "/.pyenv/",
+        "/anaconda",
+        "/miniconda",
+        "/Windows Kits",
+        "/Microsoft Visual Studio",
+        "/MSVC",
+        "/clang/",  # LLVM includes
+        "/gcc/",  # GCC includes
+        "/c++/",  # C++ standard library
+    ]
+    # Normalize path for comparison
+    normalized = path.replace("\\", "/")
+    return any(pattern in normalized for pattern in system_patterns)
+
+
 class ClangASTConverter:
     """Converts libclang cursors to autopxd IR.
 
@@ -141,7 +174,9 @@ class ClangASTConverter:
     including structs, unions, enums, typedefs, functions, classes, and variables.
 
     :param filename: Source filename for filtering declarations.
-        Only declarations from this file are included (system headers excluded).
+    :param allowed_files: Set of file paths to include declarations from.
+        If None, only declarations from filename are included.
+        If provided, declarations from any file in the set are included.
 
     Note
     ----
@@ -149,8 +184,9 @@ class ClangASTConverter:
     :class:`LibclangBackend` for the public API.
     """
 
-    def __init__(self, filename: str) -> None:
+    def __init__(self, filename: str, allowed_files: set[str] | None = None) -> None:
         self.filename = filename
+        self.allowed_files = allowed_files
         self.declarations: list[Declaration] = []
         # Track seen declarations to avoid duplicates
         self._seen: dict[str, bool] = {}
@@ -176,11 +212,18 @@ class ClangASTConverter:
             self._process_cursor(child)
 
     def _is_from_target_file(self, cursor: "clang.cindex.Cursor") -> bool:
-        """Check if cursor is from the target file."""
+        """Check if cursor is from an allowed file.
+
+        If allowed_files is set, check if the cursor's file is in that set.
+        Otherwise, only allow the main target file.
+        """
         loc = cursor.location
         if loc.file is None:
             return False
-        return bool(loc.file.name == self.filename)
+        file_path: str = loc.file.name
+        if self.allowed_files is not None:
+            return file_path in self.allowed_files
+        return bool(file_path == self.filename)
 
     def _process_cursor(self, cursor: "clang.cindex.Cursor") -> None:
         """Process a top-level cursor."""
@@ -770,6 +813,7 @@ class LibclangBackend:
         include_dirs: list[str] | None = None,
         extra_args: list[str] | None = None,
         use_default_includes: bool = True,
+        recursive_includes: bool = True,
     ) -> Header:
         """Parse C/C++ code using libclang.
 
@@ -783,6 +827,10 @@ class LibclangBackend:
         :param use_default_includes: If True (default), automatically detect and add
             system include directories by querying the system clang compiler.
             Set to False to disable this behavior.
+        :param recursive_includes: If True (default), include declarations from all
+            non-system headers that are included by the main file. This enables
+            processing of "meta-headers" that only contain #include directives.
+            System headers (e.g., /usr/include, SDK paths) are always excluded.
         :returns: :class:`~autopxd.ir.Header` containing parsed declarations.
         :raises RuntimeError: If parsing fails with errors.
 
@@ -836,8 +884,17 @@ class LibclangBackend:
             # Store full path - caller can extract basename if needed
             included_headers.add(header_path)
 
+        # Determine which files to include declarations from
+        allowed_files: set[str] | None = None
+        if recursive_includes:
+            # Include declarations from the main file and all non-system headers
+            allowed_files = {filename}
+            for header_path in included_headers:
+                if not is_system_header(header_path):
+                    allowed_files.add(header_path)
+
         # Convert to IR
-        converter = ClangASTConverter(filename)
+        converter = ClangASTConverter(filename, allowed_files=allowed_files)
         header = converter.convert(tu)
 
         # Attach included headers to the IR

@@ -78,6 +78,7 @@ def translate(
     whitelist: list[str] | None = None,
     debug: bool = False,
     use_default_includes: bool = True,
+    recursive_includes: bool = True,
 ) -> str:
     """Generate Cython .pxd from C/C++ header code.
 
@@ -91,6 +92,9 @@ def translate(
         debug: Print debug info to stderr.
         use_default_includes: If True (default), automatically detect and add
             system include directories when using the libclang backend.
+        recursive_includes: If True (default), include declarations from all
+            non-system headers that are included by the main file. This enables
+            processing of "meta-headers" that only contain #include directives.
 
     Returns:
         Cython .pxd file contents.
@@ -107,13 +111,16 @@ def translate(
 
     # Parse with backend
     backend_obj = get_backend(backend_name)
-    # Check if backend supports use_default_includes (libclang only)
-    if hasattr(backend_obj.parse, "__code__") and "use_default_includes" in backend_obj.parse.__code__.co_varnames:
-        header = backend_obj.parse(
+    # Check if backend supports libclang-specific options
+    parse_code = getattr(backend_obj.parse, "__code__", None)
+    parse_varnames = parse_code.co_varnames if parse_code else ()
+    if "use_default_includes" in parse_varnames:
+        header = backend_obj.parse(  # type: ignore[call-arg]
             code,
             hdrname,
             extra_args=extra_args or [],
-            use_default_includes=use_default_includes,  # type: ignore[call-arg]
+            use_default_includes=use_default_includes,
+            recursive_includes=recursive_includes,
         )
     else:
         header = backend_obj.parse(code, hdrname, extra_args=extra_args or [])
@@ -334,6 +341,11 @@ Options marked [libclang] require the libclang backend.
     is_flag=True,
     help="[libclang] Disable system include auto-detection.",
 )
+@click.option(
+    "--no-recursive",
+    is_flag=True,
+    help="[libclang] Disable recursive include processing. By default, declarations from all non-system included headers are included.",
+)
 # === Deprecated (hidden) ===
 @click.option(
     "--compiler-directive",
@@ -368,6 +380,7 @@ def cli(
     clang_arg: tuple[str, ...],
     whitelist: tuple[str, ...],
     no_default_includes: bool,
+    no_recursive: bool,
 ) -> None:
     if version:
         print(__version__)
@@ -424,5 +437,6 @@ def cli(
             whitelist=whitelist_list,
             debug=debug,
             use_default_includes=not no_default_includes,
+            recursive_includes=not no_recursive,
         )
     )
