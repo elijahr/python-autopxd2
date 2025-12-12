@@ -67,6 +67,16 @@ jobs:
           echo "LLVM_MAJOR_VERSION=${LLVM_VERSION}" >> $GITHUB_ENV
           echo "Found LLVM version: $LLVM_VERSION, lib dir: $LLVM_LIB_DIR"
 
+      - name: Install test libraries (Ubuntu)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get install -y \
+            libz-dev \
+            libjansson-dev \
+            libsqlite3-dev \
+            libcurl4-openssl-dev \
+            libuv1-dev
+
       - name: Install libclang (macOS)
         if: runner.os == 'macOS'
         run: |
@@ -78,6 +88,11 @@ jobs:
           LLVM_VERSION=$("${LLVM_PREFIX}/bin/llvm-config" --version | cut -d. -f1)
           echo "LLVM_MAJOR_VERSION=${LLVM_VERSION}" >> $GITHUB_ENV
           echo "Found LLVM version: $LLVM_VERSION, prefix: $LLVM_PREFIX"
+
+      - name: Install test libraries (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install zlib jansson sqlite curl libuv
 
       - name: Install dependencies
         run: uv pip install --system -e .[test]
