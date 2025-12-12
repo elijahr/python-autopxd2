@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.0] - 2025-12-11
+
 ### Added
 - **Auto-import Cython standard library types** - Types from `libc` (stdio, stdint, stdlib, string, time, math, etc.), `posix` (unistd, stat, types), and `cpython` modules are now automatically imported when detected in headers.
 - **Auto-import C++ STL types** - C++ standard library types (`std::vector`, `std::string`, `std::map`, `std::shared_ptr`, etc.) are automatically imported from Cython's `libcpp` modules.
@@ -125,7 +127,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - macOS support
 
-[Unreleased]: https://github.com/elijahr/python-autopxd2/compare/v3.0.0...HEAD
+[Unreleased]: https://github.com/elijahr/python-autopxd2/compare/v3.1.0...HEAD
+[3.1.0]: https://github.com/elijahr/python-autopxd2/compare/v3.0.0...v3.1.0
 [3.0.0]: https://github.com/elijahr/python-autopxd2/compare/v2.5.0...v3.0.0
 [2.5.0]: https://github.com/elijahr/python-autopxd2/compare/v2.4.0...v2.5.0
 [2.4.0]: https://github.com/elijahr/python-autopxd2/compare/v2.3.0...v2.4.0
