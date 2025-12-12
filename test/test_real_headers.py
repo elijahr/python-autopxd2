@@ -415,6 +415,28 @@ class TestCppHeaders:
         )
 
 
+class TestTemplates:
+    """Test C++ template parsing."""
+
+    @pytest.fixture
+    def templates_header(self, libclang_backend):
+        """Parse templates.hpp and return the IR."""
+        hpp_path = os.path.join(REAL_HEADERS_DIR, "templates.hpp")
+        if not os.path.exists(hpp_path):
+            pytest.skip("templates.hpp not found")
+
+        with open(hpp_path, encoding="utf-8") as f:
+            code = f.read()
+
+        extra_args = ["-x", "c++", "-std=c++17"] + _get_system_include_args()
+        return libclang_backend.parse(code, "templates.hpp", extra_args=extra_args)
+
+    def test_template_output_matches(self, templates_header, tmp_path):
+        """Verify template pxd matches expected."""
+        expected_path = os.path.join(REAL_HEADERS_DIR, "templates.expected.pxd")
+        assert_header_pxd_equals(templates_header, expected_path, tmp_path, cplus=True)
+
+
 class TestHeaderDiscovery:
     """Tests for discovering and validating real headers."""
 

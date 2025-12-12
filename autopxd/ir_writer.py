@@ -346,6 +346,15 @@ class PxdWriter:
             kind = "struct"
         name = self._escape_name(struct.name, include_c_name=True)
 
+        # Add template parameters if present
+        if struct.template_params:
+            params = ", ".join(struct.template_params)
+            name = f"{name}[{params}]"
+
+        # Add C++ name if different (for template specializations)
+        if struct.cpp_name and struct.cpp_name != struct.name:
+            name = f'{name} "{struct.cpp_name}"'
+
         # typedef'd structs/unions use ctypedef, plain declarations use cdef
         keyword = "ctypedef" if struct.is_typedef else "cdef"
 

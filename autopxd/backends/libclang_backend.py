@@ -133,6 +133,23 @@ def get_system_include_dirs() -> list[str]:
     return _system_include_cache
 
 
+def _mangle_specialization_name(cpp_name: str) -> str:
+    """Convert C++ template specialization to valid Python identifier.
+
+    Examples:
+        Container<int> -> Container_int
+        Map<int, double> -> Map_int_double
+        Foo<int*> -> Foo_int_ptr
+    """
+    name = cpp_name.replace(" ", "")
+    name = name.replace("<", "_").replace(">", "")
+    name = name.replace(",", "_")
+    name = name.replace("::", "_")
+    name = name.replace("*", "_ptr")
+    name = name.replace("&", "_ref")
+    return name
+
+
 class ClangASTConverter:
     """Converts libclang cursors to autopxd IR.
 
@@ -201,6 +218,9 @@ class ClangASTConverter:
         elif kind == CursorKind.CLASS_DECL:
             # C++ class - uses cppclass in Cython
             self._process_struct(cursor, is_union=False, is_cppclass=True)
+        elif kind == CursorKind.CLASS_TEMPLATE:
+            # C++ class template
+            self._process_class_template(cursor)
         elif kind == CursorKind.NAMESPACE:
             # C++ namespace - recurse into it with namespace context
             self._process_namespace(cursor)
@@ -412,6 +432,14 @@ class ClangASTConverter:
         """Process a struct/union/class declaration."""
         name = cursor.spelling or None
 
+        # Check if this is a template specialization
+        try:
+            specialized_template = cursor.specialized_template
+            is_specialization = specialized_template is not None and specialized_template != cursor
+        except AttributeError:
+            # Older versions of libclang might not have this attribute
+            is_specialization = False
+
         # Determine the key prefix for deduplication
         if is_cppclass:
             key_prefix = "class"
@@ -420,12 +448,16 @@ class ClangASTConverter:
         else:
             key_prefix = "struct"
 
+        # For specializations, use display name for deduplication key
+        if is_specialization:
+            key = f"{key_prefix}:{cursor.displayname}"
+        else:
+            key = f"{key_prefix}:{name}"
+
         # Skip if already processed
-        key = f"{key_prefix}:{name}"
-        if name and key in self._seen:
+        if key in self._seen:
             return
-        if name:
-            self._seen[key] = True
+        self._seen[key] = True
 
         # Forward declarations have no definition - output as opaque type
         is_forward_decl = not cursor.is_definition()
@@ -443,6 +475,12 @@ class ClangASTConverter:
                     if method:
                         methods.append(method)
 
+        # Handle template specialization
+        cpp_name = None
+        if is_specialization:
+            cpp_name = cursor.displayname
+            name = _mangle_specialization_name(cpp_name)
+
         struct = Struct(
             name=name,
             fields=fields,
@@ -450,6 +488,57 @@ class ClangASTConverter:
             is_union=is_union,
             is_cppclass=is_cppclass,
             namespace=self._current_namespace,
+            cpp_name=cpp_name,
+            location=self._get_location(cursor),
+        )
+        self.declarations.append(struct)
+
+    def _process_class_template(self, cursor: "clang.cindex.Cursor") -> None:
+        """Process a C++ class template declaration."""
+        name = cursor.spelling or None
+        if not name:
+            return
+
+        # Skip if already processed
+        key = f"template:{name}"
+        if key in self._seen:
+            return
+        self._seen[key] = True
+
+        # Extract template type parameters
+        template_params: list[str] = []
+        fields: list[Field] = []
+        methods: list[Function] = []
+
+        for child in cursor.get_children():
+            if child.kind == CursorKind.TEMPLATE_TYPE_PARAMETER:
+                param_name = child.spelling or f"T{len(template_params)}"
+                template_params.append(param_name)
+            elif child.kind == CursorKind.TEMPLATE_NON_TYPE_PARAMETER:
+                # Non-type template parameters (e.g., template<int N>)
+                # Cython doesn't support these directly, so skip
+                pass
+            elif child.kind == CursorKind.FIELD_DECL:
+                field = self._convert_field(child)
+                if field:
+                    fields.append(field)
+            elif child.kind == CursorKind.CXX_METHOD:
+                method = self._convert_method(child)
+                if method:
+                    methods.append(method)
+
+        if not template_params:
+            # No template parameters found - treat as regular class
+            return
+
+        struct = Struct(
+            name=name,
+            fields=fields,
+            methods=methods,
+            is_union=False,
+            is_cppclass=True,
+            namespace=self._current_namespace,
+            template_params=template_params,
             location=self._get_location(cursor),
         )
         self.declarations.append(struct)

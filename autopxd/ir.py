@@ -452,6 +452,8 @@ class Struct:
     is_cppclass: bool = False
     is_typedef: bool = False
     namespace: Optional[str] = None
+    template_params: list[str] = field(default_factory=list)
+    cpp_name: Optional[str] = None
     location: Optional[SourceLocation] = None
 
     def __str__(self) -> str:
