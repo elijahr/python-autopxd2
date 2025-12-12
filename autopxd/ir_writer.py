@@ -96,6 +96,15 @@ class PxdWriter:
         self.known_enums: set[str] = set()
         self._collect_known_types()
 
+        # Track used-but-undeclared struct/union types (need forward declarations)
+        self.undeclared_structs: set[str] = set()
+        self.undeclared_unions: set[str] = set()
+
+        # Track incomplete structs (forward declarations with no fields)
+        # Fields using these as value types must be skipped
+        self.incomplete_structs: set[str] = set()
+        self._collect_incomplete_types()
+
         # New cimport tracking using registries
         self.cython_cimports: dict[str, set[str]] = {}  # module -> types
         self.stub_cimports: dict[str, set[str]] = {}  # stub_module -> types
@@ -103,6 +112,186 @@ class PxdWriter:
 
         # Collect types from all declarations
         self._collect_cimport_types()
+
+    def _sort_declarations(self, decls: list[Declaration]) -> tuple[list[Declaration], set[int]]:
+        """Sort declarations topologically to resolve forward references.
+
+        This ensures typedefs that reference structs come after the struct
+        definitions, and structs that use typedef types have the typedefs
+        defined first.
+
+        Args:
+            decls: List of declarations to sort.
+
+        Returns:
+            Tuple of (sorted declarations, set of indices that are in cycles).
+        """
+        # Build dependency graph: decl -> list of decls it depends on
+        dependencies: dict[int, set[int]] = defaultdict(set)
+        decl_names: dict[str, list[int]] = defaultdict(list)  # name -> indices in decls
+
+        # First pass: build name index for all declarations
+        # Note: We need to track ALL occurrences, not just the last one
+        for i, decl in enumerate(decls):
+            if isinstance(decl, (Struct, Typedef, Enum)) and decl.name:
+                decl_names[decl.name].append(i)
+
+        # Second pass: build dependency edges
+        # Key insight: if struct S uses typedef T in a field, then T must be defined before S
+        # Similarly, if typedef T aliases struct S, then S must be defined before T
+        for i, decl in enumerate(decls):
+            if isinstance(decl, Typedef):
+                # Typedef depends on the underlying type (struct/union/enum)
+                # E.g., "ctypedef uv_signal_s uv_signal_t" depends on uv_signal_s
+                # Also, function pointer typedefs depend on types used in parameters/return
+                deps = self._extract_type_names(decl.underlying_type)
+                for dep_name in deps:
+                    if dep_name in decl_names:
+                        # Add dependency on ALL occurrences of this name
+                        for dep_idx in decl_names[dep_name]:
+                            dep_decl = decls[dep_idx]
+                            # Depend on struct/union/enum/typedef definitions
+                            if isinstance(dep_decl, (Struct, Enum, Typedef)):
+                                dependencies[i].add(dep_idx)
+
+            elif isinstance(decl, Struct):
+                # Struct depends on types used in its fields
+                # E.g., struct with field "uv_signal_t child" depends on uv_signal_t typedef
+                #
+                # Key insight about pointer types:
+                # - Pointers to structs DON'T need the struct to be defined first
+                #   (forward declaration is sufficient)
+                # - BUT typedefs MUST be defined before use, even through pointers,
+                #   because the typedef NAME must be known to the compiler
+                for field in decl.fields:
+                    deps = self._extract_type_names(field.type)
+                    for dep_name in deps:
+                        if dep_name in decl_names:
+                            for dep_idx in decl_names[dep_name]:
+                                dep_decl = decls[dep_idx]
+                                # Typedefs must be defined before use (even through pointers)
+                                if isinstance(dep_decl, Typedef):
+                                    dependencies[i].add(dep_idx)
+                                # Struct/enum dependencies only for VALUE types (not pointers)
+                                elif isinstance(dep_decl, (Struct, Enum)):
+                                    if not isinstance(field.type, Pointer):
+                                        if self._is_value_type_usage(field.type, dep_name):
+                                            dependencies[i].add(dep_idx)
+
+            elif isinstance(decl, Function):
+                # Functions depend on types used in return type and parameters
+                # This ensures typedefs are defined before functions use them
+                all_types: set[str] = set()
+
+                # Collect return type dependencies
+                all_types.update(self._extract_type_names(decl.return_type))
+
+                # Collect parameter type dependencies
+                for param in decl.parameters:
+                    all_types.update(self._extract_type_names(param.type))
+
+                for dep_name in all_types:
+                    if dep_name in decl_names:
+                        for dep_idx in decl_names[dep_name]:
+                            dep_decl = decls[dep_idx]
+                            # Depend on typedefs (functions use typedef names in signatures)
+                            if isinstance(dep_decl, Typedef):
+                                dependencies[i].add(dep_idx)
+
+        # Topological sort using Kahn's algorithm
+        # in_degree[i] = number of nodes that i depends on
+        in_degree = {i: len(dependencies[i]) for i in range(len(decls))}
+
+        # Start with declarations that have no dependencies
+        queue = [i for i in range(len(decls)) if in_degree[i] == 0]
+        sorted_indices = []
+
+        while queue:
+            # Process in stable order (preserve original order when possible)
+            queue.sort()
+            idx = queue.pop(0)
+            sorted_indices.append(idx)
+
+            # For each node that depends on idx, reduce its in-degree
+            for dependent in range(len(decls)):
+                if idx in dependencies[dependent]:
+                    in_degree[dependent] -= 1
+                    if in_degree[dependent] == 0:
+                        queue.append(dependent)
+
+        # If we couldn't sort everything, there's a cycle
+        # Track which declarations are in cycles
+        cycle_indices = set()
+        if len(sorted_indices) != len(decls):
+            # Find unsorted indices - these are in cycles
+            sorted_set = set(sorted_indices)
+            unsorted_indices = [i for i in range(len(decls)) if i not in sorted_set]
+            cycle_indices = set(unsorted_indices)
+            # Append unsorted declarations in original order
+            sorted_indices.extend(unsorted_indices)
+
+        return ([decls[i] for i in sorted_indices], cycle_indices)
+
+    def _extract_type_names(self, typ: TypeExpr) -> set[str]:
+        """Extract all type names referenced by a type expression.
+
+        Args:
+            typ: Type expression to analyze.
+
+        Returns:
+            Set of type names (struct tags, typedefs, etc.) referenced.
+        """
+        names = set()
+
+        if isinstance(typ, CType):
+            # Extract the base name, stripping struct/union/enum prefixes
+            name = typ.name
+            if name.startswith("struct "):
+                names.add(name[7:])
+            elif name.startswith("union "):
+                names.add(name[6:])
+            elif name.startswith("enum "):
+                names.add(name[5:])
+            else:
+                names.add(name)
+
+        elif isinstance(typ, Pointer):
+            names.update(self._extract_type_names(typ.pointee))
+
+        elif isinstance(typ, Array):
+            names.update(self._extract_type_names(typ.element_type))
+
+        elif isinstance(typ, FunctionPointer):
+            names.update(self._extract_type_names(typ.return_type))
+            for param in typ.parameters:
+                names.update(self._extract_type_names(param.type))
+
+        return names
+
+    def _is_value_type_usage(self, typ: TypeExpr, type_name: str) -> bool:
+        """Check if a type is used as a value type (not through a pointer).
+
+        Args:
+            typ: Type expression to check.
+            type_name: Name of the type we're looking for.
+
+        Returns:
+            True if type_name appears as a value type (not pointer/array element).
+        """
+        if isinstance(typ, CType):
+            # Direct usage as value type
+            name = typ.name
+            if name.startswith("struct "):
+                return name[7:] == type_name
+            elif name.startswith("union "):
+                return name[6:] == type_name
+            elif name.startswith("enum "):
+                return name[5:] == type_name
+            else:
+                return name == type_name
+
+        # Pointers and arrays don't require complete types
+        return False
 
     def write(self) -> str:
         """Convert IR Header to Cython ``.pxd`` string.
@@ -140,11 +329,23 @@ class PxdWriter:
         if not by_namespace:
             by_namespace[None] = []
 
+        # Sort declarations within each namespace to resolve forward references
+        # Also track which declarations are in cycles
+        sorted_by_namespace: dict[str | None, list[Declaration]] = {}
+        cycle_indices_by_namespace: dict[str | None, set[int]] = {}
+
+        for ns in by_namespace:
+            sorted_decls, cycle_indices = self._sort_declarations(by_namespace[ns])
+            sorted_by_namespace[ns] = sorted_decls
+            # Track which declarations are in cycles (for that namespace)
+            cycle_indices_by_namespace[ns] = cycle_indices
+
         # Output non-namespaced declarations first, then namespaced (sorted)
         namespace_order = sorted(by_namespace.keys(), key=lambda x: (x is not None, x or ""))
 
         for namespace in namespace_order:
-            decls = by_namespace[namespace]
+            decls = sorted_by_namespace[namespace]
+            cycle_indices = cycle_indices_by_namespace[namespace]
 
             # Add extern block with optional namespace
             if namespace:
@@ -152,17 +353,155 @@ class PxdWriter:
             else:
                 lines.append(f'cdef extern from "{self.header.path}":')
 
-            # Add declarations
-            if not decls:
-                lines.append(f"{self.INDENT}pass")
-                lines.append("")
-            else:
-                lines.append("")
+            # Add forward declarations for undeclared struct/union types (only in global namespace)
+            if namespace is None:
+                forward_decls = []
+                for struct_name in sorted(self.undeclared_structs):
+                    forward_decls.append(f"{self.INDENT}cdef struct {struct_name}")
+                for union_name in sorted(self.undeclared_unions):
+                    forward_decls.append(f"{self.INDENT}cdef union {union_name}")
+                if forward_decls:
+                    lines.append("")
+                    lines.extend(forward_decls)
+
+            # For declarations with circular dependencies, use multi-phase output:
+            # 1. Forward declarations for structs in cycles
+            # 2a. Typedefs that DON'T reference structs in cycles (safe to use)
+            # 2b. Typedefs that reference structs in cycles (but structs are forward-declared)
+            # 3. Everything else except full struct bodies in cycles
+            # 4. Full struct bodies for structs in cycles
+
+            if cycle_indices:
+                # Build a set of struct names that are in cycles
+                cycle_struct_names = set()
+                for i, decl in enumerate(decls):
+                    if i in cycle_indices and isinstance(decl, Struct) and decl.name:
+                        cycle_struct_names.add(decl.name)
+
+                # Build a map of typedef names to their declarations for dependency tracking
+                typedef_map: dict[str, Typedef] = {}
                 for decl in decls:
+                    if isinstance(decl, Typedef) and decl.name:
+                        typedef_map[decl.name] = decl
+
+                # Recursively mark typedefs that depend on cycle structs (directly or indirectly)
+                def refs_cycle_struct_recursive(
+                    typedef: Typedef,
+                    visited: set[str],
+                    _cycle_struct_names: set[str] = cycle_struct_names,
+                    _typedef_map: dict[str, Typedef] = typedef_map,
+                ) -> bool:
+                    """Check if a typedef references a cycle struct directly or through other typedefs."""
+                    if typedef.name and typedef.name in visited:
+                        return False  # Avoid infinite recursion
+                    if typedef.name:
+                        visited.add(typedef.name)
+
+                    type_names = self._extract_type_names(typedef.underlying_type)
+                    for type_name in type_names:
+                        # Direct reference to cycle struct
+                        if type_name in _cycle_struct_names:
+                            return True
+                        # Indirect reference through another typedef
+                        if type_name in _typedef_map:
+                            if refs_cycle_struct_recursive(_typedef_map[type_name], visited):
+                                return True
+                    return False
+
+                # Phase 1: Forward declarations for structs/unions in cycles
+                forward_struct_decls = []
+                for i, decl in enumerate(decls):
+                    if i in cycle_indices and isinstance(decl, Struct):
+                        # Only emit forward declaration if struct has fields
+                        # (empty structs are already forward declarations)
+                        if decl.fields or decl.methods:
+                            kind = "union" if decl.is_union else "struct"
+                            name = self._escape_name(decl.name, include_c_name=False)
+                            forward_struct_decls.append(f"{self.INDENT}cdef {kind} {name}")
+
+                if forward_struct_decls:
+                    lines.append("")
+                    lines.extend(forward_struct_decls)
+
+                # Phase 2a: Typedefs that don't reference cycle structs (directly or indirectly)
+                safe_typedef_decls = []
+                for decl in decls:
+                    if isinstance(decl, Typedef):
+                        if not refs_cycle_struct_recursive(decl, set()):
+                            decl_lines = self._write_declaration(decl)
+                            for line in decl_lines:
+                                safe_typedef_decls.append(f"{self.INDENT}{line}" if line else "")
+                            safe_typedef_decls.append("")
+
+                if safe_typedef_decls:
+                    lines.append("")
+                    lines.extend(safe_typedef_decls)
+
+                # Phase 2b: Typedefs that reference structs in cycles (directly or indirectly)
+                # Emit these now (after forward declarations) so functions/structs can use them
+                cycle_typedef_decls = []
+                for decl in decls:
+                    if isinstance(decl, Typedef):
+                        if refs_cycle_struct_recursive(decl, set()):
+                            decl_lines = self._write_declaration(decl)
+                            for line in decl_lines:
+                                cycle_typedef_decls.append(f"{self.INDENT}{line}" if line else "")
+                            cycle_typedef_decls.append("")
+
+                if cycle_typedef_decls:
+                    lines.append("")
+                    lines.extend(cycle_typedef_decls)
+
+                # Phase 3: Everything else EXCEPT full struct bodies in cycles
+                # This includes: enums, functions, structs NOT in cycles
+                other_decls = []
+                for i, decl in enumerate(decls):
+                    # Skip all typedefs (already emitted in phase 2a/2b)
+                    if isinstance(decl, Typedef):
+                        continue
+
+                    # Skip full definitions of structs in cycles (emit those in phase 4)
+                    if i in cycle_indices and isinstance(decl, Struct) and (decl.fields or decl.methods):
+                        continue
+
                     decl_lines = self._write_declaration(decl)
                     for line in decl_lines:
-                        lines.append(f"{self.INDENT}{line}" if line else "")
+                        other_decls.append(f"{self.INDENT}{line}" if line else "")
+                    other_decls.append("")
+
+                if other_decls:
                     lines.append("")
+                    lines.extend(other_decls)
+
+                # Phase 4: Full struct/union bodies (only those in cycles)
+                # Now all typedefs and non-cycle structs are defined, so these can use them
+                struct_bodies = []
+                for i, decl in enumerate(decls):
+                    if i in cycle_indices and isinstance(decl, Struct):
+                        # Emit full body (if it has fields/methods)
+                        if decl.fields or decl.methods:
+                            decl_lines = self._write_declaration(decl)
+                            for line in decl_lines:
+                                struct_bodies.append(f"{self.INDENT}{line}" if line else "")
+                            struct_bodies.append("")
+
+                if struct_bodies:
+                    lines.append("")
+                    lines.extend(struct_bodies)
+
+            else:
+                # No cycles - use normal output
+                # Add declarations
+                if not decls and not (namespace is None and (self.undeclared_structs or self.undeclared_unions)):
+                    lines.append(f"{self.INDENT}pass")
+                    lines.append("")
+                else:
+                    lines.append("")
+                    for decl in decls:
+                        decl_lines = self._write_declaration(decl)
+                        for line in decl_lines:
+                            lines.append(f"{self.INDENT}{line}" if line else "")
+                        lines.append("")
 
         return "\n".join(lines)
 
@@ -183,6 +522,17 @@ class PxdWriter:
                 if decl.name:
                     # Track typedef names - these can be used without prefix
                     self.known_structs.add(decl.name)
+
+    def _collect_incomplete_types(self) -> None:
+        """Collect structs that are forward declarations (no fields).
+
+        Cython requires complete type definitions for struct value types.
+        Fields using incomplete structs as value types must be skipped.
+        """
+        for decl in self.header.declarations:
+            if isinstance(decl, Struct):
+                if decl.name and not decl.fields and not decl.methods:
+                    self.incomplete_structs.add(decl.name)
 
     def _collect_cimport_types(self) -> None:
         """Collect all types that need cimport statements."""
@@ -226,6 +576,22 @@ class PxdWriter:
         # Strip struct/class/union keywords (e.g., "struct string" -> "string")
         clean_name = name.removeprefix("struct ").removeprefix("class ").removeprefix("union ")
 
+        # Check if this type is available in stubs BEFORE deciding to forward-declare
+        stub_module = get_stub_module_for_type(name) or get_stub_module_for_type(clean_name)
+
+        # Track undeclared struct/union types that need forward declarations
+        # BUT only if they're not available in stubs
+        if not stub_module:
+            if name.startswith("struct "):
+                struct_name = name[7:]  # len("struct ") = 7
+                # Skip anonymous structs
+                if "(unnamed at" not in struct_name and struct_name not in self.known_structs:
+                    self.undeclared_structs.add(struct_name)
+            elif name.startswith("union "):
+                union_name = name[6:]  # len("union ") = 6
+                if "(unnamed at" not in union_name and union_name not in self.known_unions:
+                    self.undeclared_unions.add(union_name)
+
         # Strip std:: prefix for C++ types
         cpp_name = clean_name.removeprefix("std::")
 
@@ -248,10 +614,10 @@ class PxdWriter:
             self._check_template_args(cpp_name)
             return
 
-        # Check autopxd stubs
-        stub_module = get_stub_module_for_type(name)
+        # Check autopxd stubs - try both the full name and clean name
+        stub_module = get_stub_module_for_type(name) or get_stub_module_for_type(clean_name)
         if stub_module:
-            self.stub_cimports.setdefault(stub_module, set()).add(name)
+            self.stub_cimports.setdefault(stub_module, set()).add(clean_name)
 
     def _check_template_args(self, type_str: str) -> None:
         """Recursively check template arguments for types that need cimports.
@@ -365,13 +731,31 @@ class PxdWriter:
         lines = [f"{keyword} {kind} {name}:"]
 
         for field in struct.fields:
-            field_type = self._format_type(field.type)
+            # Skip anonymous struct/union fields - Cython can't represent them directly
+            if isinstance(field.type, CType) and "(unnamed at" in field.type.name:
+                continue
+
+            # Skip fields using incomplete types as values (not pointers)
+            # Cython requires complete type definitions for struct value types
+            if self._is_incomplete_value_type(field.type):
+                continue
+
             field_name = self._escape_name(field.name, include_c_name=True)
+            # Handle function pointer fields specially
+            # Cython requires: int (*callback)(void*, int)
+            if isinstance(field.type, FunctionPointer):
+                lines.append(f"{self.INDENT}{self._format_func_ptr(field.type, field_name)}")
+            # Handle pointer to function pointer
+            elif isinstance(field.type, Pointer) and isinstance(field.type.pointee, FunctionPointer):
+                lines.append(f"{self.INDENT}{self._format_func_ptr(field.type.pointee, field_name)}")
             # Add array dimensions to name if this is an array type
-            if isinstance(field.type, Array):
+            elif isinstance(field.type, Array):
+                field_type = self._format_type(field.type)
                 dims = self._format_array_dims(field.type)
-                field_name = f"{field_name}{dims}"
-            lines.append(f"{self.INDENT}{field_type} {field_name}")
+                lines.append(f"{self.INDENT}{field_type} {field_name}{dims}")
+            else:
+                field_type = self._format_type(field.type)
+                lines.append(f"{self.INDENT}{field_type} {field_name}")
 
         # Add methods for cppclass
         for method in struct.methods:
@@ -383,6 +767,10 @@ class PxdWriter:
 
     def _write_enum(self, enum: Enum) -> list[str]:
         """Write an enum declaration."""
+        # Skip anonymous enums with clang's "(unnamed at ...)" names
+        if enum.name and "(unnamed at" in enum.name:
+            return []
+
         name = self._escape_name(enum.name, include_c_name=True)
 
         # typedef'd enums use ctypedef, plain enum declarations use cpdef
@@ -428,8 +816,20 @@ class PxdWriter:
         """Write a function pointer typedef.
 
         Cython syntax: ctypedef return_type (*name)(params)
+
+        Note: Cython does not support function pointers that return function pointers.
+        For such cases, we use void* as a workaround.
         """
-        return_type = self._format_type(fp.return_type)
+        # Check if return type is a function pointer (or pointer to function pointer)
+        # Cython doesn't support this, so we use void* instead
+        is_func_ptr_return = isinstance(fp.return_type, FunctionPointer) or (
+            isinstance(fp.return_type, Pointer) and isinstance(fp.return_type.pointee, FunctionPointer)
+        )
+        if is_func_ptr_return:
+            return_type = "void*"
+        else:
+            return_type = self._format_type(fp.return_type)
+
         params = self._format_params(fp.parameters, fp.is_variadic)
         return [f"ctypedef {return_type} (*{name})({params})"]
 
@@ -497,14 +897,17 @@ class PxdWriter:
             if name.startswith(prefix) and name.endswith(")"):
                 name = name[len(prefix) : -1]
 
-        # Strip struct/union/enum prefix if the type is already declared
+        # Strip struct/union/enum prefix if the type is declared, forward-declared, or from stubs
         if name.startswith("struct "):
             struct_name = name[7:]  # len("struct ") = 7
-            if struct_name in self.known_structs:
+            # Strip prefix if declared OR forward-declared OR available in stubs
+            stub_available = get_stub_module_for_type(struct_name) is not None
+            if struct_name in self.known_structs or struct_name in self.undeclared_structs or stub_available:
                 name = struct_name
         elif name.startswith("union "):
             union_name = name[6:]  # len("union ") = 6
-            if union_name in self.known_unions:
+            stub_available = get_stub_module_for_type(union_name) is not None
+            if union_name in self.known_unions or union_name in self.undeclared_unions or stub_available:
                 name = union_name
         elif name.startswith("enum "):
             enum_name = name[5:]  # len("enum ") = 5
@@ -530,10 +933,33 @@ class PxdWriter:
         return name
 
     def _format_pointer(self, ptr: Pointer) -> str:
-        """Format a Pointer type."""
+        """Format a Pointer type.
+
+        Special cases:
+        - Pointer to FunctionPointer: void (*)(int)
+        - Pointer to Pointer to FunctionPointer: void (**)(int)
+        """
         if isinstance(ptr.pointee, FunctionPointer):
             # Function pointer - handled specially
             return self._format_func_ptr_as_ptr(ptr.pointee, ptr.qualifiers)
+
+        # Check for pointer to pointer to function pointer
+        # This should be formatted as: void (**)(params) not void (*)(params)*
+        if isinstance(ptr.pointee, Pointer) and isinstance(ptr.pointee.pointee, FunctionPointer):
+            # Format as pointer to pointer to function
+            fp = ptr.pointee.pointee
+            return_type = self._format_type(fp.return_type)
+            params = self._format_params(fp.parameters, fp.is_variadic)
+            # Cython requires explicit void for empty parameter lists
+            if not params:
+                params = "void"
+            result = f"{return_type} (**)({params})"
+
+            if ptr.qualifiers:
+                quals = " ".join(ptr.qualifiers)
+                result = f"{result} {quals}"
+
+            return result
 
         pointee = self._format_type(ptr.pointee)
         result = f"{pointee}*"
@@ -557,16 +983,90 @@ class PxdWriter:
         # The dimensions are added by the caller
         return self._format_type(arr.element_type)
 
-    def _format_func_ptr(self, fp: FunctionPointer) -> str:
-        """Format a FunctionPointer type."""
-        return_type = self._format_type(fp.return_type)
-        params = self._format_params(fp.parameters, fp.is_variadic)
-        return f"{return_type} (*)({params})"
+    def _is_incomplete_value_type(self, typ: TypeExpr) -> bool:
+        """Check if a type is an incomplete struct used as a value (not pointer).
+
+        Cython requires complete type definitions when a struct is used as a
+        value type. Pointers to incomplete types are allowed.
+        """
+        if isinstance(typ, CType):
+            # Check if it's a struct type that's incomplete
+            name = typ.name
+            # Strip "struct " prefix if present
+            if name.startswith("struct "):
+                struct_name = name[7:]
+            else:
+                struct_name = name
+
+            # Check if this struct is in our incomplete set
+            if struct_name in self.incomplete_structs:
+                return True
+
+            # Also check for undeclared structs (forward-declared by us)
+            if struct_name in self.undeclared_structs:
+                return True
+
+        # Pointers are OK even to incomplete types
+        # Arrays and function pointers are also not affected
+        return False
+
+    def _format_func_ptr(self, fp: FunctionPointer, name: str | None = None) -> str:
+        """Format a FunctionPointer type.
+
+        Args:
+            fp: The FunctionPointer to format
+            name: Optional parameter name to include inside the (*name) part
+
+        For Cython, function pointer parameters need the name inside:
+            int (*callback)(void*, int)  # with name
+            int (*)(void*, int)          # without name
+
+        Special handling for nested function pointers:
+            When return_type is also a FunctionPointer, we need to format it
+            recursively. For empty parameter lists, Cython requires explicit
+            'void' instead of empty '()'.
+        """
+        # Check if return type is a function pointer (nested function pointer)
+        # If so, we need special formatting to handle the nesting
+        if isinstance(fp.return_type, FunctionPointer):
+            # Format the inner function pointer (return type) recursively
+            inner_fp = self._format_func_ptr(fp.return_type, None)
+            params = self._format_params(fp.parameters, fp.is_variadic)
+            # Cython requires explicit void for empty parameter lists in function pointers
+            if not params:
+                params = "void"
+            if name:
+                return f"{inner_fp} (*{name})({params})"
+            return f"{inner_fp} (*)({params})"
+        elif isinstance(fp.return_type, Pointer) and isinstance(fp.return_type.pointee, FunctionPointer):
+            # Handle Pointer to FunctionPointer as return type
+            # This is the case for: void (*)(void) (*xDlSym)(...)
+            inner_fp = self._format_func_ptr(fp.return_type.pointee, None)
+            params = self._format_params(fp.parameters, fp.is_variadic)
+            # Cython requires explicit void for empty parameter lists in function pointers
+            if not params:
+                params = "void"
+            if name:
+                return f"{inner_fp} (*{name})({params})"
+            return f"{inner_fp} (*)({params})"
+        else:
+            # Regular function pointer (not nested)
+            return_type = self._format_type(fp.return_type)
+            params = self._format_params(fp.parameters, fp.is_variadic)
+            # Cython requires explicit void for empty parameter lists in function pointers
+            if not params:
+                params = "void"
+            if name:
+                return f"{return_type} (*{name})({params})"
+            return f"{return_type} (*)({params})"
 
     def _format_func_ptr_as_ptr(self, fp: FunctionPointer, ptr_quals: list[str]) -> str:
         """Format a pointer to function pointer."""
         return_type = self._format_type(fp.return_type)
         params = self._format_params(fp.parameters, fp.is_variadic)
+        # Cython requires explicit void for empty parameter lists in function pointers
+        if not params:
+            params = "void"
         result = f"{return_type} (*)({params})"
 
         if ptr_quals:
@@ -579,16 +1079,26 @@ class PxdWriter:
         """Format function parameters."""
         parts = []
         for param in params:
-            param_type = self._format_type(param.type)
             if param.name:
                 name = self._escape_name(param.name)
+                # Handle function pointer parameters specially
+                # Cython requires: int (*callback)(void*, int)
+                # NOT: int (*)(void*, int) callback
+                if isinstance(param.type, FunctionPointer):
+                    parts.append(self._format_func_ptr(param.type, name))
+                # Handle pointer to function pointer: int (*callback)(...)
+                elif isinstance(param.type, Pointer) and isinstance(param.type.pointee, FunctionPointer):
+                    parts.append(self._format_func_ptr(param.type.pointee, name))
                 # Handle array parameters
-                if isinstance(param.type, Array):
+                elif isinstance(param.type, Array):
+                    param_type = self._format_type(param.type)
                     dims = self._format_array_dims(param.type)
                     parts.append(f"{param_type} {name}{dims}")
                 else:
+                    param_type = self._format_type(param.type)
                     parts.append(f"{param_type} {name}")
             else:
+                param_type = self._format_type(param.type)
                 parts.append(param_type)
 
         if is_variadic:
