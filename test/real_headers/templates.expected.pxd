@@ -1,5 +1,6 @@
 cdef extern from "templates.hpp":
 
+    # NOTE: Partial specialization Container<T *> exists in C++ but cannot be declared in Cython. Use specific instantiations.
     cdef cppclass Container[T]:
         T value
         T get()
@@ -12,3 +13,8 @@ cdef extern from "templates.hpp":
     cdef cppclass Container_int "Container<int>":
         int special_value
         int get_special()
+
+    # NOTE: Template has non-type parameter 'N' (int). Cython does not support non-type template parameters. Use specific instantiations as needed.
+    cdef cppclass FixedArray[T]:
+        T* data
+        int size()

@@ -498,6 +498,7 @@ class ClangASTConverter:
             TypeKind.CONSTANTARRAY,
             TypeKind.INCOMPLETEARRAY,
             TypeKind.VARIABLEARRAY,
+            TypeKind.DEPENDENTSIZEDARRAY,
         ):
             element = clang_type.element_type
             names.update(self._extract_typedef_names_from_type(element))
@@ -671,6 +672,9 @@ class ClangASTConverter:
         elif kind == CursorKind.CLASS_TEMPLATE:
             # C++ class template
             self._process_class_template(cursor)
+        elif kind == CursorKind.CLASS_TEMPLATE_PARTIAL_SPECIALIZATION:
+            # C++ partial template specialization - emit comment explaining limitation
+            self._process_partial_specialization(cursor)
         elif kind == CursorKind.NAMESPACE:
             # C++ namespace - recurse into it with namespace context
             self._process_namespace(cursor)
@@ -972,10 +976,12 @@ class ClangASTConverter:
             return
         self._seen[key] = True
 
-        # Extract template type parameters
+        # Extract template type parameters and track non-type parameters
         template_params: list[str] = []
+        nontype_params: list[tuple[str, str]] = []
         fields: list[Field] = []
         methods: list[Function] = []
+        notes: list[str] = []
 
         for child in cursor.get_children():
             if child.kind == CursorKind.TEMPLATE_TYPE_PARAMETER:
@@ -983,8 +989,10 @@ class ClangASTConverter:
                 template_params.append(param_name)
             elif child.kind == CursorKind.TEMPLATE_NON_TYPE_PARAMETER:
                 # Non-type template parameters (e.g., template<int N>)
-                # Cython doesn't support these directly, so skip
-                pass
+                # Cython doesn't support these directly, so track for note
+                param_name = child.spelling or "N"
+                param_type = child.type.spelling
+                nontype_params.append((param_name, param_type))
             elif child.kind == CursorKind.FIELD_DECL:
                 field = self._convert_field(child)
                 if field:
@@ -998,6 +1006,15 @@ class ClangASTConverter:
             # No template parameters found - treat as regular class
             return
 
+        # Add note if non-type parameters exist
+        if nontype_params:
+            for param_name, param_type in nontype_params:
+                notes.append(
+                    f"NOTE: Template has non-type parameter '{param_name}' ({param_type}). "
+                    "Cython does not support non-type template parameters. "
+                    "Use specific instantiations as needed."
+                )
+
         struct = Struct(
             name=name,
             fields=fields,
@@ -1006,6 +1023,60 @@ class ClangASTConverter:
             is_cppclass=True,
             namespace=self._current_namespace,
             template_params=template_params,
+            notes=notes,
+            location=self._get_location(cursor),
+        )
+        self.declarations.append(struct)
+
+    def _process_partial_specialization(self, cursor: "clang.cindex.Cursor") -> None:
+        """Process a C++ partial template specialization.
+
+        Partial specializations cannot be represented in Cython, but we emit
+        a comment to note their existence so users are aware.
+        """
+        display_name = cursor.displayname or cursor.spelling or "unknown"
+
+        # Get the base template name (e.g., "Container" from "Container<T*>")
+        base_name = cursor.spelling or None
+
+        # Skip if no name
+        if not base_name:
+            return
+
+        # Create a unique key for this partial specialization
+        key = f"partial_spec:{display_name}"
+        if key in self._seen:
+            return
+        self._seen[key] = True
+
+        # Try to find the base template to add a note to it
+        # Look for existing template with the base name
+        for decl in self.declarations:
+            if isinstance(decl, Struct) and decl.name == base_name and decl.template_params:
+                # Add note about partial specialization
+                note = (
+                    f"NOTE: Partial specialization {display_name} exists in C++ "
+                    "but cannot be declared in Cython. Use specific instantiations."
+                )
+                if note not in decl.notes:
+                    decl.notes.append(note)
+                return
+
+        # If we didn't find the base template, emit a standalone note comment
+        # by creating a minimal struct with just the note
+        # This is a fallback - ideally the base template should exist
+        note = (
+            f"NOTE: Partial specialization {display_name} exists in C++ "
+            "but cannot be declared in Cython. Use specific instantiations."
+        )
+        struct = Struct(
+            name=base_name,
+            fields=[],
+            methods=[],
+            is_union=False,
+            is_cppclass=True,
+            namespace=self._current_namespace,
+            notes=[note],
             location=self._get_location(cursor),
         )
         self.declarations.append(struct)
@@ -1266,6 +1337,16 @@ class ClangASTConverter:
             # VARIABLEARRAY size is runtime-determined
 
             return Array(element_type=element_type, size=size)
+
+        # Handle dependent-sized arrays (template parameter dependent)
+        # These appear in templates like: template<int N> class Foo { T data[N]; };
+        # Cython cannot represent these, so we convert to pointers
+        if kind == TypeKind.DEPENDENTSIZEDARRAY:
+            element_type = self._convert_type(clang_type.element_type)
+            if not element_type:
+                return None
+            # Return as pointer since Cython can't represent dependent array sizes
+            return Pointer(pointee=element_type)
 
         # Handle function types (for function pointer types)
         if kind == TypeKind.FUNCTIONPROTO:

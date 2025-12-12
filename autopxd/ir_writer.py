@@ -777,6 +777,13 @@ class PxdWriter:
 
     def _write_struct(self, struct: Struct) -> list[str]:
         """Write a struct, union, or cppclass declaration."""
+        lines: list[str] = []
+
+        # Emit notes as comments before the struct declaration
+        if struct.notes:
+            for note in struct.notes:
+                lines.append(f"# {note}")
+
         if struct.is_cppclass:
             kind = "cppclass"
         elif struct.is_union:
@@ -799,9 +806,10 @@ class PxdWriter:
 
         # If struct has no fields and no methods, it's a forward declaration
         if not struct.fields and not struct.methods:
-            return [f"{keyword} {kind} {name}"]
+            lines.append(f"{keyword} {kind} {name}")
+            return lines
 
-        lines = [f"{keyword} {kind} {name}:"]
+        lines.append(f"{keyword} {kind} {name}:")
 
         for field in struct.fields:
             # Skip anonymous struct/union fields - Cython can't represent them directly

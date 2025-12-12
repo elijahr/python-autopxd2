@@ -22,3 +22,19 @@ public:
     int special_value;
     int get_special();
 };
+
+// Partial specialization (for pointers)
+template<typename T>
+class Container<T*> {
+public:
+    T* ptr_value;
+    T* get_ptr();
+};
+
+// Template with non-type parameter
+template<typename T, int N>
+class FixedArray {
+public:
+    T data[N];
+    int size();
+};

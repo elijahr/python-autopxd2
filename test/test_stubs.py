@@ -93,3 +93,72 @@ class TestSocketStubs:
         content = (files / "netinet_in.pxd").read_text()
         assert "sockaddr_in" in content
         assert "in_addr" in content
+
+
+class TestAllStubsCompile:
+    """Verify all stub files are syntactically correct Cython."""
+
+    @pytest.mark.parametrize(
+        "stub_file",
+        [
+            "arpa_inet.pxd",
+            "dirent.pxd",
+            "netdb.pxd",
+            "netinet_in.pxd",
+            "pthread.pxd",
+            "regex.pxd",
+            "semaphore.pxd",
+            "stdarg.pxd",
+            "stdatomic.pxd",
+            "sys_socket.pxd",
+            "sys_statvfs.pxd",
+            "sys_un.pxd",
+            "termios.pxd",
+            "cppthread.pxd",
+            "cppchrono.pxd",
+            "cppfilesystem.pxd",
+        ],
+    )
+    def test_stub_compiles(self, stub_file, tmp_path):
+        """Verify stub file is valid Cython syntax."""
+        import os
+
+        from Cython.Compiler.Main import CompilationOptions
+        from Cython.Compiler.Main import compile as cython_compile
+
+        stub_path = os.path.join(
+            os.path.dirname(__file__),
+            "..",
+            "autopxd",
+            "stubs",
+            stub_file,
+        )
+
+        if not os.path.exists(stub_path):
+            pytest.skip(f"Stub {stub_file} not yet created")
+
+        # Create a pyx that imports from the stub
+        stub_name = stub_file[:-4]  # Remove .pxd
+
+        # C++ stubs need cython_cplus directive
+        is_cpp_stub = stub_name.startswith("cpp")
+        if is_cpp_stub:
+            pyx_content = "# distutils: language = c++\n"
+            pyx_content += f"from autopxd.stubs.{stub_name} cimport *\n"
+        else:
+            pyx_content = f"from autopxd.stubs.{stub_name} cimport *\n"
+
+        pyx_file = tmp_path / "test_stub.pyx"
+        pyx_file.write_text(pyx_content)
+
+        # Attempt to compile
+        options = CompilationOptions(
+            language_level=3,
+            cplus=is_cpp_stub,
+        )
+        try:
+            result = cython_compile(str(pyx_file), options=options)
+            if result and hasattr(result, "num_errors") and result.num_errors > 0:
+                pytest.fail(f"Cython compilation had {result.num_errors} errors")
+        except Exception as e:
+            pytest.fail(f"Cython compilation failed: {e}")

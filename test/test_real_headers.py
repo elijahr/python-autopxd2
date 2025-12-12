@@ -57,6 +57,13 @@ LIBRARY_CONFIGS = {
         "smoke_test": "uv_version_string()",
         "cplus": False,
     },
+    # === Additional C Libraries ===
+    "cjson": {
+        "pkg_config": "libcjson",
+        "system_header": "cjson/cJSON.h",
+        "smoke_test": "cJSON_Version()",
+        "cplus": False,
+    },
 }
 
 

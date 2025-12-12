@@ -454,6 +454,7 @@ class Struct:
     namespace: Optional[str] = None
     template_params: list[str] = field(default_factory=list)
     cpp_name: Optional[str] = None
+    notes: list[str] = field(default_factory=list)
     location: Optional[SourceLocation] = None
 
     def __str__(self) -> str:
