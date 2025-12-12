@@ -1053,8 +1053,7 @@ which backends are available on your system.</p>
 </code></pre></div>
 <h2 id="docker-no-installation-required">Docker (No Installation Required)<a class="headerlink" href="#docker-no-installation-required" title="Permanent link">&para;</a></h2>
 <p>Use the Docker image for libclang support without installing anything locally:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>docker<span class="w"> </span>build<span class="w"> </span>-t<span class="w"> </span>autopxd2<span class="w"> </span>https://github.com/elijahr/python-autopxd2.git
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>-v<span class="w"> </span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>:/work<span class="w"> </span>autopxd2<span class="w"> </span>autopxd<span class="w"> </span>/work/myheader.h
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>-v<span class="w"> </span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>:/work<span class="w"> </span>-w<span class="w"> </span>/work<span class="w"> </span>ghcr.io/elijahr/python-autopxd2<span class="w"> </span>autopxd<span class="w"> </span>myheader.h
 </code></pre></div>
 <p>See <a href="../docker/">Docker Usage</a> for more details.</p>
 <h2 id="system-libclang-installation">System libclang Installation<a class="headerlink" href="#system-libclang-installation" title="Permanent link">&para;</a></h2>

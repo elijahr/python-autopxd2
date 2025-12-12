@@ -1140,7 +1140,7 @@
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>autopxd<span class="w"> </span>--backend<span class="w"> </span>libclang<span class="w"> </span>myclass.hpp<span class="w"> </span>&gt;<span class="w"> </span>myclass.pxd
 </code></pre></div>
 <p>Or with Docker:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>-v<span class="w"> </span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>:/work<span class="w"> </span>autopxd2<span class="w"> </span>autopxd<span class="w"> </span>--backend<span class="w"> </span>libclang<span class="w"> </span>/work/myclass.hpp
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>-v<span class="w"> </span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>:/work<span class="w"> </span>-w<span class="w"> </span>/work<span class="w"> </span>ghcr.io/elijahr/python-autopxd2<span class="w"> </span>autopxd<span class="w"> </span>myclass.hpp
 </code></pre></div>
 <h2 id="supported-c-features">Supported C++ Features<a class="headerlink" href="#supported-c-features" title="Permanent link">&para;</a></h2>
 <h3 id="classes">Classes<a class="headerlink" href="#classes" title="Permanent link">&para;</a></h3>

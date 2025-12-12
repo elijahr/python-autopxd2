@@ -2503,57 +2503,7 @@ header = backend.parse(
 
               <details class="mkdocstrings-source">
                 <summary>Source code in <code>autopxd/backends/libclang_backend.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-662">662</a></span>
-<span class="normal"><a href="#__codelineno-0-663">663</a></span>
-<span class="normal"><a href="#__codelineno-0-664">664</a></span>
-<span class="normal"><a href="#__codelineno-0-665">665</a></span>
-<span class="normal"><a href="#__codelineno-0-666">666</a></span>
-<span class="normal"><a href="#__codelineno-0-667">667</a></span>
-<span class="normal"><a href="#__codelineno-0-668">668</a></span>
-<span class="normal"><a href="#__codelineno-0-669">669</a></span>
-<span class="normal"><a href="#__codelineno-0-670">670</a></span>
-<span class="normal"><a href="#__codelineno-0-671">671</a></span>
-<span class="normal"><a href="#__codelineno-0-672">672</a></span>
-<span class="normal"><a href="#__codelineno-0-673">673</a></span>
-<span class="normal"><a href="#__codelineno-0-674">674</a></span>
-<span class="normal"><a href="#__codelineno-0-675">675</a></span>
-<span class="normal"><a href="#__codelineno-0-676">676</a></span>
-<span class="normal"><a href="#__codelineno-0-677">677</a></span>
-<span class="normal"><a href="#__codelineno-0-678">678</a></span>
-<span class="normal"><a href="#__codelineno-0-679">679</a></span>
-<span class="normal"><a href="#__codelineno-0-680">680</a></span>
-<span class="normal"><a href="#__codelineno-0-681">681</a></span>
-<span class="normal"><a href="#__codelineno-0-682">682</a></span>
-<span class="normal"><a href="#__codelineno-0-683">683</a></span>
-<span class="normal"><a href="#__codelineno-0-684">684</a></span>
-<span class="normal"><a href="#__codelineno-0-685">685</a></span>
-<span class="normal"><a href="#__codelineno-0-686">686</a></span>
-<span class="normal"><a href="#__codelineno-0-687">687</a></span>
-<span class="normal"><a href="#__codelineno-0-688">688</a></span>
-<span class="normal"><a href="#__codelineno-0-689">689</a></span>
-<span class="normal"><a href="#__codelineno-0-690">690</a></span>
-<span class="normal"><a href="#__codelineno-0-691">691</a></span>
-<span class="normal"><a href="#__codelineno-0-692">692</a></span>
-<span class="normal"><a href="#__codelineno-0-693">693</a></span>
-<span class="normal"><a href="#__codelineno-0-694">694</a></span>
-<span class="normal"><a href="#__codelineno-0-695">695</a></span>
-<span class="normal"><a href="#__codelineno-0-696">696</a></span>
-<span class="normal"><a href="#__codelineno-0-697">697</a></span>
-<span class="normal"><a href="#__codelineno-0-698">698</a></span>
-<span class="normal"><a href="#__codelineno-0-699">699</a></span>
-<span class="normal"><a href="#__codelineno-0-700">700</a></span>
-<span class="normal"><a href="#__codelineno-0-701">701</a></span>
-<span class="normal"><a href="#__codelineno-0-702">702</a></span>
-<span class="normal"><a href="#__codelineno-0-703">703</a></span>
-<span class="normal"><a href="#__codelineno-0-704">704</a></span>
-<span class="normal"><a href="#__codelineno-0-705">705</a></span>
-<span class="normal"><a href="#__codelineno-0-706">706</a></span>
-<span class="normal"><a href="#__codelineno-0-707">707</a></span>
-<span class="normal"><a href="#__codelineno-0-708">708</a></span>
-<span class="normal"><a href="#__codelineno-0-709">709</a></span>
-<span class="normal"><a href="#__codelineno-0-710">710</a></span>
-<span class="normal"><a href="#__codelineno-0-711">711</a></span>
-<span class="normal"><a href="#__codelineno-0-712">712</a></span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-712">712</a></span>
 <span class="normal"><a href="#__codelineno-0-713">713</a></span>
 <span class="normal"><a href="#__codelineno-0-714">714</a></span>
 <span class="normal"><a href="#__codelineno-0-715">715</a></span>
@@ -2627,131 +2577,201 @@ header = backend.parse(
 <span class="normal"><a href="#__codelineno-0-783">783</a></span>
 <span class="normal"><a href="#__codelineno-0-784">784</a></span>
 <span class="normal"><a href="#__codelineno-0-785">785</a></span>
-<span class="normal"><a href="#__codelineno-0-786">786</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-662" name="__codelineno-0-662"></a><span class="k">class</span><span class="w"> </span><span class="nc">LibclangBackend</span><span class="p">:</span>
-<a id="__codelineno-0-663" name="__codelineno-0-663"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Parser backend using libclang.</span>
-<a id="__codelineno-0-664" name="__codelineno-0-664"></a>
-<a id="__codelineno-0-665" name="__codelineno-0-665"></a><span class="sd">    Uses LLVM&#39;s libclang to parse C and C++ code. This backend supports</span>
-<a id="__codelineno-0-666" name="__codelineno-0-666"></a><span class="sd">    the full C++ language including templates, classes, and namespaces.</span>
-<a id="__codelineno-0-667" name="__codelineno-0-667"></a>
-<a id="__codelineno-0-668" name="__codelineno-0-668"></a><span class="sd">    Properties</span>
-<a id="__codelineno-0-669" name="__codelineno-0-669"></a><span class="sd">    ----------</span>
-<a id="__codelineno-0-670" name="__codelineno-0-670"></a><span class="sd">    name : str</span>
-<a id="__codelineno-0-671" name="__codelineno-0-671"></a><span class="sd">        Returns ``&quot;libclang&quot;``.</span>
-<a id="__codelineno-0-672" name="__codelineno-0-672"></a><span class="sd">    supports_macros : bool</span>
-<a id="__codelineno-0-673" name="__codelineno-0-673"></a><span class="sd">        Returns ``False`` - macro extraction is limited in Python bindings.</span>
-<a id="__codelineno-0-674" name="__codelineno-0-674"></a><span class="sd">    supports_cpp : bool</span>
-<a id="__codelineno-0-675" name="__codelineno-0-675"></a><span class="sd">        Returns ``True`` - full C++ support.</span>
-<a id="__codelineno-0-676" name="__codelineno-0-676"></a>
-<a id="__codelineno-0-677" name="__codelineno-0-677"></a><span class="sd">    Example</span>
-<a id="__codelineno-0-678" name="__codelineno-0-678"></a><span class="sd">    -------</span>
-<a id="__codelineno-0-679" name="__codelineno-0-679"></a><span class="sd">    ::</span>
-<a id="__codelineno-0-680" name="__codelineno-0-680"></a>
-<a id="__codelineno-0-681" name="__codelineno-0-681"></a><span class="sd">        from autopxd.backends.libclang_backend import LibclangBackend</span>
-<a id="__codelineno-0-682" name="__codelineno-0-682"></a>
-<a id="__codelineno-0-683" name="__codelineno-0-683"></a><span class="sd">        backend = LibclangBackend()</span>
-<a id="__codelineno-0-684" name="__codelineno-0-684"></a>
-<a id="__codelineno-0-685" name="__codelineno-0-685"></a><span class="sd">        # Parse C++ code with specific standard</span>
-<a id="__codelineno-0-686" name="__codelineno-0-686"></a><span class="sd">        header = backend.parse(</span>
-<a id="__codelineno-0-687" name="__codelineno-0-687"></a><span class="sd">            code,</span>
-<a id="__codelineno-0-688" name="__codelineno-0-688"></a><span class="sd">            &quot;myheader.hpp&quot;,</span>
-<a id="__codelineno-0-689" name="__codelineno-0-689"></a><span class="sd">            extra_args=[&quot;-std=c++17&quot;, &quot;-DDEBUG=1&quot;]</span>
-<a id="__codelineno-0-690" name="__codelineno-0-690"></a><span class="sd">        )</span>
-<a id="__codelineno-0-691" name="__codelineno-0-691"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-692" name="__codelineno-0-692"></a>
-<a id="__codelineno-0-693" name="__codelineno-0-693"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-694" name="__codelineno-0-694"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_index</span><span class="p">:</span> <span class="n">clang</span><span class="o">.</span><span class="n">cindex</span><span class="o">.</span><span class="n">Index</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-<a id="__codelineno-0-695" name="__codelineno-0-695"></a>
-<a id="__codelineno-0-696" name="__codelineno-0-696"></a>    <span class="nd">@property</span>
-<a id="__codelineno-0-697" name="__codelineno-0-697"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<a id="__codelineno-0-698" name="__codelineno-0-698"></a>        <span class="k">return</span> <span class="s2">&quot;libclang&quot;</span>
-<a id="__codelineno-0-699" name="__codelineno-0-699"></a>
-<a id="__codelineno-0-700" name="__codelineno-0-700"></a>    <span class="nd">@property</span>
-<a id="__codelineno-0-701" name="__codelineno-0-701"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">supports_macros</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<a id="__codelineno-0-702" name="__codelineno-0-702"></a>        <span class="c1"># Supports simple numeric macros (#define NAME 123)</span>
-<a id="__codelineno-0-703" name="__codelineno-0-703"></a>        <span class="c1"># Complex macros (expressions, function-like) are not supported</span>
-<a id="__codelineno-0-704" name="__codelineno-0-704"></a>        <span class="k">return</span> <span class="kc">True</span>
-<a id="__codelineno-0-705" name="__codelineno-0-705"></a>
-<a id="__codelineno-0-706" name="__codelineno-0-706"></a>    <span class="nd">@property</span>
-<a id="__codelineno-0-707" name="__codelineno-0-707"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">supports_cpp</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<a id="__codelineno-0-708" name="__codelineno-0-708"></a>        <span class="k">return</span> <span class="kc">True</span>
-<a id="__codelineno-0-709" name="__codelineno-0-709"></a>
-<a id="__codelineno-0-710" name="__codelineno-0-710"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">_get_index</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;clang.cindex.Index&quot;</span><span class="p">:</span>
-<a id="__codelineno-0-711" name="__codelineno-0-711"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Get or create the clang index.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-712" name="__codelineno-0-712"></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_index</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-713" name="__codelineno-0-713"></a>            <span class="bp">self</span><span class="o">.</span><span class="n">_index</span> <span class="o">=</span> <span class="n">clang</span><span class="o">.</span><span class="n">cindex</span><span class="o">.</span><span class="n">Index</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
-<a id="__codelineno-0-714" name="__codelineno-0-714"></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_index</span>
-<a id="__codelineno-0-715" name="__codelineno-0-715"></a>
-<a id="__codelineno-0-716" name="__codelineno-0-716"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">parse</span><span class="p">(</span>
-<a id="__codelineno-0-717" name="__codelineno-0-717"></a>        <span class="bp">self</span><span class="p">,</span>
-<a id="__codelineno-0-718" name="__codelineno-0-718"></a>        <span class="n">code</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<a id="__codelineno-0-719" name="__codelineno-0-719"></a>        <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<a id="__codelineno-0-720" name="__codelineno-0-720"></a>        <span class="n">include_dirs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-721" name="__codelineno-0-721"></a>        <span class="n">extra_args</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-722" name="__codelineno-0-722"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Header</span><span class="p">:</span>
-<a id="__codelineno-0-723" name="__codelineno-0-723"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse C/C++ code using libclang.</span>
-<a id="__codelineno-0-724" name="__codelineno-0-724"></a>
-<a id="__codelineno-0-725" name="__codelineno-0-725"></a><span class="sd">        Unlike the pycparser backend, this method handles raw (unpreprocessed)</span>
-<a id="__codelineno-0-726" name="__codelineno-0-726"></a><span class="sd">        code and performs preprocessing internally.</span>
-<a id="__codelineno-0-727" name="__codelineno-0-727"></a>
-<a id="__codelineno-0-728" name="__codelineno-0-728"></a><span class="sd">        :param code: C/C++ source code to parse (raw, not preprocessed).</span>
-<a id="__codelineno-0-729" name="__codelineno-0-729"></a><span class="sd">        :param filename: Source filename for error messages and location tracking.</span>
-<a id="__codelineno-0-730" name="__codelineno-0-730"></a><span class="sd">        :param include_dirs: Additional include directories (converted to ``-I`` flags).</span>
-<a id="__codelineno-0-731" name="__codelineno-0-731"></a><span class="sd">        :param extra_args: Additional compiler arguments (e.g., ``[&quot;-std=c++17&quot;]``).</span>
-<a id="__codelineno-0-732" name="__codelineno-0-732"></a><span class="sd">        :returns: :class:`~autopxd.ir.Header` containing parsed declarations.</span>
-<a id="__codelineno-0-733" name="__codelineno-0-733"></a><span class="sd">        :raises RuntimeError: If parsing fails with errors.</span>
+<span class="normal"><a href="#__codelineno-0-786">786</a></span>
+<span class="normal"><a href="#__codelineno-0-787">787</a></span>
+<span class="normal"><a href="#__codelineno-0-788">788</a></span>
+<span class="normal"><a href="#__codelineno-0-789">789</a></span>
+<span class="normal"><a href="#__codelineno-0-790">790</a></span>
+<span class="normal"><a href="#__codelineno-0-791">791</a></span>
+<span class="normal"><a href="#__codelineno-0-792">792</a></span>
+<span class="normal"><a href="#__codelineno-0-793">793</a></span>
+<span class="normal"><a href="#__codelineno-0-794">794</a></span>
+<span class="normal"><a href="#__codelineno-0-795">795</a></span>
+<span class="normal"><a href="#__codelineno-0-796">796</a></span>
+<span class="normal"><a href="#__codelineno-0-797">797</a></span>
+<span class="normal"><a href="#__codelineno-0-798">798</a></span>
+<span class="normal"><a href="#__codelineno-0-799">799</a></span>
+<span class="normal"><a href="#__codelineno-0-800">800</a></span>
+<span class="normal"><a href="#__codelineno-0-801">801</a></span>
+<span class="normal"><a href="#__codelineno-0-802">802</a></span>
+<span class="normal"><a href="#__codelineno-0-803">803</a></span>
+<span class="normal"><a href="#__codelineno-0-804">804</a></span>
+<span class="normal"><a href="#__codelineno-0-805">805</a></span>
+<span class="normal"><a href="#__codelineno-0-806">806</a></span>
+<span class="normal"><a href="#__codelineno-0-807">807</a></span>
+<span class="normal"><a href="#__codelineno-0-808">808</a></span>
+<span class="normal"><a href="#__codelineno-0-809">809</a></span>
+<span class="normal"><a href="#__codelineno-0-810">810</a></span>
+<span class="normal"><a href="#__codelineno-0-811">811</a></span>
+<span class="normal"><a href="#__codelineno-0-812">812</a></span>
+<span class="normal"><a href="#__codelineno-0-813">813</a></span>
+<span class="normal"><a href="#__codelineno-0-814">814</a></span>
+<span class="normal"><a href="#__codelineno-0-815">815</a></span>
+<span class="normal"><a href="#__codelineno-0-816">816</a></span>
+<span class="normal"><a href="#__codelineno-0-817">817</a></span>
+<span class="normal"><a href="#__codelineno-0-818">818</a></span>
+<span class="normal"><a href="#__codelineno-0-819">819</a></span>
+<span class="normal"><a href="#__codelineno-0-820">820</a></span>
+<span class="normal"><a href="#__codelineno-0-821">821</a></span>
+<span class="normal"><a href="#__codelineno-0-822">822</a></span>
+<span class="normal"><a href="#__codelineno-0-823">823</a></span>
+<span class="normal"><a href="#__codelineno-0-824">824</a></span>
+<span class="normal"><a href="#__codelineno-0-825">825</a></span>
+<span class="normal"><a href="#__codelineno-0-826">826</a></span>
+<span class="normal"><a href="#__codelineno-0-827">827</a></span>
+<span class="normal"><a href="#__codelineno-0-828">828</a></span>
+<span class="normal"><a href="#__codelineno-0-829">829</a></span>
+<span class="normal"><a href="#__codelineno-0-830">830</a></span>
+<span class="normal"><a href="#__codelineno-0-831">831</a></span>
+<span class="normal"><a href="#__codelineno-0-832">832</a></span>
+<span class="normal"><a href="#__codelineno-0-833">833</a></span>
+<span class="normal"><a href="#__codelineno-0-834">834</a></span>
+<span class="normal"><a href="#__codelineno-0-835">835</a></span>
+<span class="normal"><a href="#__codelineno-0-836">836</a></span>
+<span class="normal"><a href="#__codelineno-0-837">837</a></span>
+<span class="normal"><a href="#__codelineno-0-838">838</a></span>
+<span class="normal"><a href="#__codelineno-0-839">839</a></span>
+<span class="normal"><a href="#__codelineno-0-840">840</a></span>
+<span class="normal"><a href="#__codelineno-0-841">841</a></span>
+<span class="normal"><a href="#__codelineno-0-842">842</a></span>
+<span class="normal"><a href="#__codelineno-0-843">843</a></span>
+<span class="normal"><a href="#__codelineno-0-844">844</a></span>
+<span class="normal"><a href="#__codelineno-0-845">845</a></span>
+<span class="normal"><a href="#__codelineno-0-846">846</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-712" name="__codelineno-0-712"></a><span class="k">class</span><span class="w"> </span><span class="nc">LibclangBackend</span><span class="p">:</span>
+<a id="__codelineno-0-713" name="__codelineno-0-713"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Parser backend using libclang.</span>
+<a id="__codelineno-0-714" name="__codelineno-0-714"></a>
+<a id="__codelineno-0-715" name="__codelineno-0-715"></a><span class="sd">    Uses LLVM&#39;s libclang to parse C and C++ code. This backend supports</span>
+<a id="__codelineno-0-716" name="__codelineno-0-716"></a><span class="sd">    the full C++ language including templates, classes, and namespaces.</span>
+<a id="__codelineno-0-717" name="__codelineno-0-717"></a>
+<a id="__codelineno-0-718" name="__codelineno-0-718"></a><span class="sd">    Properties</span>
+<a id="__codelineno-0-719" name="__codelineno-0-719"></a><span class="sd">    ----------</span>
+<a id="__codelineno-0-720" name="__codelineno-0-720"></a><span class="sd">    name : str</span>
+<a id="__codelineno-0-721" name="__codelineno-0-721"></a><span class="sd">        Returns ``&quot;libclang&quot;``.</span>
+<a id="__codelineno-0-722" name="__codelineno-0-722"></a><span class="sd">    supports_macros : bool</span>
+<a id="__codelineno-0-723" name="__codelineno-0-723"></a><span class="sd">        Returns ``False`` - macro extraction is limited in Python bindings.</span>
+<a id="__codelineno-0-724" name="__codelineno-0-724"></a><span class="sd">    supports_cpp : bool</span>
+<a id="__codelineno-0-725" name="__codelineno-0-725"></a><span class="sd">        Returns ``True`` - full C++ support.</span>
+<a id="__codelineno-0-726" name="__codelineno-0-726"></a>
+<a id="__codelineno-0-727" name="__codelineno-0-727"></a><span class="sd">    Example</span>
+<a id="__codelineno-0-728" name="__codelineno-0-728"></a><span class="sd">    -------</span>
+<a id="__codelineno-0-729" name="__codelineno-0-729"></a><span class="sd">    ::</span>
+<a id="__codelineno-0-730" name="__codelineno-0-730"></a>
+<a id="__codelineno-0-731" name="__codelineno-0-731"></a><span class="sd">        from autopxd.backends.libclang_backend import LibclangBackend</span>
+<a id="__codelineno-0-732" name="__codelineno-0-732"></a>
+<a id="__codelineno-0-733" name="__codelineno-0-733"></a><span class="sd">        backend = LibclangBackend()</span>
 <a id="__codelineno-0-734" name="__codelineno-0-734"></a>
-<a id="__codelineno-0-735" name="__codelineno-0-735"></a><span class="sd">        Example</span>
-<a id="__codelineno-0-736" name="__codelineno-0-736"></a><span class="sd">        -------</span>
-<a id="__codelineno-0-737" name="__codelineno-0-737"></a><span class="sd">        ::</span>
-<a id="__codelineno-0-738" name="__codelineno-0-738"></a>
-<a id="__codelineno-0-739" name="__codelineno-0-739"></a><span class="sd">            header = backend.parse(</span>
-<a id="__codelineno-0-740" name="__codelineno-0-740"></a><span class="sd">                code,</span>
-<a id="__codelineno-0-741" name="__codelineno-0-741"></a><span class="sd">                &quot;myheader.hpp&quot;,</span>
-<a id="__codelineno-0-742" name="__codelineno-0-742"></a><span class="sd">                include_dirs=[&quot;/usr/local/include&quot;],</span>
-<a id="__codelineno-0-743" name="__codelineno-0-743"></a><span class="sd">                extra_args=[&quot;-std=c++17&quot;, &quot;-DNDEBUG&quot;]</span>
-<a id="__codelineno-0-744" name="__codelineno-0-744"></a><span class="sd">            )</span>
-<a id="__codelineno-0-745" name="__codelineno-0-745"></a><span class="sd">        &quot;&quot;&quot;</span>
-<a id="__codelineno-0-746" name="__codelineno-0-746"></a>        <span class="n">args</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-<a id="__codelineno-0-747" name="__codelineno-0-747"></a>
-<a id="__codelineno-0-748" name="__codelineno-0-748"></a>        <span class="c1"># Add include directories</span>
-<a id="__codelineno-0-749" name="__codelineno-0-749"></a>        <span class="k">if</span> <span class="n">include_dirs</span><span class="p">:</span>
-<a id="__codelineno-0-750" name="__codelineno-0-750"></a>            <span class="k">for</span> <span class="n">inc_dir</span> <span class="ow">in</span> <span class="n">include_dirs</span><span class="p">:</span>
-<a id="__codelineno-0-751" name="__codelineno-0-751"></a>                <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;-I</span><span class="si">{</span><span class="n">inc_dir</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-752" name="__codelineno-0-752"></a>
-<a id="__codelineno-0-753" name="__codelineno-0-753"></a>        <span class="c1"># Add extra arguments</span>
-<a id="__codelineno-0-754" name="__codelineno-0-754"></a>        <span class="k">if</span> <span class="n">extra_args</span><span class="p">:</span>
-<a id="__codelineno-0-755" name="__codelineno-0-755"></a>            <span class="n">args</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">extra_args</span><span class="p">)</span>
-<a id="__codelineno-0-756" name="__codelineno-0-756"></a>
-<a id="__codelineno-0-757" name="__codelineno-0-757"></a>        <span class="c1"># Parse the code with detailed preprocessing record for macro extraction</span>
-<a id="__codelineno-0-758" name="__codelineno-0-758"></a>        <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_index</span><span class="p">()</span>
-<a id="__codelineno-0-759" name="__codelineno-0-759"></a>        <span class="n">tu</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span>
-<a id="__codelineno-0-760" name="__codelineno-0-760"></a>            <span class="n">filename</span><span class="p">,</span>
-<a id="__codelineno-0-761" name="__codelineno-0-761"></a>            <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
-<a id="__codelineno-0-762" name="__codelineno-0-762"></a>            <span class="n">unsaved_files</span><span class="o">=</span><span class="p">[(</span><span class="n">filename</span><span class="p">,</span> <span class="n">code</span><span class="p">)],</span>
-<a id="__codelineno-0-763" name="__codelineno-0-763"></a>            <span class="n">options</span><span class="o">=</span><span class="n">clang</span><span class="o">.</span><span class="n">cindex</span><span class="o">.</span><span class="n">TranslationUnit</span><span class="o">.</span><span class="n">PARSE_DETAILED_PROCESSING_RECORD</span><span class="p">,</span>
-<a id="__codelineno-0-764" name="__codelineno-0-764"></a>        <span class="p">)</span>
+<a id="__codelineno-0-735" name="__codelineno-0-735"></a><span class="sd">        # Parse C++ code with specific standard</span>
+<a id="__codelineno-0-736" name="__codelineno-0-736"></a><span class="sd">        header = backend.parse(</span>
+<a id="__codelineno-0-737" name="__codelineno-0-737"></a><span class="sd">            code,</span>
+<a id="__codelineno-0-738" name="__codelineno-0-738"></a><span class="sd">            &quot;myheader.hpp&quot;,</span>
+<a id="__codelineno-0-739" name="__codelineno-0-739"></a><span class="sd">            extra_args=[&quot;-std=c++17&quot;, &quot;-DDEBUG=1&quot;]</span>
+<a id="__codelineno-0-740" name="__codelineno-0-740"></a><span class="sd">        )</span>
+<a id="__codelineno-0-741" name="__codelineno-0-741"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-742" name="__codelineno-0-742"></a>
+<a id="__codelineno-0-743" name="__codelineno-0-743"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-744" name="__codelineno-0-744"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_index</span><span class="p">:</span> <span class="n">clang</span><span class="o">.</span><span class="n">cindex</span><span class="o">.</span><span class="n">Index</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-745" name="__codelineno-0-745"></a>
+<a id="__codelineno-0-746" name="__codelineno-0-746"></a>    <span class="nd">@property</span>
+<a id="__codelineno-0-747" name="__codelineno-0-747"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<a id="__codelineno-0-748" name="__codelineno-0-748"></a>        <span class="k">return</span> <span class="s2">&quot;libclang&quot;</span>
+<a id="__codelineno-0-749" name="__codelineno-0-749"></a>
+<a id="__codelineno-0-750" name="__codelineno-0-750"></a>    <span class="nd">@property</span>
+<a id="__codelineno-0-751" name="__codelineno-0-751"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">supports_macros</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<a id="__codelineno-0-752" name="__codelineno-0-752"></a>        <span class="c1"># Supports simple numeric macros (#define NAME 123)</span>
+<a id="__codelineno-0-753" name="__codelineno-0-753"></a>        <span class="c1"># Complex macros (expressions, function-like) are not supported</span>
+<a id="__codelineno-0-754" name="__codelineno-0-754"></a>        <span class="k">return</span> <span class="kc">True</span>
+<a id="__codelineno-0-755" name="__codelineno-0-755"></a>
+<a id="__codelineno-0-756" name="__codelineno-0-756"></a>    <span class="nd">@property</span>
+<a id="__codelineno-0-757" name="__codelineno-0-757"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">supports_cpp</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<a id="__codelineno-0-758" name="__codelineno-0-758"></a>        <span class="k">return</span> <span class="kc">True</span>
+<a id="__codelineno-0-759" name="__codelineno-0-759"></a>
+<a id="__codelineno-0-760" name="__codelineno-0-760"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">_get_index</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;clang.cindex.Index&quot;</span><span class="p">:</span>
+<a id="__codelineno-0-761" name="__codelineno-0-761"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Get or create the clang index.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-762" name="__codelineno-0-762"></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_index</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-763" name="__codelineno-0-763"></a>            <span class="bp">self</span><span class="o">.</span><span class="n">_index</span> <span class="o">=</span> <span class="n">clang</span><span class="o">.</span><span class="n">cindex</span><span class="o">.</span><span class="n">Index</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
+<a id="__codelineno-0-764" name="__codelineno-0-764"></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_index</span>
 <a id="__codelineno-0-765" name="__codelineno-0-765"></a>
-<a id="__codelineno-0-766" name="__codelineno-0-766"></a>        <span class="c1"># Check for fatal errors</span>
-<a id="__codelineno-0-767" name="__codelineno-0-767"></a>        <span class="k">for</span> <span class="n">diag</span> <span class="ow">in</span> <span class="n">tu</span><span class="o">.</span><span class="n">diagnostics</span><span class="p">:</span>
-<a id="__codelineno-0-768" name="__codelineno-0-768"></a>            <span class="k">if</span> <span class="n">diag</span><span class="o">.</span><span class="n">severity</span> <span class="o">&gt;=</span> <span class="n">clang</span><span class="o">.</span><span class="n">cindex</span><span class="o">.</span><span class="n">Diagnostic</span><span class="o">.</span><span class="n">Error</span><span class="p">:</span>
-<a id="__codelineno-0-769" name="__codelineno-0-769"></a>                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Parse error: </span><span class="si">{</span><span class="n">diag</span><span class="o">.</span><span class="n">spelling</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-770" name="__codelineno-0-770"></a>
-<a id="__codelineno-0-771" name="__codelineno-0-771"></a>        <span class="c1"># Collect included headers</span>
-<a id="__codelineno-0-772" name="__codelineno-0-772"></a>        <span class="n">included_headers</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-<a id="__codelineno-0-773" name="__codelineno-0-773"></a>        <span class="k">for</span> <span class="n">inclusion</span> <span class="ow">in</span> <span class="n">tu</span><span class="o">.</span><span class="n">get_includes</span><span class="p">():</span>
-<a id="__codelineno-0-774" name="__codelineno-0-774"></a>            <span class="c1"># inclusion.include is a File with name attribute</span>
-<a id="__codelineno-0-775" name="__codelineno-0-775"></a>            <span class="n">header_path</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">inclusion</span><span class="o">.</span><span class="n">include</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-<a id="__codelineno-0-776" name="__codelineno-0-776"></a>            <span class="c1"># Store full path - caller can extract basename if needed</span>
-<a id="__codelineno-0-777" name="__codelineno-0-777"></a>            <span class="n">included_headers</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">header_path</span><span class="p">)</span>
+<a id="__codelineno-0-766" name="__codelineno-0-766"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">parse</span><span class="p">(</span>
+<a id="__codelineno-0-767" name="__codelineno-0-767"></a>        <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-0-768" name="__codelineno-0-768"></a>        <span class="n">code</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-0-769" name="__codelineno-0-769"></a>        <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-0-770" name="__codelineno-0-770"></a>        <span class="n">include_dirs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-771" name="__codelineno-0-771"></a>        <span class="n">extra_args</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-772" name="__codelineno-0-772"></a>        <span class="n">use_default_includes</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-0-773" name="__codelineno-0-773"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Header</span><span class="p">:</span>
+<a id="__codelineno-0-774" name="__codelineno-0-774"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse C/C++ code using libclang.</span>
+<a id="__codelineno-0-775" name="__codelineno-0-775"></a>
+<a id="__codelineno-0-776" name="__codelineno-0-776"></a><span class="sd">        Unlike the pycparser backend, this method handles raw (unpreprocessed)</span>
+<a id="__codelineno-0-777" name="__codelineno-0-777"></a><span class="sd">        code and performs preprocessing internally.</span>
 <a id="__codelineno-0-778" name="__codelineno-0-778"></a>
-<a id="__codelineno-0-779" name="__codelineno-0-779"></a>        <span class="c1"># Convert to IR</span>
-<a id="__codelineno-0-780" name="__codelineno-0-780"></a>        <span class="n">converter</span> <span class="o">=</span> <span class="n">ClangASTConverter</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
-<a id="__codelineno-0-781" name="__codelineno-0-781"></a>        <span class="n">header</span> <span class="o">=</span> <span class="n">converter</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="n">tu</span><span class="p">)</span>
-<a id="__codelineno-0-782" name="__codelineno-0-782"></a>
-<a id="__codelineno-0-783" name="__codelineno-0-783"></a>        <span class="c1"># Attach included headers to the IR</span>
-<a id="__codelineno-0-784" name="__codelineno-0-784"></a>        <span class="n">header</span><span class="o">.</span><span class="n">included_headers</span> <span class="o">=</span> <span class="n">included_headers</span>
-<a id="__codelineno-0-785" name="__codelineno-0-785"></a>
-<a id="__codelineno-0-786" name="__codelineno-0-786"></a>        <span class="k">return</span> <span class="n">header</span>
+<a id="__codelineno-0-779" name="__codelineno-0-779"></a><span class="sd">        :param code: C/C++ source code to parse (raw, not preprocessed).</span>
+<a id="__codelineno-0-780" name="__codelineno-0-780"></a><span class="sd">        :param filename: Source filename for error messages and location tracking.</span>
+<a id="__codelineno-0-781" name="__codelineno-0-781"></a><span class="sd">        :param include_dirs: Additional include directories (converted to ``-I`` flags).</span>
+<a id="__codelineno-0-782" name="__codelineno-0-782"></a><span class="sd">        :param extra_args: Additional compiler arguments (e.g., ``[&quot;-std=c++17&quot;]``).</span>
+<a id="__codelineno-0-783" name="__codelineno-0-783"></a><span class="sd">        :param use_default_includes: If True (default), automatically detect and add</span>
+<a id="__codelineno-0-784" name="__codelineno-0-784"></a><span class="sd">            system include directories by querying the system clang compiler.</span>
+<a id="__codelineno-0-785" name="__codelineno-0-785"></a><span class="sd">            Set to False to disable this behavior.</span>
+<a id="__codelineno-0-786" name="__codelineno-0-786"></a><span class="sd">        :returns: :class:`~autopxd.ir.Header` containing parsed declarations.</span>
+<a id="__codelineno-0-787" name="__codelineno-0-787"></a><span class="sd">        :raises RuntimeError: If parsing fails with errors.</span>
+<a id="__codelineno-0-788" name="__codelineno-0-788"></a>
+<a id="__codelineno-0-789" name="__codelineno-0-789"></a><span class="sd">        Example</span>
+<a id="__codelineno-0-790" name="__codelineno-0-790"></a><span class="sd">        -------</span>
+<a id="__codelineno-0-791" name="__codelineno-0-791"></a><span class="sd">        ::</span>
+<a id="__codelineno-0-792" name="__codelineno-0-792"></a>
+<a id="__codelineno-0-793" name="__codelineno-0-793"></a><span class="sd">            header = backend.parse(</span>
+<a id="__codelineno-0-794" name="__codelineno-0-794"></a><span class="sd">                code,</span>
+<a id="__codelineno-0-795" name="__codelineno-0-795"></a><span class="sd">                &quot;myheader.hpp&quot;,</span>
+<a id="__codelineno-0-796" name="__codelineno-0-796"></a><span class="sd">                include_dirs=[&quot;/usr/local/include&quot;],</span>
+<a id="__codelineno-0-797" name="__codelineno-0-797"></a><span class="sd">                extra_args=[&quot;-std=c++17&quot;, &quot;-DNDEBUG&quot;]</span>
+<a id="__codelineno-0-798" name="__codelineno-0-798"></a><span class="sd">            )</span>
+<a id="__codelineno-0-799" name="__codelineno-0-799"></a><span class="sd">        &quot;&quot;&quot;</span>
+<a id="__codelineno-0-800" name="__codelineno-0-800"></a>        <span class="n">args</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-0-801" name="__codelineno-0-801"></a>
+<a id="__codelineno-0-802" name="__codelineno-0-802"></a>        <span class="c1"># Add system include directories if enabled and no -I flags provided</span>
+<a id="__codelineno-0-803" name="__codelineno-0-803"></a>        <span class="k">if</span> <span class="n">use_default_includes</span><span class="p">:</span>
+<a id="__codelineno-0-804" name="__codelineno-0-804"></a>            <span class="n">has_include_flags</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">include_dirs</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span><span class="n">arg</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;-I&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="p">(</span><span class="n">extra_args</span> <span class="ow">or</span> <span class="p">[]))</span>
+<a id="__codelineno-0-805" name="__codelineno-0-805"></a>            <span class="k">if</span> <span class="ow">not</span> <span class="n">has_include_flags</span><span class="p">:</span>
+<a id="__codelineno-0-806" name="__codelineno-0-806"></a>                <span class="n">args</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">get_system_include_dirs</span><span class="p">())</span>
+<a id="__codelineno-0-807" name="__codelineno-0-807"></a>
+<a id="__codelineno-0-808" name="__codelineno-0-808"></a>        <span class="c1"># Add include directories</span>
+<a id="__codelineno-0-809" name="__codelineno-0-809"></a>        <span class="k">if</span> <span class="n">include_dirs</span><span class="p">:</span>
+<a id="__codelineno-0-810" name="__codelineno-0-810"></a>            <span class="k">for</span> <span class="n">inc_dir</span> <span class="ow">in</span> <span class="n">include_dirs</span><span class="p">:</span>
+<a id="__codelineno-0-811" name="__codelineno-0-811"></a>                <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;-I</span><span class="si">{</span><span class="n">inc_dir</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-812" name="__codelineno-0-812"></a>
+<a id="__codelineno-0-813" name="__codelineno-0-813"></a>        <span class="c1"># Add extra arguments</span>
+<a id="__codelineno-0-814" name="__codelineno-0-814"></a>        <span class="k">if</span> <span class="n">extra_args</span><span class="p">:</span>
+<a id="__codelineno-0-815" name="__codelineno-0-815"></a>            <span class="n">args</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">extra_args</span><span class="p">)</span>
+<a id="__codelineno-0-816" name="__codelineno-0-816"></a>
+<a id="__codelineno-0-817" name="__codelineno-0-817"></a>        <span class="c1"># Parse the code with detailed preprocessing record for macro extraction</span>
+<a id="__codelineno-0-818" name="__codelineno-0-818"></a>        <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_index</span><span class="p">()</span>
+<a id="__codelineno-0-819" name="__codelineno-0-819"></a>        <span class="n">tu</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span>
+<a id="__codelineno-0-820" name="__codelineno-0-820"></a>            <span class="n">filename</span><span class="p">,</span>
+<a id="__codelineno-0-821" name="__codelineno-0-821"></a>            <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
+<a id="__codelineno-0-822" name="__codelineno-0-822"></a>            <span class="n">unsaved_files</span><span class="o">=</span><span class="p">[(</span><span class="n">filename</span><span class="p">,</span> <span class="n">code</span><span class="p">)],</span>
+<a id="__codelineno-0-823" name="__codelineno-0-823"></a>            <span class="n">options</span><span class="o">=</span><span class="n">clang</span><span class="o">.</span><span class="n">cindex</span><span class="o">.</span><span class="n">TranslationUnit</span><span class="o">.</span><span class="n">PARSE_DETAILED_PROCESSING_RECORD</span><span class="p">,</span>
+<a id="__codelineno-0-824" name="__codelineno-0-824"></a>        <span class="p">)</span>
+<a id="__codelineno-0-825" name="__codelineno-0-825"></a>
+<a id="__codelineno-0-826" name="__codelineno-0-826"></a>        <span class="c1"># Check for fatal errors</span>
+<a id="__codelineno-0-827" name="__codelineno-0-827"></a>        <span class="k">for</span> <span class="n">diag</span> <span class="ow">in</span> <span class="n">tu</span><span class="o">.</span><span class="n">diagnostics</span><span class="p">:</span>
+<a id="__codelineno-0-828" name="__codelineno-0-828"></a>            <span class="k">if</span> <span class="n">diag</span><span class="o">.</span><span class="n">severity</span> <span class="o">&gt;=</span> <span class="n">clang</span><span class="o">.</span><span class="n">cindex</span><span class="o">.</span><span class="n">Diagnostic</span><span class="o">.</span><span class="n">Error</span><span class="p">:</span>
+<a id="__codelineno-0-829" name="__codelineno-0-829"></a>                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Parse error: </span><span class="si">{</span><span class="n">diag</span><span class="o">.</span><span class="n">spelling</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-830" name="__codelineno-0-830"></a>
+<a id="__codelineno-0-831" name="__codelineno-0-831"></a>        <span class="c1"># Collect included headers</span>
+<a id="__codelineno-0-832" name="__codelineno-0-832"></a>        <span class="n">included_headers</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+<a id="__codelineno-0-833" name="__codelineno-0-833"></a>        <span class="k">for</span> <span class="n">inclusion</span> <span class="ow">in</span> <span class="n">tu</span><span class="o">.</span><span class="n">get_includes</span><span class="p">():</span>
+<a id="__codelineno-0-834" name="__codelineno-0-834"></a>            <span class="c1"># inclusion.include is a File with name attribute</span>
+<a id="__codelineno-0-835" name="__codelineno-0-835"></a>            <span class="n">header_path</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">inclusion</span><span class="o">.</span><span class="n">include</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+<a id="__codelineno-0-836" name="__codelineno-0-836"></a>            <span class="c1"># Store full path - caller can extract basename if needed</span>
+<a id="__codelineno-0-837" name="__codelineno-0-837"></a>            <span class="n">included_headers</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">header_path</span><span class="p">)</span>
+<a id="__codelineno-0-838" name="__codelineno-0-838"></a>
+<a id="__codelineno-0-839" name="__codelineno-0-839"></a>        <span class="c1"># Convert to IR</span>
+<a id="__codelineno-0-840" name="__codelineno-0-840"></a>        <span class="n">converter</span> <span class="o">=</span> <span class="n">ClangASTConverter</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+<a id="__codelineno-0-841" name="__codelineno-0-841"></a>        <span class="n">header</span> <span class="o">=</span> <span class="n">converter</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="n">tu</span><span class="p">)</span>
+<a id="__codelineno-0-842" name="__codelineno-0-842"></a>
+<a id="__codelineno-0-843" name="__codelineno-0-843"></a>        <span class="c1"># Attach included headers to the IR</span>
+<a id="__codelineno-0-844" name="__codelineno-0-844"></a>        <span class="n">header</span><span class="o">.</span><span class="n">included_headers</span> <span class="o">=</span> <span class="n">included_headers</span>
+<a id="__codelineno-0-845" name="__codelineno-0-845"></a>
+<a id="__codelineno-0-846" name="__codelineno-0-846"></a>        <span class="k">return</span> <span class="n">header</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -2772,7 +2792,7 @@ header = backend.parse(
 
 
 <h4 id="autopxd.backends.libclang_backend.LibclangBackend.parse" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <code class="highlight language-python"><span class="n">parse</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">include_dirs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">extra_args</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <code class="highlight language-python"><span class="n">parse</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">include_dirs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">extra_args</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_default_includes</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
 
 <a href="#autopxd.backends.libclang_backend.LibclangBackend.parse" class="headerlink" title="Permanent link">&para;</a></h4>
 
@@ -2867,6 +2887,22 @@ code and performs preprocessing internally.</p>
                   <code>None</code>
             </td>
           </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>use_default_includes</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True (default), automatically detect and add system include directories by querying the system clang compiler. Set to False to disable this behavior.</p>
+              </div>
+            </td>
+            <td>
+                  <code>True</code>
+            </td>
+          </tr>
       </tbody>
     </table>
 
@@ -2924,57 +2960,7 @@ code and performs preprocessing internally.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>autopxd/backends/libclang_backend.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-716">716</a></span>
-<span class="normal"><a href="#__codelineno-0-717">717</a></span>
-<span class="normal"><a href="#__codelineno-0-718">718</a></span>
-<span class="normal"><a href="#__codelineno-0-719">719</a></span>
-<span class="normal"><a href="#__codelineno-0-720">720</a></span>
-<span class="normal"><a href="#__codelineno-0-721">721</a></span>
-<span class="normal"><a href="#__codelineno-0-722">722</a></span>
-<span class="normal"><a href="#__codelineno-0-723">723</a></span>
-<span class="normal"><a href="#__codelineno-0-724">724</a></span>
-<span class="normal"><a href="#__codelineno-0-725">725</a></span>
-<span class="normal"><a href="#__codelineno-0-726">726</a></span>
-<span class="normal"><a href="#__codelineno-0-727">727</a></span>
-<span class="normal"><a href="#__codelineno-0-728">728</a></span>
-<span class="normal"><a href="#__codelineno-0-729">729</a></span>
-<span class="normal"><a href="#__codelineno-0-730">730</a></span>
-<span class="normal"><a href="#__codelineno-0-731">731</a></span>
-<span class="normal"><a href="#__codelineno-0-732">732</a></span>
-<span class="normal"><a href="#__codelineno-0-733">733</a></span>
-<span class="normal"><a href="#__codelineno-0-734">734</a></span>
-<span class="normal"><a href="#__codelineno-0-735">735</a></span>
-<span class="normal"><a href="#__codelineno-0-736">736</a></span>
-<span class="normal"><a href="#__codelineno-0-737">737</a></span>
-<span class="normal"><a href="#__codelineno-0-738">738</a></span>
-<span class="normal"><a href="#__codelineno-0-739">739</a></span>
-<span class="normal"><a href="#__codelineno-0-740">740</a></span>
-<span class="normal"><a href="#__codelineno-0-741">741</a></span>
-<span class="normal"><a href="#__codelineno-0-742">742</a></span>
-<span class="normal"><a href="#__codelineno-0-743">743</a></span>
-<span class="normal"><a href="#__codelineno-0-744">744</a></span>
-<span class="normal"><a href="#__codelineno-0-745">745</a></span>
-<span class="normal"><a href="#__codelineno-0-746">746</a></span>
-<span class="normal"><a href="#__codelineno-0-747">747</a></span>
-<span class="normal"><a href="#__codelineno-0-748">748</a></span>
-<span class="normal"><a href="#__codelineno-0-749">749</a></span>
-<span class="normal"><a href="#__codelineno-0-750">750</a></span>
-<span class="normal"><a href="#__codelineno-0-751">751</a></span>
-<span class="normal"><a href="#__codelineno-0-752">752</a></span>
-<span class="normal"><a href="#__codelineno-0-753">753</a></span>
-<span class="normal"><a href="#__codelineno-0-754">754</a></span>
-<span class="normal"><a href="#__codelineno-0-755">755</a></span>
-<span class="normal"><a href="#__codelineno-0-756">756</a></span>
-<span class="normal"><a href="#__codelineno-0-757">757</a></span>
-<span class="normal"><a href="#__codelineno-0-758">758</a></span>
-<span class="normal"><a href="#__codelineno-0-759">759</a></span>
-<span class="normal"><a href="#__codelineno-0-760">760</a></span>
-<span class="normal"><a href="#__codelineno-0-761">761</a></span>
-<span class="normal"><a href="#__codelineno-0-762">762</a></span>
-<span class="normal"><a href="#__codelineno-0-763">763</a></span>
-<span class="normal"><a href="#__codelineno-0-764">764</a></span>
-<span class="normal"><a href="#__codelineno-0-765">765</a></span>
-<span class="normal"><a href="#__codelineno-0-766">766</a></span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-766">766</a></span>
 <span class="normal"><a href="#__codelineno-0-767">767</a></span>
 <span class="normal"><a href="#__codelineno-0-768">768</a></span>
 <span class="normal"><a href="#__codelineno-0-769">769</a></span>
@@ -2994,77 +2980,147 @@ code and performs preprocessing internally.</p>
 <span class="normal"><a href="#__codelineno-0-783">783</a></span>
 <span class="normal"><a href="#__codelineno-0-784">784</a></span>
 <span class="normal"><a href="#__codelineno-0-785">785</a></span>
-<span class="normal"><a href="#__codelineno-0-786">786</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-716" name="__codelineno-0-716"></a><span class="k">def</span><span class="w"> </span><span class="nf">parse</span><span class="p">(</span>
-<a id="__codelineno-0-717" name="__codelineno-0-717"></a>    <span class="bp">self</span><span class="p">,</span>
-<a id="__codelineno-0-718" name="__codelineno-0-718"></a>    <span class="n">code</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<a id="__codelineno-0-719" name="__codelineno-0-719"></a>    <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<a id="__codelineno-0-720" name="__codelineno-0-720"></a>    <span class="n">include_dirs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-721" name="__codelineno-0-721"></a>    <span class="n">extra_args</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-722" name="__codelineno-0-722"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Header</span><span class="p">:</span>
-<a id="__codelineno-0-723" name="__codelineno-0-723"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse C/C++ code using libclang.</span>
-<a id="__codelineno-0-724" name="__codelineno-0-724"></a>
-<a id="__codelineno-0-725" name="__codelineno-0-725"></a><span class="sd">    Unlike the pycparser backend, this method handles raw (unpreprocessed)</span>
-<a id="__codelineno-0-726" name="__codelineno-0-726"></a><span class="sd">    code and performs preprocessing internally.</span>
-<a id="__codelineno-0-727" name="__codelineno-0-727"></a>
-<a id="__codelineno-0-728" name="__codelineno-0-728"></a><span class="sd">    :param code: C/C++ source code to parse (raw, not preprocessed).</span>
-<a id="__codelineno-0-729" name="__codelineno-0-729"></a><span class="sd">    :param filename: Source filename for error messages and location tracking.</span>
-<a id="__codelineno-0-730" name="__codelineno-0-730"></a><span class="sd">    :param include_dirs: Additional include directories (converted to ``-I`` flags).</span>
-<a id="__codelineno-0-731" name="__codelineno-0-731"></a><span class="sd">    :param extra_args: Additional compiler arguments (e.g., ``[&quot;-std=c++17&quot;]``).</span>
-<a id="__codelineno-0-732" name="__codelineno-0-732"></a><span class="sd">    :returns: :class:`~autopxd.ir.Header` containing parsed declarations.</span>
-<a id="__codelineno-0-733" name="__codelineno-0-733"></a><span class="sd">    :raises RuntimeError: If parsing fails with errors.</span>
-<a id="__codelineno-0-734" name="__codelineno-0-734"></a>
-<a id="__codelineno-0-735" name="__codelineno-0-735"></a><span class="sd">    Example</span>
-<a id="__codelineno-0-736" name="__codelineno-0-736"></a><span class="sd">    -------</span>
-<a id="__codelineno-0-737" name="__codelineno-0-737"></a><span class="sd">    ::</span>
-<a id="__codelineno-0-738" name="__codelineno-0-738"></a>
-<a id="__codelineno-0-739" name="__codelineno-0-739"></a><span class="sd">        header = backend.parse(</span>
-<a id="__codelineno-0-740" name="__codelineno-0-740"></a><span class="sd">            code,</span>
-<a id="__codelineno-0-741" name="__codelineno-0-741"></a><span class="sd">            &quot;myheader.hpp&quot;,</span>
-<a id="__codelineno-0-742" name="__codelineno-0-742"></a><span class="sd">            include_dirs=[&quot;/usr/local/include&quot;],</span>
-<a id="__codelineno-0-743" name="__codelineno-0-743"></a><span class="sd">            extra_args=[&quot;-std=c++17&quot;, &quot;-DNDEBUG&quot;]</span>
-<a id="__codelineno-0-744" name="__codelineno-0-744"></a><span class="sd">        )</span>
-<a id="__codelineno-0-745" name="__codelineno-0-745"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-0-746" name="__codelineno-0-746"></a>    <span class="n">args</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-<a id="__codelineno-0-747" name="__codelineno-0-747"></a>
-<a id="__codelineno-0-748" name="__codelineno-0-748"></a>    <span class="c1"># Add include directories</span>
-<a id="__codelineno-0-749" name="__codelineno-0-749"></a>    <span class="k">if</span> <span class="n">include_dirs</span><span class="p">:</span>
-<a id="__codelineno-0-750" name="__codelineno-0-750"></a>        <span class="k">for</span> <span class="n">inc_dir</span> <span class="ow">in</span> <span class="n">include_dirs</span><span class="p">:</span>
-<a id="__codelineno-0-751" name="__codelineno-0-751"></a>            <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;-I</span><span class="si">{</span><span class="n">inc_dir</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-752" name="__codelineno-0-752"></a>
-<a id="__codelineno-0-753" name="__codelineno-0-753"></a>    <span class="c1"># Add extra arguments</span>
-<a id="__codelineno-0-754" name="__codelineno-0-754"></a>    <span class="k">if</span> <span class="n">extra_args</span><span class="p">:</span>
-<a id="__codelineno-0-755" name="__codelineno-0-755"></a>        <span class="n">args</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">extra_args</span><span class="p">)</span>
-<a id="__codelineno-0-756" name="__codelineno-0-756"></a>
-<a id="__codelineno-0-757" name="__codelineno-0-757"></a>    <span class="c1"># Parse the code with detailed preprocessing record for macro extraction</span>
-<a id="__codelineno-0-758" name="__codelineno-0-758"></a>    <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_index</span><span class="p">()</span>
-<a id="__codelineno-0-759" name="__codelineno-0-759"></a>    <span class="n">tu</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span>
-<a id="__codelineno-0-760" name="__codelineno-0-760"></a>        <span class="n">filename</span><span class="p">,</span>
-<a id="__codelineno-0-761" name="__codelineno-0-761"></a>        <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
-<a id="__codelineno-0-762" name="__codelineno-0-762"></a>        <span class="n">unsaved_files</span><span class="o">=</span><span class="p">[(</span><span class="n">filename</span><span class="p">,</span> <span class="n">code</span><span class="p">)],</span>
-<a id="__codelineno-0-763" name="__codelineno-0-763"></a>        <span class="n">options</span><span class="o">=</span><span class="n">clang</span><span class="o">.</span><span class="n">cindex</span><span class="o">.</span><span class="n">TranslationUnit</span><span class="o">.</span><span class="n">PARSE_DETAILED_PROCESSING_RECORD</span><span class="p">,</span>
-<a id="__codelineno-0-764" name="__codelineno-0-764"></a>    <span class="p">)</span>
-<a id="__codelineno-0-765" name="__codelineno-0-765"></a>
-<a id="__codelineno-0-766" name="__codelineno-0-766"></a>    <span class="c1"># Check for fatal errors</span>
-<a id="__codelineno-0-767" name="__codelineno-0-767"></a>    <span class="k">for</span> <span class="n">diag</span> <span class="ow">in</span> <span class="n">tu</span><span class="o">.</span><span class="n">diagnostics</span><span class="p">:</span>
-<a id="__codelineno-0-768" name="__codelineno-0-768"></a>        <span class="k">if</span> <span class="n">diag</span><span class="o">.</span><span class="n">severity</span> <span class="o">&gt;=</span> <span class="n">clang</span><span class="o">.</span><span class="n">cindex</span><span class="o">.</span><span class="n">Diagnostic</span><span class="o">.</span><span class="n">Error</span><span class="p">:</span>
-<a id="__codelineno-0-769" name="__codelineno-0-769"></a>            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Parse error: </span><span class="si">{</span><span class="n">diag</span><span class="o">.</span><span class="n">spelling</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-770" name="__codelineno-0-770"></a>
-<a id="__codelineno-0-771" name="__codelineno-0-771"></a>    <span class="c1"># Collect included headers</span>
-<a id="__codelineno-0-772" name="__codelineno-0-772"></a>    <span class="n">included_headers</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-<a id="__codelineno-0-773" name="__codelineno-0-773"></a>    <span class="k">for</span> <span class="n">inclusion</span> <span class="ow">in</span> <span class="n">tu</span><span class="o">.</span><span class="n">get_includes</span><span class="p">():</span>
-<a id="__codelineno-0-774" name="__codelineno-0-774"></a>        <span class="c1"># inclusion.include is a File with name attribute</span>
-<a id="__codelineno-0-775" name="__codelineno-0-775"></a>        <span class="n">header_path</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">inclusion</span><span class="o">.</span><span class="n">include</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-<a id="__codelineno-0-776" name="__codelineno-0-776"></a>        <span class="c1"># Store full path - caller can extract basename if needed</span>
-<a id="__codelineno-0-777" name="__codelineno-0-777"></a>        <span class="n">included_headers</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">header_path</span><span class="p">)</span>
+<span class="normal"><a href="#__codelineno-0-786">786</a></span>
+<span class="normal"><a href="#__codelineno-0-787">787</a></span>
+<span class="normal"><a href="#__codelineno-0-788">788</a></span>
+<span class="normal"><a href="#__codelineno-0-789">789</a></span>
+<span class="normal"><a href="#__codelineno-0-790">790</a></span>
+<span class="normal"><a href="#__codelineno-0-791">791</a></span>
+<span class="normal"><a href="#__codelineno-0-792">792</a></span>
+<span class="normal"><a href="#__codelineno-0-793">793</a></span>
+<span class="normal"><a href="#__codelineno-0-794">794</a></span>
+<span class="normal"><a href="#__codelineno-0-795">795</a></span>
+<span class="normal"><a href="#__codelineno-0-796">796</a></span>
+<span class="normal"><a href="#__codelineno-0-797">797</a></span>
+<span class="normal"><a href="#__codelineno-0-798">798</a></span>
+<span class="normal"><a href="#__codelineno-0-799">799</a></span>
+<span class="normal"><a href="#__codelineno-0-800">800</a></span>
+<span class="normal"><a href="#__codelineno-0-801">801</a></span>
+<span class="normal"><a href="#__codelineno-0-802">802</a></span>
+<span class="normal"><a href="#__codelineno-0-803">803</a></span>
+<span class="normal"><a href="#__codelineno-0-804">804</a></span>
+<span class="normal"><a href="#__codelineno-0-805">805</a></span>
+<span class="normal"><a href="#__codelineno-0-806">806</a></span>
+<span class="normal"><a href="#__codelineno-0-807">807</a></span>
+<span class="normal"><a href="#__codelineno-0-808">808</a></span>
+<span class="normal"><a href="#__codelineno-0-809">809</a></span>
+<span class="normal"><a href="#__codelineno-0-810">810</a></span>
+<span class="normal"><a href="#__codelineno-0-811">811</a></span>
+<span class="normal"><a href="#__codelineno-0-812">812</a></span>
+<span class="normal"><a href="#__codelineno-0-813">813</a></span>
+<span class="normal"><a href="#__codelineno-0-814">814</a></span>
+<span class="normal"><a href="#__codelineno-0-815">815</a></span>
+<span class="normal"><a href="#__codelineno-0-816">816</a></span>
+<span class="normal"><a href="#__codelineno-0-817">817</a></span>
+<span class="normal"><a href="#__codelineno-0-818">818</a></span>
+<span class="normal"><a href="#__codelineno-0-819">819</a></span>
+<span class="normal"><a href="#__codelineno-0-820">820</a></span>
+<span class="normal"><a href="#__codelineno-0-821">821</a></span>
+<span class="normal"><a href="#__codelineno-0-822">822</a></span>
+<span class="normal"><a href="#__codelineno-0-823">823</a></span>
+<span class="normal"><a href="#__codelineno-0-824">824</a></span>
+<span class="normal"><a href="#__codelineno-0-825">825</a></span>
+<span class="normal"><a href="#__codelineno-0-826">826</a></span>
+<span class="normal"><a href="#__codelineno-0-827">827</a></span>
+<span class="normal"><a href="#__codelineno-0-828">828</a></span>
+<span class="normal"><a href="#__codelineno-0-829">829</a></span>
+<span class="normal"><a href="#__codelineno-0-830">830</a></span>
+<span class="normal"><a href="#__codelineno-0-831">831</a></span>
+<span class="normal"><a href="#__codelineno-0-832">832</a></span>
+<span class="normal"><a href="#__codelineno-0-833">833</a></span>
+<span class="normal"><a href="#__codelineno-0-834">834</a></span>
+<span class="normal"><a href="#__codelineno-0-835">835</a></span>
+<span class="normal"><a href="#__codelineno-0-836">836</a></span>
+<span class="normal"><a href="#__codelineno-0-837">837</a></span>
+<span class="normal"><a href="#__codelineno-0-838">838</a></span>
+<span class="normal"><a href="#__codelineno-0-839">839</a></span>
+<span class="normal"><a href="#__codelineno-0-840">840</a></span>
+<span class="normal"><a href="#__codelineno-0-841">841</a></span>
+<span class="normal"><a href="#__codelineno-0-842">842</a></span>
+<span class="normal"><a href="#__codelineno-0-843">843</a></span>
+<span class="normal"><a href="#__codelineno-0-844">844</a></span>
+<span class="normal"><a href="#__codelineno-0-845">845</a></span>
+<span class="normal"><a href="#__codelineno-0-846">846</a></span></pre></div></td><td class="code"><div><pre><span></span><code><a id="__codelineno-0-766" name="__codelineno-0-766"></a><span class="k">def</span><span class="w"> </span><span class="nf">parse</span><span class="p">(</span>
+<a id="__codelineno-0-767" name="__codelineno-0-767"></a>    <span class="bp">self</span><span class="p">,</span>
+<a id="__codelineno-0-768" name="__codelineno-0-768"></a>    <span class="n">code</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-0-769" name="__codelineno-0-769"></a>    <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<a id="__codelineno-0-770" name="__codelineno-0-770"></a>    <span class="n">include_dirs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-771" name="__codelineno-0-771"></a>    <span class="n">extra_args</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-0-772" name="__codelineno-0-772"></a>    <span class="n">use_default_includes</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-0-773" name="__codelineno-0-773"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Header</span><span class="p">:</span>
+<a id="__codelineno-0-774" name="__codelineno-0-774"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse C/C++ code using libclang.</span>
+<a id="__codelineno-0-775" name="__codelineno-0-775"></a>
+<a id="__codelineno-0-776" name="__codelineno-0-776"></a><span class="sd">    Unlike the pycparser backend, this method handles raw (unpreprocessed)</span>
+<a id="__codelineno-0-777" name="__codelineno-0-777"></a><span class="sd">    code and performs preprocessing internally.</span>
 <a id="__codelineno-0-778" name="__codelineno-0-778"></a>
-<a id="__codelineno-0-779" name="__codelineno-0-779"></a>    <span class="c1"># Convert to IR</span>
-<a id="__codelineno-0-780" name="__codelineno-0-780"></a>    <span class="n">converter</span> <span class="o">=</span> <span class="n">ClangASTConverter</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
-<a id="__codelineno-0-781" name="__codelineno-0-781"></a>    <span class="n">header</span> <span class="o">=</span> <span class="n">converter</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="n">tu</span><span class="p">)</span>
-<a id="__codelineno-0-782" name="__codelineno-0-782"></a>
-<a id="__codelineno-0-783" name="__codelineno-0-783"></a>    <span class="c1"># Attach included headers to the IR</span>
-<a id="__codelineno-0-784" name="__codelineno-0-784"></a>    <span class="n">header</span><span class="o">.</span><span class="n">included_headers</span> <span class="o">=</span> <span class="n">included_headers</span>
-<a id="__codelineno-0-785" name="__codelineno-0-785"></a>
-<a id="__codelineno-0-786" name="__codelineno-0-786"></a>    <span class="k">return</span> <span class="n">header</span>
+<a id="__codelineno-0-779" name="__codelineno-0-779"></a><span class="sd">    :param code: C/C++ source code to parse (raw, not preprocessed).</span>
+<a id="__codelineno-0-780" name="__codelineno-0-780"></a><span class="sd">    :param filename: Source filename for error messages and location tracking.</span>
+<a id="__codelineno-0-781" name="__codelineno-0-781"></a><span class="sd">    :param include_dirs: Additional include directories (converted to ``-I`` flags).</span>
+<a id="__codelineno-0-782" name="__codelineno-0-782"></a><span class="sd">    :param extra_args: Additional compiler arguments (e.g., ``[&quot;-std=c++17&quot;]``).</span>
+<a id="__codelineno-0-783" name="__codelineno-0-783"></a><span class="sd">    :param use_default_includes: If True (default), automatically detect and add</span>
+<a id="__codelineno-0-784" name="__codelineno-0-784"></a><span class="sd">        system include directories by querying the system clang compiler.</span>
+<a id="__codelineno-0-785" name="__codelineno-0-785"></a><span class="sd">        Set to False to disable this behavior.</span>
+<a id="__codelineno-0-786" name="__codelineno-0-786"></a><span class="sd">    :returns: :class:`~autopxd.ir.Header` containing parsed declarations.</span>
+<a id="__codelineno-0-787" name="__codelineno-0-787"></a><span class="sd">    :raises RuntimeError: If parsing fails with errors.</span>
+<a id="__codelineno-0-788" name="__codelineno-0-788"></a>
+<a id="__codelineno-0-789" name="__codelineno-0-789"></a><span class="sd">    Example</span>
+<a id="__codelineno-0-790" name="__codelineno-0-790"></a><span class="sd">    -------</span>
+<a id="__codelineno-0-791" name="__codelineno-0-791"></a><span class="sd">    ::</span>
+<a id="__codelineno-0-792" name="__codelineno-0-792"></a>
+<a id="__codelineno-0-793" name="__codelineno-0-793"></a><span class="sd">        header = backend.parse(</span>
+<a id="__codelineno-0-794" name="__codelineno-0-794"></a><span class="sd">            code,</span>
+<a id="__codelineno-0-795" name="__codelineno-0-795"></a><span class="sd">            &quot;myheader.hpp&quot;,</span>
+<a id="__codelineno-0-796" name="__codelineno-0-796"></a><span class="sd">            include_dirs=[&quot;/usr/local/include&quot;],</span>
+<a id="__codelineno-0-797" name="__codelineno-0-797"></a><span class="sd">            extra_args=[&quot;-std=c++17&quot;, &quot;-DNDEBUG&quot;]</span>
+<a id="__codelineno-0-798" name="__codelineno-0-798"></a><span class="sd">        )</span>
+<a id="__codelineno-0-799" name="__codelineno-0-799"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-800" name="__codelineno-0-800"></a>    <span class="n">args</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-0-801" name="__codelineno-0-801"></a>
+<a id="__codelineno-0-802" name="__codelineno-0-802"></a>    <span class="c1"># Add system include directories if enabled and no -I flags provided</span>
+<a id="__codelineno-0-803" name="__codelineno-0-803"></a>    <span class="k">if</span> <span class="n">use_default_includes</span><span class="p">:</span>
+<a id="__codelineno-0-804" name="__codelineno-0-804"></a>        <span class="n">has_include_flags</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">include_dirs</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span><span class="n">arg</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;-I&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="p">(</span><span class="n">extra_args</span> <span class="ow">or</span> <span class="p">[]))</span>
+<a id="__codelineno-0-805" name="__codelineno-0-805"></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">has_include_flags</span><span class="p">:</span>
+<a id="__codelineno-0-806" name="__codelineno-0-806"></a>            <span class="n">args</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">get_system_include_dirs</span><span class="p">())</span>
+<a id="__codelineno-0-807" name="__codelineno-0-807"></a>
+<a id="__codelineno-0-808" name="__codelineno-0-808"></a>    <span class="c1"># Add include directories</span>
+<a id="__codelineno-0-809" name="__codelineno-0-809"></a>    <span class="k">if</span> <span class="n">include_dirs</span><span class="p">:</span>
+<a id="__codelineno-0-810" name="__codelineno-0-810"></a>        <span class="k">for</span> <span class="n">inc_dir</span> <span class="ow">in</span> <span class="n">include_dirs</span><span class="p">:</span>
+<a id="__codelineno-0-811" name="__codelineno-0-811"></a>            <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;-I</span><span class="si">{</span><span class="n">inc_dir</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-812" name="__codelineno-0-812"></a>
+<a id="__codelineno-0-813" name="__codelineno-0-813"></a>    <span class="c1"># Add extra arguments</span>
+<a id="__codelineno-0-814" name="__codelineno-0-814"></a>    <span class="k">if</span> <span class="n">extra_args</span><span class="p">:</span>
+<a id="__codelineno-0-815" name="__codelineno-0-815"></a>        <span class="n">args</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">extra_args</span><span class="p">)</span>
+<a id="__codelineno-0-816" name="__codelineno-0-816"></a>
+<a id="__codelineno-0-817" name="__codelineno-0-817"></a>    <span class="c1"># Parse the code with detailed preprocessing record for macro extraction</span>
+<a id="__codelineno-0-818" name="__codelineno-0-818"></a>    <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_index</span><span class="p">()</span>
+<a id="__codelineno-0-819" name="__codelineno-0-819"></a>    <span class="n">tu</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span>
+<a id="__codelineno-0-820" name="__codelineno-0-820"></a>        <span class="n">filename</span><span class="p">,</span>
+<a id="__codelineno-0-821" name="__codelineno-0-821"></a>        <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
+<a id="__codelineno-0-822" name="__codelineno-0-822"></a>        <span class="n">unsaved_files</span><span class="o">=</span><span class="p">[(</span><span class="n">filename</span><span class="p">,</span> <span class="n">code</span><span class="p">)],</span>
+<a id="__codelineno-0-823" name="__codelineno-0-823"></a>        <span class="n">options</span><span class="o">=</span><span class="n">clang</span><span class="o">.</span><span class="n">cindex</span><span class="o">.</span><span class="n">TranslationUnit</span><span class="o">.</span><span class="n">PARSE_DETAILED_PROCESSING_RECORD</span><span class="p">,</span>
+<a id="__codelineno-0-824" name="__codelineno-0-824"></a>    <span class="p">)</span>
+<a id="__codelineno-0-825" name="__codelineno-0-825"></a>
+<a id="__codelineno-0-826" name="__codelineno-0-826"></a>    <span class="c1"># Check for fatal errors</span>
+<a id="__codelineno-0-827" name="__codelineno-0-827"></a>    <span class="k">for</span> <span class="n">diag</span> <span class="ow">in</span> <span class="n">tu</span><span class="o">.</span><span class="n">diagnostics</span><span class="p">:</span>
+<a id="__codelineno-0-828" name="__codelineno-0-828"></a>        <span class="k">if</span> <span class="n">diag</span><span class="o">.</span><span class="n">severity</span> <span class="o">&gt;=</span> <span class="n">clang</span><span class="o">.</span><span class="n">cindex</span><span class="o">.</span><span class="n">Diagnostic</span><span class="o">.</span><span class="n">Error</span><span class="p">:</span>
+<a id="__codelineno-0-829" name="__codelineno-0-829"></a>            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Parse error: </span><span class="si">{</span><span class="n">diag</span><span class="o">.</span><span class="n">spelling</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-830" name="__codelineno-0-830"></a>
+<a id="__codelineno-0-831" name="__codelineno-0-831"></a>    <span class="c1"># Collect included headers</span>
+<a id="__codelineno-0-832" name="__codelineno-0-832"></a>    <span class="n">included_headers</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+<a id="__codelineno-0-833" name="__codelineno-0-833"></a>    <span class="k">for</span> <span class="n">inclusion</span> <span class="ow">in</span> <span class="n">tu</span><span class="o">.</span><span class="n">get_includes</span><span class="p">():</span>
+<a id="__codelineno-0-834" name="__codelineno-0-834"></a>        <span class="c1"># inclusion.include is a File with name attribute</span>
+<a id="__codelineno-0-835" name="__codelineno-0-835"></a>        <span class="n">header_path</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">inclusion</span><span class="o">.</span><span class="n">include</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+<a id="__codelineno-0-836" name="__codelineno-0-836"></a>        <span class="c1"># Store full path - caller can extract basename if needed</span>
+<a id="__codelineno-0-837" name="__codelineno-0-837"></a>        <span class="n">included_headers</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">header_path</span><span class="p">)</span>
+<a id="__codelineno-0-838" name="__codelineno-0-838"></a>
+<a id="__codelineno-0-839" name="__codelineno-0-839"></a>    <span class="c1"># Convert to IR</span>
+<a id="__codelineno-0-840" name="__codelineno-0-840"></a>    <span class="n">converter</span> <span class="o">=</span> <span class="n">ClangASTConverter</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+<a id="__codelineno-0-841" name="__codelineno-0-841"></a>    <span class="n">header</span> <span class="o">=</span> <span class="n">converter</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="n">tu</span><span class="p">)</span>
+<a id="__codelineno-0-842" name="__codelineno-0-842"></a>
+<a id="__codelineno-0-843" name="__codelineno-0-843"></a>    <span class="c1"># Attach included headers to the IR</span>
+<a id="__codelineno-0-844" name="__codelineno-0-844"></a>    <span class="n">header</span><span class="o">.</span><span class="n">included_headers</span> <span class="o">=</span> <span class="n">included_headers</span>
+<a id="__codelineno-0-845" name="__codelineno-0-845"></a>
+<a id="__codelineno-0-846" name="__codelineno-0-846"></a>    <span class="k">return</span> <span class="n">header</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>

@@ -652,21 +652,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#-d-compiler-directive-directive" class="md-nav__link">
+  <a href="#-d-define-macro" class="md-nav__link">
     <span class="md-ellipsis">
       
-        -D, --compiler-directive &lt;directive&gt;
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#-r-regex-pattern" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        -R, --regex &lt;pattern&gt;
+        -D, --define &lt;macro&gt;
       
     </span>
   </a>
@@ -685,10 +674,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#-clang-arg-arg" class="md-nav__link">
+  <a href="#-clang-arg-arg-libclang" class="md-nav__link">
     <span class="md-ellipsis">
       
-        --clang-arg &lt;arg&gt;
+        --clang-arg &lt;arg&gt; [libclang]
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-no-default-includes-libclang" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --no-default-includes [libclang]
       
     </span>
   </a>
@@ -1237,21 +1237,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#-d-compiler-directive-directive" class="md-nav__link">
+  <a href="#-d-define-macro" class="md-nav__link">
     <span class="md-ellipsis">
       
-        -D, --compiler-directive &lt;directive&gt;
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#-r-regex-pattern" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        -R, --regex &lt;pattern&gt;
+        -D, --define &lt;macro&gt;
       
     </span>
   </a>
@@ -1270,10 +1259,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#-clang-arg-arg" class="md-nav__link">
+  <a href="#-clang-arg-arg-libclang" class="md-nav__link">
     <span class="md-ellipsis">
       
-        --clang-arg &lt;arg&gt;
+        --clang-arg &lt;arg&gt; [libclang]
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-no-default-includes-libclang" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --no-default-includes [libclang]
       
     </span>
   </a>
@@ -1510,23 +1510,25 @@
 </code></pre></div>
 <h3 id="-i-include-dir-dir"><code>-I, --include-dir &lt;dir&gt;</code><a class="headerlink" href="#-i-include-dir-dir" title="Permanent link">&para;</a></h3>
 <p>Add a directory to the include search path. Can be specified multiple times.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>autopxd<span class="w"> </span>-I<span class="w"> </span>/usr/include<span class="w"> </span>-I<span class="w"> </span>./include<span class="w"> </span>myheader.h
+<p><strong>Note:</strong> The libclang backend automatically detects system include paths (e.g., <code>/usr/include</code>), so you typically only need <code>-I</code> for project-specific directories.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>autopxd<span class="w"> </span>-I<span class="w"> </span>./include<span class="w"> </span>-I<span class="w"> </span>./third_party<span class="w"> </span>myheader.h
 </code></pre></div>
-<h3 id="-d-compiler-directive-directive"><code>-D, --compiler-directive &lt;directive&gt;</code><a class="headerlink" href="#-d-compiler-directive-directive" title="Permanent link">&para;</a></h3>
-<p>Pass a directive to the C preprocessor. Can be specified multiple times.</p>
+<h3 id="-d-define-macro"><code>-D, --define &lt;macro&gt;</code><a class="headerlink" href="#-d-define-macro" title="Permanent link">&para;</a></h3>
+<p>Define a preprocessor macro. Can be specified multiple times.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>autopxd<span class="w"> </span>-D<span class="w"> </span>DEBUG<span class="w"> </span>-D<span class="w"> </span><span class="nv">VERSION</span><span class="o">=</span><span class="m">2</span><span class="w"> </span>myheader.h
-</code></pre></div>
-<h3 id="-r-regex-pattern"><code>-R, --regex &lt;pattern&gt;</code><a class="headerlink" href="#-r-regex-pattern" title="Permanent link">&para;</a></h3>
-<p>Apply a sed-style search/replace pattern after preprocessing. Useful for fixing problematic constructs.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>autopxd<span class="w"> </span>-R<span class="w"> </span><span class="s1">&#39;s/__attribute__.*//g&#39;</span><span class="w"> </span>myheader.h
 </code></pre></div>
 <h3 id="-w-whitelist-file"><code>-w, --whitelist &lt;file&gt;</code><a class="headerlink" href="#-w-whitelist-file" title="Permanent link">&para;</a></h3>
 <p>Only generate declarations from specified files. Can be specified multiple times.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>autopxd<span class="w"> </span>-w<span class="w"> </span>main.h<span class="w"> </span>-w<span class="w"> </span>types.h<span class="w"> </span>combined.h
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>autopxd<span class="w"> </span>-w<span class="w"> </span>main.h<span class="w"> </span>-w<span class="w"> </span>types.h<span class="w"> </span>combined.h
 </code></pre></div>
-<h3 id="-clang-arg-arg"><code>--clang-arg &lt;arg&gt;</code><a class="headerlink" href="#-clang-arg-arg" title="Permanent link">&para;</a></h3>
+<h3 id="-clang-arg-arg-libclang"><code>--clang-arg &lt;arg&gt;</code> [libclang]<a class="headerlink" href="#-clang-arg-arg-libclang" title="Permanent link">&para;</a></h3>
 <p>Pass an argument directly to libclang. Can be specified multiple times.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>autopxd<span class="w"> </span>--clang-arg<span class="w"> </span>-DFOO<span class="w"> </span>--clang-arg<span class="w"> </span>-I/custom/include<span class="w"> </span>myheader.h
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>autopxd<span class="w"> </span>--clang-arg<span class="w"> </span>-DFOO<span class="w"> </span>--clang-arg<span class="w"> </span>-I/custom/include<span class="w"> </span>myheader.h
+</code></pre></div>
+<h3 id="-no-default-includes-libclang"><code>--no-default-includes</code> [libclang]<a class="headerlink" href="#-no-default-includes-libclang" title="Permanent link">&para;</a></h3>
+<p>Disable automatic detection of system include directories. By default, the libclang backend queries the system clang compiler to find standard include paths. Use this option if you need full control over include paths.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># Disable auto-detection and specify all paths manually</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>autopxd<span class="w"> </span>--no-default-includes<span class="w"> </span>-I<span class="w"> </span>/my/custom/sysroot/include<span class="w"> </span>myheader.h
 </code></pre></div>
 <h3 id="-q-quiet"><code>-q, --quiet</code><a class="headerlink" href="#-q-quiet" title="Permanent link">&para;</a></h3>
 <p>Suppress warnings (e.g., backend fallback warnings).</p>
@@ -1569,7 +1571,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>brew<span class="w"> </span>install<span class="w"> </span>llvm
 </code></pre></div></p>
 <p><strong>Or use Docker:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>-v<span class="w"> </span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>:/work<span class="w"> </span>ghcr.io/elijahr/autopxd2<span class="w"> </span>myheader.h<span class="w"> </span>myheader.pxd
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>-v<span class="w"> </span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>:/work<span class="w"> </span>-w<span class="w"> </span>/work<span class="w"> </span>ghcr.io/elijahr/python-autopxd2<span class="w"> </span>autopxd<span class="w"> </span>myheader.h
 </code></pre></div></p>
 <h3 id="c-parsing-fails">C++ parsing fails<a class="headerlink" href="#c-parsing-fails" title="Permanent link">&para;</a></h3>
 <p>Make sure you're using the libclang backend:</p>
