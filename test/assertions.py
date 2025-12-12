@@ -47,7 +47,11 @@ def assert_pxd_equals(
         f"\n{'='*60}\nEXPECTED:\n{'='*60}\n{repr(expected)}\n" f"{'='*60}\nACTUAL:\n{'='*60}\n{repr(actual)}\n{'='*60}"
     )
 
-    validate_cython_compiles(actual, tmp_path, cplus=cplus)
+    # Write header to tmp_path so C compilation can find it
+    header_file = tmp_path / filename
+    header_file.write_text(code.strip())
+
+    validate_cython_compiles(actual, tmp_path, cplus=cplus, include_dirs=[str(tmp_path)])
 
 
 def assert_ir_to_pxd_equals(
@@ -55,6 +59,7 @@ def assert_ir_to_pxd_equals(
     expected: str,
     tmp_path,
     cplus: bool = False,
+    header_code: str | None = None,
 ):
     """Assert IR Header produces expected pxd and compiles with Cython.
 
@@ -63,6 +68,8 @@ def assert_ir_to_pxd_equals(
         expected: Expected pxd output (full text, must match exactly)
         tmp_path: pytest tmp_path fixture
         cplus: If True, validate as C++
+        header_code: C/C++ code to write as header for compilation.
+                     If None, C compilation is skipped (Cython-only validation).
     """
     actual = write_pxd(header)
 
@@ -70,7 +77,14 @@ def assert_ir_to_pxd_equals(
         f"\n{'='*60}\nEXPECTED:\n{'='*60}\n{repr(expected)}\n" f"{'='*60}\nACTUAL:\n{'='*60}\n{repr(actual)}\n{'='*60}"
     )
 
-    validate_cython_compiles(actual, tmp_path, cplus=cplus)
+    if header_code is not None:
+        # Write header to tmp_path so C compilation can find it
+        header_file = tmp_path / header.filename
+        header_file.write_text(header_code)
+        validate_cython_compiles(actual, tmp_path, cplus=cplus, include_dirs=[str(tmp_path)])
+    else:
+        # IR unit tests without C code - Cython-only validation (no C compile)
+        validate_cython_compiles(actual, tmp_path, cplus=cplus, cython_only=True)
 
 
 def assert_pxd_file_equals(
@@ -110,7 +124,11 @@ def assert_pxd_file_equals(
         f"{'='*60}\nACTUAL:\n{'='*60}\n{repr(actual)}\n{'='*60}"
     )
 
-    validate_cython_compiles(actual, tmp_path, cplus=cplus)
+    # Write header to tmp_path so C compilation can find it
+    header_file = tmp_path / filename
+    header_file.write_text(code.strip())
+
+    validate_cython_compiles(actual, tmp_path, cplus=cplus, include_dirs=[str(tmp_path)])
 
 
 def assert_header_pxd_equals(
@@ -118,6 +136,7 @@ def assert_header_pxd_equals(
     expected_path: str,
     tmp_path,
     cplus: bool = False,
+    header_code: str | None = None,
 ):
     """Assert IR Header produces expected pxd from file and compiles with Cython.
 
@@ -128,6 +147,8 @@ def assert_header_pxd_equals(
         expected_path: Path to .expected.pxd file
         tmp_path: pytest tmp_path fixture for Cython compilation
         cplus: If True, validate as C++ with Cython
+        header_code: C/C++ code to write as header for compilation.
+                     If None, C compilation is skipped (Cython-only validation).
     """
     with open(expected_path, encoding="utf-8") as f:
         expected = f.read()
@@ -139,7 +160,14 @@ def assert_header_pxd_equals(
         f"{'='*60}\nACTUAL:\n{'='*60}\n{repr(actual)}\n{'='*60}"
     )
 
-    validate_cython_compiles(actual, tmp_path, cplus=cplus)
+    if header_code is not None:
+        # Write header to tmp_path so C compilation can find it
+        header_file = tmp_path / header.filename
+        header_file.write_text(header_code)
+        validate_cython_compiles(actual, tmp_path, cplus=cplus, include_dirs=[str(tmp_path)])
+    else:
+        # Tests without C code - Cython-only validation (no C compile)
+        validate_cython_compiles(actual, tmp_path, cplus=cplus, cython_only=True)
 
 
 def assert_test_file_equals(
@@ -183,4 +211,8 @@ def assert_test_file_equals(
         f"{'='*60}\nACTUAL:\n{'='*60}\n{repr(actual_pxd)}\n{'='*60}"
     )
 
-    validate_cython_compiles(actual_pxd, tmp_path, cplus=cplus)
+    # Write header to tmp_path so C compilation can find it
+    header_file = tmp_path / filename
+    header_file.write_text(header_code.strip())
+
+    validate_cython_compiles(actual_pxd, tmp_path, cplus=cplus, include_dirs=[str(tmp_path)])

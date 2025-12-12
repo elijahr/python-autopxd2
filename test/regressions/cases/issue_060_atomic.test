@@ -1,12 +1,12 @@
-typedef int atomic_int;
+typedef int my_atomic_int;
 typedef _Atomic int my_atomic;
 
-atomic_int counter;
+my_atomic_int counter;
 ---
 cdef extern from "issue_060_atomic.test":
 
-    ctypedef int atomic_int
+    ctypedef int my_atomic_int
 
     ctypedef int my_atomic
 
-    atomic_int counter
+    my_atomic_int counter

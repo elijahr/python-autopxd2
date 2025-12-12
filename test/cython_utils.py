@@ -16,6 +16,7 @@ def validate_cython_compiles(
     smoke_test: str | None = None,
     header_only: bool = False,
     include_dirs: list[str] | None = None,
+    cython_only: bool = False,
 ) -> None:
     """Validate that pxd content compiles with Cython and optionally links.
 
@@ -27,6 +28,7 @@ def validate_cython_compiles(
         smoke_test: Expression to call in smoke test function
         header_only: If True, compile to .o only (no linking)
         include_dirs: Extra -I paths for compilation
+        cython_only: If True, only validate Cython→C, skip C compilation
 
     Raises:
         Cython.Compiler.Errors.CompileError: If compilation fails
@@ -58,9 +60,20 @@ def test_smoke():
     )
     cythonize_one(str(src), str(dst), None, False, options=options)
 
-    # If no pkg_config and not header_only, just do Cython validation
-    if not pkg_config and not header_only:
+    # If cython_only, stop here (for IR tests without C headers)
+    if cython_only:
         return
+
+    # If no pkg_config, warn and continue with header_only compilation
+    if not pkg_config and not header_only:
+        import warnings
+
+        warnings.warn(
+            "pkg_config not provided, continuing with header_only compilation "
+            "(C code will be compiled but not linked)",
+            stacklevel=2,
+        )
+        header_only = True
 
     # Get compile flags from pkg-config
     cflags = ""
@@ -124,7 +137,11 @@ def test_smoke():
             + shlex.split(cflags)
             + shlex.split(python_cflags)
         )
-        subprocess.run(cmd, check=True, capture_output=True, text=True)
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"C compilation STDERR: {result.stderr}")
+            print(f"C compilation STDOUT: {result.stdout}")
+            result.check_returncode()
     else:
         # Full compile to .so
         so_file = tmp_path / "test.so"
