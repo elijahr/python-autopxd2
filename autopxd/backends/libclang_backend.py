@@ -173,16 +173,350 @@ class ClangASTConverter:
         self._seen: dict[str, bool] = {}
         # Current namespace context (for nested namespace support)
         self._namespace_stack: list[str] = []
+        # Store translation unit for dependency resolution
+        self._tu: clang.cindex.TranslationUnit | None = None
 
     @property
     def _current_namespace(self) -> str | None:
         """Get current namespace as '::'-joined string, or None if global."""
         return "::".join(self._namespace_stack) if self._namespace_stack else None
 
+    def _remove_forward_declaration(self, name: str | None, kind: str) -> None:
+        """Remove a forward declaration from declarations list.
+
+        Called when we encounter a full definition after having emitted
+        a forward declaration. We need to remove the forward declaration
+        so it can be replaced by the complete definition.
+        """
+        if name is None:
+            return
+
+        # Find and remove the forward declaration
+        for i, decl in enumerate(self.declarations):
+            if isinstance(decl, Struct):
+                if decl.name == name:
+                    # Check if it's a forward declaration (no fields, no methods)
+                    if not decl.fields and not decl.methods:
+                        # Verify the kind matches
+                        is_match = (
+                            (kind == "struct" and not decl.is_union and not decl.is_cppclass)
+                            or (kind == "union" and decl.is_union)
+                            or (kind == "class" and decl.is_cppclass)
+                        )
+                        if is_match:
+                            self.declarations.pop(i)
+                            return
+
     def convert(self, tu: "clang.cindex.TranslationUnit") -> Header:
-        """Convert a libclang TranslationUnit to our IR Header."""
-        self._process_children(tu.cursor)
+        """Convert a libclang TranslationUnit to our IR Header.
+
+        Uses smart dependency resolution to include typedefs from included
+        headers when they define types used in the main file.
+        """
+        self._tu = tu
+
+        # Phase 1: Collect main file cursors and identify used/defined types
+        main_cursors: list[clang.cindex.Cursor] = []
+        used_types: set[str] = set()
+        defined_types: set[str] = set()
+
+        for child in tu.cursor.get_children():
+            if not self._is_from_target_file(child):
+                continue
+            main_cursors.append(child)
+
+            # Collect types used by this cursor
+            used_types.update(self._collect_used_types(child))
+
+            # Collect types defined by this cursor
+            defined_types.update(self._collect_defined_types(child))
+
+        # Phase 2: Calculate needed types (used but not defined in main file)
+        needed_types = used_types - defined_types
+
+        # Remove built-in C types that don't need definitions
+        # These are either keywords, provided by Cython/libc, or platform-specific
+        builtin_types = {
+            # C keywords and basic types
+            "void",
+            "char",
+            "short",
+            "int",
+            "long",
+            "float",
+            "double",
+            "signed",
+            "unsigned",
+            "bool",
+            "bint",
+            # stddef.h / stdint.h types (provided by libc.stddef, libc.stdint)
+            "size_t",
+            "ssize_t",
+            "ptrdiff_t",
+            "wchar_t",
+            "int8_t",
+            "int16_t",
+            "int32_t",
+            "int64_t",
+            "uint8_t",
+            "uint16_t",
+            "uint32_t",
+            "uint64_t",
+            "intptr_t",
+            "uintptr_t",
+            "intmax_t",
+            "uintmax_t",
+            # stdio.h types
+            "FILE",
+            "fpos_t",
+            # stdarg.h types
+            "va_list",
+            # time.h types
+            "time_t",
+            "clock_t",
+            # sys/types.h common types
+            "off_t",
+            "pid_t",
+            "uid_t",
+            "gid_t",
+            "mode_t",
+            "dev_t",
+            "ino_t",
+            "nlink_t",
+            "blksize_t",
+            "blkcnt_t",
+            # Platform-specific internal types (should not be exposed)
+            "__int64_t",
+            "__uint64_t",
+            "__int32_t",
+            "__uint32_t",
+            "__int16_t",
+            "__uint16_t",
+            "__int8_t",
+            "__uint8_t",
+            "__darwin_off_t",
+            "__darwin_size_t",
+            "__darwin_ssize_t",
+            "__darwin_time_t",
+            "__darwin_clock_t",
+            "__darwin_pid_t",
+            "__darwin_uid_t",
+            "__darwin_gid_t",
+            "__darwin_mode_t",
+            "__darwin_dev_t",
+            "__darwin_ino_t",
+            "__darwin_ino64_t",
+            # Linux internal types
+            "__off_t",
+            "__off64_t",
+            "__pid_t",
+            "__uid_t",
+            "__gid_t",
+            "__mode_t",
+            "__dev_t",
+            "__ino_t",
+            "__ino64_t",
+            "__time_t",
+            "__clock_t",
+            "__ssize_t",
+        }
+        needed_types -= builtin_types
+        # Also filter out types that start with __ (internal/reserved)
+        needed_types = {t for t in needed_types if not t.startswith("__")}
+
+        # Phase 3: Find and process typedefs from included files for needed types
+        if needed_types:
+            self._resolve_dependencies(tu.cursor, needed_types)
+
+        # Phase 4: Process main file declarations
+        for cursor in main_cursors:
+            self._process_cursor(cursor)
+
         return Header(path=self.filename, declarations=self.declarations)
+
+    def _collect_used_types(self, cursor: "clang.cindex.Cursor") -> set[str]:
+        """Recursively collect all typedef names used by a cursor."""
+        used: set[str] = set()
+
+        # Check the cursor's type
+        if cursor.type.kind == TypeKind.TYPEDEF:
+            decl = cursor.type.get_declaration()
+            if decl.spelling:
+                used.add(decl.spelling)
+
+        # Check result type for functions
+        if cursor.kind == CursorKind.FUNCTION_DECL:
+            used.update(self._extract_typedef_names_from_type(cursor.result_type))
+            for arg in cursor.get_arguments():
+                used.update(self._extract_typedef_names_from_type(arg.type))
+
+        # Recursively check children
+        for child in cursor.get_children():
+            # Check field types
+            if child.kind == CursorKind.FIELD_DECL or child.kind == CursorKind.PARM_DECL:
+                used.update(self._extract_typedef_names_from_type(child.type))
+            # Recurse
+            used.update(self._collect_used_types(child))
+
+        return used
+
+    def _extract_typedef_names_from_type(self, clang_type: "clang.cindex.Type") -> set[str]:
+        """Extract typedef names from a type, including through pointers/arrays."""
+        names: set[str] = set()
+        kind = clang_type.kind
+
+        if kind == TypeKind.TYPEDEF:
+            decl = clang_type.get_declaration()
+            if decl.spelling:
+                names.add(decl.spelling)
+            # Also check the underlying type for chained typedefs
+            underlying = clang_type.get_canonical()
+            if underlying.kind == TypeKind.TYPEDEF:
+                udecl = underlying.get_declaration()
+                if udecl.spelling:
+                    names.add(udecl.spelling)
+        elif kind == TypeKind.POINTER:
+            pointee = clang_type.get_pointee()
+            names.update(self._extract_typedef_names_from_type(pointee))
+        elif kind in (
+            TypeKind.CONSTANTARRAY,
+            TypeKind.INCOMPLETEARRAY,
+            TypeKind.VARIABLEARRAY,
+        ):
+            element = clang_type.element_type
+            names.update(self._extract_typedef_names_from_type(element))
+        elif kind == TypeKind.ELABORATED:
+            named = clang_type.get_named_type()
+            names.update(self._extract_typedef_names_from_type(named))
+
+        return names
+
+    def _collect_defined_types(self, cursor: "clang.cindex.Cursor") -> set[str]:
+        """Collect type names defined by a cursor."""
+        defined: set[str] = set()
+        kind = cursor.kind
+
+        if (
+            kind == CursorKind.TYPEDEF_DECL
+            or kind in (CursorKind.STRUCT_DECL, CursorKind.UNION_DECL)
+            or kind == CursorKind.ENUM_DECL
+            or kind in (CursorKind.CLASS_DECL, CursorKind.CLASS_TEMPLATE)
+        ):
+            if cursor.spelling:
+                defined.add(cursor.spelling)
+
+        return defined
+
+    def _resolve_dependencies(
+        self,
+        root_cursor: "clang.cindex.Cursor",
+        needed_types: set[str],
+    ) -> None:
+        """Find and process typedefs from included files for needed types."""
+        # Build a map of typedef name -> cursor for all non-main-file typedefs
+        typedef_map: dict[str, clang.cindex.Cursor] = {}
+
+        for child in root_cursor.get_children():
+            if child.kind == CursorKind.TYPEDEF_DECL:
+                if not self._is_from_target_file(child) and child.spelling:
+                    typedef_map[child.spelling] = child
+
+        # Build dependency graph and process in topological order
+        def get_dependencies(type_name: str) -> set[str]:
+            """Get types that this typedef depends on.
+
+            This includes:
+            1. Types referenced directly in the typedef's underlying type
+            2. Types used by structs/unions that the typedef aliases
+            """
+            if type_name not in typedef_map:
+                return set()
+            cursor = typedef_map[type_name]
+            underlying = cursor.underlying_typedef_type
+            deps = self._extract_typedef_names_from_type(underlying)
+
+            # If the underlying type is a struct/union, also collect types used by it
+            # This handles cases like: typedef struct foo_s { bar_t field; } foo_t;
+            # where bar_t needs to be resolved before foo_t
+            decl = underlying.get_declaration()
+            if decl.kind in (CursorKind.STRUCT_DECL, CursorKind.UNION_DECL):
+                deps.update(self._collect_used_types(decl))
+
+            # Only return deps that are also in typedef_map (defined in included files)
+            return deps & set(typedef_map.keys())
+
+        # System types that should not be emitted but can satisfy dependencies
+        system_types_not_to_emit = {
+            "size_t",
+            "ssize_t",
+            "ptrdiff_t",
+            "wchar_t",
+            "int8_t",
+            "int16_t",
+            "int32_t",
+            "int64_t",
+            "uint8_t",
+            "uint16_t",
+            "uint32_t",
+            "uint64_t",
+            "intptr_t",
+            "uintptr_t",
+            "intmax_t",
+            "uintmax_t",
+            "off_t",
+            "time_t",
+            "clock_t",
+            "pid_t",
+            "uid_t",
+            "gid_t",
+            "mode_t",
+            "dev_t",
+            "ino_t",
+            "nlink_t",
+            "blksize_t",
+            "blkcnt_t",
+        }
+
+        # Expand needed_types to include all transitive dependencies
+        all_needed: set[str] = set()
+        to_expand = list(needed_types)
+        while to_expand:
+            type_name = to_expand.pop()
+            if type_name in all_needed:
+                continue
+            if type_name in typedef_map:
+                all_needed.add(type_name)
+                deps = get_dependencies(type_name)
+                to_expand.extend(deps - all_needed)
+
+        # Filter out system types that shouldn't be emitted
+        all_needed -= system_types_not_to_emit
+
+        # Process in dependency order using simple topological sort
+        processed: set[str] = set(system_types_not_to_emit)  # Treat system types as already processed
+        # Sort alphabetically for deterministic output
+        to_process = sorted(all_needed)
+        max_iterations = len(to_process) * len(to_process) + 1  # Safety limit
+
+        iterations = 0
+        while to_process and iterations < max_iterations:
+            iterations += 1
+            type_name = to_process.pop(0)
+            if type_name in processed:
+                continue
+
+            # Check if all dependencies are processed (system types count as processed)
+            deps = get_dependencies(type_name)
+            unmet_deps = deps - processed - system_types_not_to_emit
+            if unmet_deps:
+                # Re-queue and try again later
+                to_process.append(type_name)
+                continue
+
+            # All dependencies met, process this typedef
+            processed.add(type_name)
+            if type_name in typedef_map:
+                self._process_typedef(typedef_map[type_name])
 
     def _process_children(self, cursor: "clang.cindex.Cursor") -> None:
         """Process all children of a cursor."""
@@ -454,13 +788,30 @@ class ClangASTConverter:
         else:
             key = f"{key_prefix}:{name}"
 
-        # Skip if already processed
-        if key in self._seen:
-            return
-        self._seen[key] = True
-
         # Forward declarations have no definition - output as opaque type
         is_forward_decl = not cursor.is_definition()
+
+        # Handle seen tracking:
+        # - If we've seen a definition, skip any subsequent declarations
+        # - If we've only seen a forward declaration, a definition should replace it
+        definition_key = f"{key}:definition"
+        if definition_key in self._seen:
+            # Already have a definition, skip this
+            return
+
+        if is_forward_decl:
+            # Only emit forward declaration if we haven't seen this type at all
+            if key in self._seen:
+                return
+            self._seen[key] = True
+        else:
+            # This is a definition - mark it and remove any prior forward declaration
+            self._seen[definition_key] = True
+            if key in self._seen:
+                # We previously emitted a forward declaration - need to remove it
+                # and replace with the definition
+                self._remove_forward_declaration(name, key_prefix)
+            self._seen[key] = True
 
         fields: list[Field] = []
         methods: list[Function] = []
@@ -645,13 +996,76 @@ class ClangASTConverter:
         self._seen[key] = True
 
         underlying = cursor.underlying_typedef_type
-        underlying_type = self._convert_type(underlying)
-        if not underlying_type:
+
+        # Special handling for struct/union typedefs that have inline definitions
+        # e.g., typedef struct foo { int x; } foo_t;
+        # We need to emit the struct definition first, then the typedef
+        if underlying.kind in (TypeKind.RECORD, TypeKind.ELABORATED):
+            # Get the actual record type
+            record_type = underlying
+            if underlying.kind == TypeKind.ELABORATED:
+                record_type = underlying.get_named_type()
+
+            if record_type.kind == TypeKind.RECORD:
+                decl = record_type.get_declaration()
+                # Check if this is a struct/union with a definition (not forward decl)
+                if decl.is_definition():
+                    struct_name = decl.spelling
+                    # Only emit the struct if we haven't emitted a definition
+                    key_prefix = "union" if decl.kind == CursorKind.UNION_DECL else "struct"
+                    struct_key = f"{key_prefix}:{struct_name}"
+                    definition_key = f"{struct_key}:definition"
+
+                    # Check if we already have a definition - if so, skip the struct
+                    # but still emit the typedef
+                    if definition_key not in self._seen:
+                        self._seen[struct_key] = True
+                        self._seen[definition_key] = True  # Mark definition as seen
+                        is_union = decl.kind == CursorKind.UNION_DECL
+
+                        fields: list[Field] = []
+                        for child in decl.get_children():
+                            if child.kind == CursorKind.FIELD_DECL:
+                                field = self._convert_field(child)
+                                if field:
+                                    fields.append(field)
+
+                        struct = Struct(
+                            name=struct_name or None,
+                            fields=fields,
+                            methods=[],
+                            is_union=is_union,
+                            is_cppclass=False,
+                            namespace=self._current_namespace,
+                            location=self._get_location(decl),
+                        )
+                        self.declarations.append(struct)
+
+                    # Now create the typedef pointing to the struct name
+                    if struct_name:
+                        underlying_type: CType | Pointer | Array | FunctionPointer = CType(
+                            name=struct_name
+                        )  # Use just the name, not "struct name"
+                    else:
+                        # Anonymous struct - can't typedef easily
+                        return
+
+                    typedef = Typedef(
+                        name=name,
+                        underlying_type=underlying_type,
+                        location=self._get_location(cursor),
+                    )
+                    self.declarations.append(typedef)
+                    return
+
+        # Standard typedef handling
+        standard_underlying_type = self._convert_type(underlying)
+        if not standard_underlying_type:
             return
 
         typedef = Typedef(
             name=name,
-            underlying_type=underlying_type,
+            underlying_type=standard_underlying_type,
             location=self._get_location(cursor),
         )
         self.declarations.append(typedef)
