@@ -101,10 +101,7 @@ CYTHON_STDLIB_HEADERS: dict[str, tuple[str, set[str]]] = {
             "nlink_t",
         },
     ),
-    "dirent.h": (
-        "posix.dirent",
-        {"DIR", "dirent"},
-    ),
+    # NOTE: posix.dirent doesn't exist in Cython - use our stub instead
     "dlfcn.h": (
         "posix.dlfcn",
         set(),  # Functions only
@@ -135,6 +132,9 @@ AUTOPXD_STUB_HEADERS: dict[str, str] = {
 AUTOPXD_STUB_TYPES: dict[str, str] = {
     # stdarg
     "va_list": "stdarg",
+    # dirent.h (not available in Cython's posix.dirent)
+    "DIR": "dirent",
+    "dirent": "dirent",
     # sys/socket.h
     "sockaddr": "sys_socket",
     "socklen_t": "sys_socket",
