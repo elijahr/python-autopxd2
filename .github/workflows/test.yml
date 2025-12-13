@@ -75,7 +75,10 @@ jobs:
             libjansson-dev \
             libsqlite3-dev \
             libcurl4-openssl-dev \
-            libuv1-dev
+            libuv1-dev \
+            libcjson-dev \
+            libsodium-dev \
+            libutf8proc-dev
 
       - name: Install libclang (macOS)
         if: runner.os == 'macOS'
@@ -92,7 +95,7 @@ jobs:
       - name: Install test libraries (macOS)
         if: runner.os == 'macOS'
         run: |
-          brew install zlib jansson sqlite curl libuv
+          brew install zlib jansson sqlite curl libuv cjson libsodium utf8proc
 
       - name: Install dependencies
         run: uv pip install --system -e .[test]

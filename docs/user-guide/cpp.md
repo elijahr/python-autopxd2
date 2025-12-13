@@ -82,7 +82,9 @@ For full method support, you'll need to manually add method declarations or use 
 
 ### Templates
 
-Template classes and functions are not currently supported.
+Template classes are supported through the libclang backend, including primary templates
+and full specializations. See [C++ Template Support](backends.md#c-template-support-libclang-only)
+for details.
 
 ### Overloading
 

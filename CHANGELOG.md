@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Circular dependency resolution** - Multi-phase output generation that correctly handles circular type dependencies. Libraries like libuv and sqlite3 that have function pointer typedefs referencing structs now generate valid Cython.
+- **New POSIX stubs** - `sys_un.pxd` (Unix domain sockets), `semaphore.pxd` (POSIX semaphores), `regex.pxd` (POSIX regex), `sys_statvfs.pxd` (filesystem stats).
+- **C11 stdatomic stub** - `stdatomic.pxd` provides atomic types and memory ordering for C11 code.
+- **C++ stubs** - `cppthread.pxd` (std::thread), `cppchrono.pxd` (std::chrono), `cppfilesystem.pxd` (std::filesystem).
+- **Template specialization detection** - Partial template specializations and non-type template parameters are now detected and emit explanatory comments (Cython cannot represent these features directly).
+- **Meta-header support** - Headers that only contain `#include` directives are detected and recursively parsed to gather all declarations.
+
+### Changed
+- **Compile-verified tests** - Test suite now performs actual C compilation to verify generated pxd files produce valid code. This catches type definition issues that were previously hidden.
+- **Improved test infrastructure** - Assertion helpers write header content to temp directories so C compiler can find included files.
+
 ## [3.1.1] - 2025-12-11
 
 ### Added

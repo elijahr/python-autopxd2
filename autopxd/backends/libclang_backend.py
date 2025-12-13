@@ -88,30 +88,35 @@ def is_system_libclang_available() -> bool:
 
 
 # Cache for system include directories (computed once per process)
-_system_include_cache: list[str] | None = None
+_system_include_cache_c: list[str] | None = None
+_system_include_cache_cxx: list[str] | None = None
 
 
-def get_system_include_dirs() -> list[str]:
+def get_system_include_dirs(cplus: bool = False) -> list[str]:
     """Get system include directories by querying the system clang compiler.
 
-    This runs ``clang -v -x c -E /dev/null`` and parses the include paths
-    from its output. The result is cached for subsequent calls.
+    This runs ``clang -v -x c -E /dev/null`` (or ``-x c++`` for C++) and
+    parses the include paths from its output. The result is cached for
+    subsequent calls.
 
+    :param cplus: If True, query for C++ includes (includes libc++ paths).
     :returns: List of ``-I<path>`` arguments for system include directories.
         Returns empty list if clang is not available or detection fails.
     """
-    global _system_include_cache  # noqa: PLW0603
+    global _system_include_cache_c, _system_include_cache_cxx  # noqa: PLW0603
 
-    if _system_include_cache is not None:
-        return _system_include_cache
+    cache = _system_include_cache_cxx if cplus else _system_include_cache_c
+    if cache is not None:
+        return cache
 
-    _system_include_cache = []
+    result_cache: list[str] = []
 
     try:
         # Use /dev/null on Unix, NUL on Windows
         null_file = "NUL" if sys.platform == "win32" else "/dev/null"
+        lang = "c++" if cplus else "c"
         result = subprocess.run(
-            ["clang", "-v", "-x", "c", "-E", null_file],
+            ["clang", "-v", "-x", lang, "-E", null_file],
             capture_output=True,
             text=True,
             timeout=10,
@@ -127,11 +132,17 @@ def get_system_include_dirs() -> list[str]:
                     break
                 path = line.strip()
                 if path and not path.endswith("(framework directory)"):
-                    _system_include_cache.append(f"-I{path}")
+                    # Use -isystem for system includes to give local includes priority
+                    result_cache.append(f"-isystem{path}")
     except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
         pass
 
-    return _system_include_cache
+    if cplus:
+        _system_include_cache_cxx = result_cache
+    else:
+        _system_include_cache_c = result_cache
+
+    return result_cache
 
 
 def _is_system_header(header_path: str) -> bool:
@@ -982,6 +993,7 @@ class ClangASTConverter:
         fields: list[Field] = []
         methods: list[Function] = []
         notes: list[str] = []
+        inner_typedefs: dict[str, str] = {}
 
         for child in cursor.get_children():
             if child.kind == CursorKind.TEMPLATE_TYPE_PARAMETER:
@@ -993,6 +1005,12 @@ class ClangASTConverter:
                 param_name = child.spelling or "N"
                 param_type = child.type.spelling
                 nontype_params.append((param_name, param_type))
+            elif child.kind == CursorKind.TYPEDEF_DECL:
+                # Extract inner typedefs (e.g., typedef Iterator<T, PT> iterator)
+                typedef_name = child.spelling
+                underlying = child.underlying_typedef_type.spelling
+                if typedef_name and underlying:
+                    inner_typedefs[typedef_name] = underlying
             elif child.kind == CursorKind.FIELD_DECL:
                 field = self._convert_field(child)
                 if field:
@@ -1024,6 +1042,7 @@ class ClangASTConverter:
             namespace=self._current_namespace,
             template_params=template_params,
             notes=notes,
+            inner_typedefs=inner_typedefs,
             location=self._get_location(cursor),
         )
         self.declarations.append(struct)
@@ -1259,6 +1278,24 @@ class ClangASTConverter:
                         self.declarations.append(typedef)
                     return
 
+        # Resolve compile-time expressions (decltype, sizeof) to canonical types
+        # This handles cases like: typedef decltype(nullptr) nullptr_t;
+        underlying_spelling = underlying.spelling
+        if "decltype(" in underlying_spelling or "sizeof(" in underlying_spelling:
+            # Try to resolve to canonical type
+            canonical = underlying.get_canonical()
+            canonical_type = self._convert_type(canonical)
+
+            if canonical_type:
+                # Successfully resolved - use canonical type
+                typedef = Typedef(
+                    name=name,
+                    underlying_type=canonical_type,
+                    location=self._get_location(cursor),
+                )
+                self.declarations.append(typedef)
+                return
+
         # Standard typedef handling
         standard_underlying_type = self._convert_type(underlying)
         if not standard_underlying_type:
@@ -1376,6 +1413,12 @@ class ClangASTConverter:
         if kind == TypeKind.TYPEDEF:
             decl = clang_type.get_declaration()
             return CType(name=decl.spelling)
+
+        # Handle nullptr_t type (C++11)
+        # std::nullptr_t resolves to TypeKind.NULLPTR
+        # Map to void* since Cython doesn't have a nullptr_t type
+        if kind == TypeKind.NULLPTR:
+            return Pointer(pointee=CType(name="void"))
 
         # Handle basic types
         spelling = clang_type.spelling

@@ -20,6 +20,14 @@ from __future__ import annotations
 
 CYTHON_STDLIB_HEADERS: dict[str, tuple[str, set[str]]] = {
     # libc headers
+    "stddef.h": (
+        "libc.stddef",
+        {
+            # Note: size_t and ssize_t are Cython built-ins, don't need cimport
+            "ptrdiff_t",
+            "wchar_t",
+        },
+    ),
     "stdint.h": (
         "libc.stdint",
         {
@@ -33,8 +41,7 @@ CYTHON_STDLIB_HEADERS: dict[str, tuple[str, set[str]]] = {
             "uint64_t",
             "intptr_t",
             "uintptr_t",
-            # Note: size_t and ssize_t are Cython built-ins, not in libc.stdint
-            "ptrdiff_t",
+            # Note: size_t is in libc.stddef, ssize_t is Cython built-in
             "intmax_t",
             "uintmax_t",
         },

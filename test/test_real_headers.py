@@ -64,6 +64,46 @@ LIBRARY_CONFIGS = {
         "smoke_test": "cJSON_Version()",
         "cplus": False,
     },
+    # Note: nng library doesn't provide pkg-config on macOS, only cmake.
+    # Uncomment when pkg-config support is added or cmake detection is implemented.
+    # "nng": {
+    #     "pkg_config": "nng",
+    #     "system_header": "nng/nng.h",
+    #     "smoke_test": "nng_version()",
+    #     "cplus": False,
+    # },
+    # Note: sodium.h is an umbrella header that just includes sub-headers.
+    # The actual declarations are in sodium/*.h. No function smoke test.
+    "libsodium": {
+        "pkg_config": "libsodium",
+        "system_header": "sodium.h",
+        "smoke_test": None,  # Umbrella header - no exported functions
+        "cplus": False,
+    },
+    "utf8proc": {
+        "pkg_config": "libutf8proc",
+        "system_header": "utf8proc.h",
+        "smoke_test": "utf8proc_version()",
+        "cplus": False,
+    },
+    # === C++ Libraries ===
+    # Note: nlohmann/json.hpp uses advanced C++ template metaprogramming
+    # (dependent types like "typename iterator::difference_type") that
+    # Cython cannot compile. The pxd generates but doesn't compile.
+    # "nlohmann_json": {
+    #     "pkg_config": "nlohmann_json",
+    #     "system_header": "nlohmann/json.hpp",
+    #     "smoke_test": None,  # Header-only, no exported functions
+    #     "cplus": True,
+    # },
+    # Note: fmt library has complex include dependencies (malloc, etc.) that
+    # require additional system header setup. Parsing fails before pxd generation.
+    # "fmt": {
+    #     "pkg_config": "fmt",
+    #     "system_header": "fmt/core.h",
+    #     "smoke_test": "fmt_version()",
+    #     "cplus": True,
+    # },
 }
 
 
@@ -118,36 +158,20 @@ def _get_header_path(system_header: str, pkg_name: str) -> str | None:
     return None
 
 
-def _get_system_include_args() -> list[str]:
+def _get_system_include_args(cplus: bool = False) -> list[str]:
     """Get system include paths for libclang.
 
     libclang doesn't automatically know about system headers, so we need
     to provide the paths explicitly. This includes both the SDK headers
     and the clang builtin headers (for stdarg.h, stddef.h, etc.).
-    """
-    args = []
 
-    # Get include paths from clang -v output
-    try:
-        result = subprocess.run(
-            ["clang", "-v", "-x", "c", "-E", "/dev/null"],
-            capture_output=True,
-            text=True,
-        )
-        # Parse the include paths from stderr
-        in_includes = False
-        for line in result.stderr.splitlines():
-            if "#include <...> search starts here:" in line:
-                in_includes = True
-                continue
-            if in_includes:
-                if line.startswith("End of search list"):
-                    break
-                path = line.strip()
-                if path and not path.endswith("(framework directory)"):
-                    args.extend(["-I", path])
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        pass
+    For C++ mode, this also includes the C++ standard library (libc++) paths.
+
+    :param cplus: If True, include C++ stdlib paths.
+    """
+    from autopxd.backends.libclang_backend import get_system_include_dirs
+
+    args = get_system_include_dirs(cplus=cplus)
 
     # Fallback: if we didn't get any paths, try platform-specific defaults
     if not args:
@@ -156,13 +180,13 @@ def _get_system_include_args() -> list[str]:
                 sdk_path = subprocess.check_output(
                     ["xcrun", "--show-sdk-path"], text=True, stderr=subprocess.DEVNULL
                 ).strip()
-                args.extend(["-isysroot", sdk_path])
+                args = ["-isysroot", sdk_path]
             except (subprocess.CalledProcessError, FileNotFoundError):
                 pass
         elif sys.platform == "linux":
             for path in ["/usr/include", "/usr/local/include"]:
                 if os.path.isdir(path):
-                    args.extend(["-I", path])
+                    args.append(f"-I{path}")
 
     return args
 
@@ -392,7 +416,7 @@ class TestCppHeaders:
         with open(hpp_path, encoding="utf-8") as f:
             code = f.read()
 
-        extra_args = ["-x", "c++", "-std=c++11"] + _get_system_include_args()
+        extra_args = ["-x", "c++", "-std=c++11"] + _get_system_include_args(cplus=True)
         return libclang_backend.parse(
             code,
             "simple_cpp.hpp",
@@ -431,13 +455,82 @@ class TestTemplates:
         with open(hpp_path, encoding="utf-8") as f:
             code = f.read()
 
-        extra_args = ["-x", "c++", "-std=c++17"] + _get_system_include_args()
+        extra_args = ["-x", "c++", "-std=c++17"] + _get_system_include_args(cplus=True)
         return libclang_backend.parse(code, "templates.hpp", extra_args=extra_args)
 
     def test_template_output_matches(self, templates_header, tmp_path):
         """Verify template pxd matches expected."""
         expected_path = os.path.join(REAL_HEADERS_DIR, "templates.expected.pxd")
         assert_header_pxd_equals(templates_header, expected_path, tmp_path, cplus=True)
+
+
+class TestFusionSDK:
+    """Test parsing Autodesk Fusion 360 C++ SDK headers.
+
+    The Fusion SDK is a complex C++ API with templates, namespaces, and
+    smart pointers. This tests our ability to handle real-world C++ SDKs.
+
+    SDK source: https://github.com/AutodeskFusion360/FusionAPIReference
+    """
+
+    FUSION_SDK_DIR = os.path.join(REAL_HEADERS_DIR, "fusion_sdk")
+
+    @pytest.fixture
+    def fusion_base_header(self, libclang_backend):
+        """Parse Fusion SDK Core/Base.h and return the IR."""
+        base_path = os.path.join(self.FUSION_SDK_DIR, "Core", "Base.h")
+        if not os.path.exists(base_path):
+            pytest.skip("Fusion SDK headers not found in test/real_headers/fusion_sdk/")
+
+        with open(base_path, encoding="utf-8") as f:
+            code = f.read()
+
+        extra_args = ["-x", "c++", "-std=c++17"] + _get_system_include_args(cplus=True)
+        extra_args.extend(
+            [
+                f"-I{self.FUSION_SDK_DIR}",
+                f"-I{os.path.join(self.FUSION_SDK_DIR, 'Core')}",
+            ]
+        )
+
+        return libclang_backend.parse(code, "Base.h", extra_args=extra_args)
+
+    def test_parses_fusion_base_without_error(self, fusion_base_header):
+        """Verify Fusion SDK Base.h parses successfully."""
+        assert fusion_base_header is not None
+        assert len(fusion_base_header.declarations) > 0
+
+    def test_finds_base_class(self, fusion_base_header):
+        """Verify we find the Base class in adsk::core namespace."""
+        structs = [d for d in fusion_base_header.declarations if isinstance(d, Struct)]
+        struct_names = {s.name for s in structs}
+        assert "Base" in struct_names, f"Base class not found. Found: {struct_names}"
+
+    def test_finds_ptr_template(self, fusion_base_header):
+        """Verify we find the Ptr smart pointer template."""
+        structs = [d for d in fusion_base_header.declarations if isinstance(d, Struct)]
+        struct_names = {s.name for s in structs}
+        assert "Ptr" in struct_names, f"Ptr template not found. Found: {struct_names}"
+
+    def test_finds_reference_counted(self, fusion_base_header):
+        """Verify we find the ReferenceCounted base class."""
+        structs = [d for d in fusion_base_header.declarations if isinstance(d, Struct)]
+        struct_names = {s.name for s in structs}
+        assert "ReferenceCounted" in struct_names
+
+    def test_generates_valid_pxd(self, fusion_base_header, tmp_path):
+        """Verify generated pxd is valid Cython syntax."""
+        pxd = write_pxd(fusion_base_header)
+
+        # Should have namespace declarations
+        assert 'namespace "adsk::core"' in pxd
+
+        # Should have cppclass declarations
+        assert "cdef cppclass Base" in pxd
+        assert "cdef cppclass Ptr" in pxd
+
+        # Validate it compiles with Cython (no C compilation - no real library)
+        validate_cython_compiles(pxd, tmp_path, cplus=True, cython_only=True)
 
 
 class TestHeaderDiscovery:
@@ -472,14 +565,20 @@ class TestFullCompilation:
         """Generate pxd from system header and compile against library."""
         config = LIBRARY_CONFIGS[library]
 
-        # Skip if library not installed
+        # Fail if library not installed - all libraries in LIBRARY_CONFIGS must be available
         if not _check_pkg_config(config["pkg_config"]):
-            pytest.skip(f"{config['pkg_config']} not installed (pkg-config)")
+            pytest.fail(
+                f"{config['pkg_config']} not installed (pkg-config). "
+                f"Install the library or remove '{library}' from LIBRARY_CONFIGS."
+            )
 
         # Find header
         header_path = _get_header_path(config["system_header"], config["pkg_config"])
         if not header_path:
-            pytest.skip(f"Header {config['system_header']} not found")
+            pytest.fail(
+                f"Header {config['system_header']} not found. "
+                f"Install the library or remove '{library}' from LIBRARY_CONFIGS."
+            )
 
         # Get pkg-config include directories for parsing
         try:
@@ -506,8 +605,9 @@ class TestFullCompilation:
         with open(header_path, encoding="utf-8", errors="replace") as f:
             code = f.read()
 
-        extra_args = _get_system_include_args()
-        if config.get("cplus"):
+        is_cplus = config.get("cplus", False)
+        extra_args = _get_system_include_args(cplus=is_cplus)
+        if is_cplus:
             extra_args = ["-x", "c++", "-std=c++17"] + extra_args
 
         # Use the system_header as the filename for the extern block

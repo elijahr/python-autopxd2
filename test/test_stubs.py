@@ -117,6 +117,11 @@ class TestAllStubsCompile:
             "cppthread.pxd",
             "cppchrono.pxd",
             "cppfilesystem.pxd",
+            "cppregex.pxd",
+            "cpptuple.pxd",
+            "cpparray.pxd",
+            "cppvariant.pxd",
+            "cppbitset.pxd",
         ],
     )
     def test_stub_compiles(self, stub_file, tmp_path):

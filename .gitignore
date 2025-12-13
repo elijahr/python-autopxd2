@@ -110,3 +110,5 @@ docs/plans/
 .idea
 /node_modules
 logs/
+.envrc
+uv.lock

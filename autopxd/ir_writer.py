@@ -54,6 +54,11 @@ from autopxd.keywords import (
 # Type qualifiers that Cython doesn't support - strip from output
 UNSUPPORTED_TYPE_QUALIFIERS = {"_Atomic", "__restrict", "_Noreturn", "__restrict__"}
 
+# C type names that need to be converted to Cython equivalents
+C_TO_CYTHON_TYPE_MAP = {
+    "_Bool": "bint",  # C99 boolean type -> Cython boolean integer
+}
+
 
 class PxdWriter:
     """Writes IR to Cython ``.pxd`` format.
@@ -109,6 +114,12 @@ class PxdWriter:
         self.cython_cimports: dict[str, set[str]] = {}  # module -> types
         self.stub_cimports: dict[str, set[str]] = {}  # stub_module -> types
         self.libcpp_cimports: dict[str, set[str]] = {}  # module -> types
+
+        # Current struct's inner typedefs for method return type resolution
+        self._current_inner_typedefs: dict[str, str] = {}
+
+        # Inner typedefs that cannot be represented in Cython (nested template types)
+        self._unsupported_inner_typedefs: set[str] = set()
 
         # Collect types from all declarations
         self._collect_cimport_types()
@@ -779,6 +790,25 @@ class PxdWriter:
         """Write a struct, union, or cppclass declaration."""
         lines: list[str] = []
 
+        # Store inner typedefs context for _format_ctype to resolve method return types
+        # Inner typedefs like `typedef Iterator<T, PT> iterator;` need to be resolved
+        # to their underlying type when used as return types
+        self._current_inner_typedefs = struct.inner_typedefs if struct.is_cppclass else {}
+
+        # Track inner template typedefs that we cannot properly handle
+        # These will cause methods using them to be commented out with an explanation
+        self._unsupported_inner_typedefs = set()
+        if struct.is_cppclass and struct.inner_typedefs:
+            for inner_name, inner_type in struct.inner_typedefs.items():
+                if "<" in inner_type and ">" in inner_type:
+                    # Extract base type name (e.g., "Iterator" from "Iterator<T, PT>")
+                    base_type = inner_type.split("<")[0].strip()
+                    # If the base type is already declared (likely as another class's inner type),
+                    # we can't use it because Cython doesn't support C++ nested types properly
+                    # and will crash when trying to specialize with different template params
+                    if base_type and base_type in self.known_structs:
+                        self._unsupported_inner_typedefs.add(inner_name)
+
         # Emit notes as comments before the struct declaration
         if struct.notes:
             for note in struct.notes:
@@ -848,10 +878,53 @@ class PxdWriter:
                 lines.append(f"{self.INDENT}{field_type} {field_name}")
 
         # Add methods for cppclass
+        # Operators that need special handling
+        # Map C++ operator names to Python-friendly aliases using Cython's string name feature
+        operator_aliases = {
+            "operator->": "deref",  # operator->() -> deref "operator->()"
+            "operator()": "call",  # operator()() -> call "operator()()"
+        }
+        # operator, (comma) is genuinely unsupported - skip it
+        unsupported_operators = {"operator,"}
+
         for method in struct.methods:
-            method_lines = self._write_function(method)
-            for line in method_lines:
-                lines.append(f"{self.INDENT}{line}")
+            # Skip operators that Cython doesn't support
+            if method.name in unsupported_operators:
+                continue
+
+            # Check if return type uses an unsupported inner typedef
+            # If so, emit as comment with explanation per user directive
+            return_type_name = method.return_type.name if isinstance(method.return_type, CType) else None
+            if return_type_name and return_type_name in self._unsupported_inner_typedefs:
+                # Get the underlying type for the error message
+                underlying = self._current_inner_typedefs.get(return_type_name, return_type_name)
+                lines.append(
+                    f"{self.INDENT}# UNSUPPORTED: {method.name}() returns C++ inner type "
+                    f"'{return_type_name}' ({underlying})"
+                )
+                lines.append(
+                    f"{self.INDENT}# Cython cannot represent nested template types. "
+                    f"Use the C++ API directly if needed."
+                )
+                continue
+
+            # Handle operator aliasing for unsupported operators
+            if method.name in operator_aliases:
+                # Use Cython's string name feature to alias the operator
+                # e.g., T* deref "operator->()" ()
+                alias = operator_aliases[method.name]
+                return_type = self._format_type(method.return_type)
+                params = self._format_params(method.parameters, method.is_variadic)
+                method_line = f'{return_type} {alias} "{method.name}"({params})'
+                lines.append(f"{self.INDENT}{method_line}")
+            else:
+                method_lines = self._write_function(method)
+                for line in method_lines:
+                    lines.append(f"{self.INDENT}{line}")
+
+        # Clear inner typedef context after struct processing
+        self._current_inner_typedefs = {}
+        self._unsupported_inner_typedefs = set()
 
         return lines
 
@@ -988,8 +1061,20 @@ class PxdWriter:
         declared in the header, since Cython references them by name only.
         Also strips unsupported type qualifiers like _Atomic.
         Also de-duplicates qualifiers that may already be in the type name.
+        Resolves inner typedefs to their hoisted or underlying types.
+        Maps C types to Cython equivalents (e.g., _Bool -> bint).
         """
         name = ctype.name
+
+        # Map C types to Cython equivalents (e.g., _Bool -> bint)
+        if name in C_TO_CYTHON_TYPE_MAP:
+            name = C_TO_CYTHON_TYPE_MAP[name]
+
+        # Resolve inner typedefs (e.g., `iterator` -> `Iterator<T, PT>`)
+        # This handles cases like `typedef Iterator<T, PT> iterator;` inside a class
+        if self._current_inner_typedefs and name in self._current_inner_typedefs:
+            # Use the underlying type directly
+            name = self._current_inner_typedefs[name]
 
         # Strip unsupported type qualifiers from type name
         for qual in UNSUPPORTED_TYPE_QUALIFIERS:
@@ -1018,6 +1103,11 @@ class PxdWriter:
             enum_name = name[5:]  # len("enum ") = 5
             if enum_name in self.known_enums:
                 name = enum_name
+
+        # Convert C++ template syntax <> to Cython syntax []
+        # This must be done before keyword escaping to handle template parameters correctly
+        if "<" in name and ">" in name:
+            name = self._convert_template_syntax(name)
 
         # Escape keywords in type names
         parts = name.split()
@@ -1211,6 +1301,79 @@ class PxdWriter:
                 dims.append("")
             current = current.element_type
         return "".join(f"[{d}]" for d in dims)
+
+    def _convert_template_syntax(self, name: str) -> str:
+        """Convert C++ template syntax <> to Cython syntax [].
+
+        This parser handles:
+        - Nested templates: Container<Container<int>> -> Container[Container[int]]
+        - Multiple parameters: Map<K, V> -> Map[K, V]
+        - Non-type parameters: Array<int, 10> -> Array[int, 10]
+        - Operators in expressions: Array<int, (16>>2)> -> Array[int, (16>>2)]
+
+        The key insight is to only convert < and > that are part of template
+        delimiters, not operators inside expressions (which are parenthesized).
+        """
+        result = []
+        i = 0
+        depth = 0  # Track template nesting depth
+        paren_depth = 0  # Track parenthesis depth
+
+        while i < len(name):
+            char = name[i]
+
+            if char == "(":
+                paren_depth += 1
+                result.append(char)
+                i += 1
+            elif char == ")":
+                paren_depth -= 1
+                result.append(char)
+                i += 1
+            elif char == "<" and paren_depth == 0:
+                # This is a template opening bracket, not an operator
+                result.append("[")
+                depth += 1
+                i += 1
+            elif char == ">" and paren_depth == 0:
+                # Could be template closing bracket or >> operator
+                # Check if this is part of >> (two > in a row)
+                if i + 1 < len(name) and name[i + 1] == ">":
+                    # This is >>, but we need to determine context
+                    # If depth > 0, first > closes template, second might close another
+                    # We need to check if there are nested templates
+                    if depth > 0:
+                        # Close one level of template
+                        result.append("]")
+                        depth -= 1
+                        i += 1
+                        # Now check if the next > also closes a template
+                        if depth > 0:
+                            result.append("]")
+                            depth -= 1
+                            i += 1
+                        else:
+                            # Next > is not a template closer (shouldn't happen in valid code)
+                            result.append(">")
+                            i += 1
+                    else:
+                        # >> outside templates (shouldn't happen)
+                        result.append(">>")
+                        i += 2
+                else:
+                    # Single >, close template bracket
+                    if depth > 0:
+                        result.append("]")
+                        depth -= 1
+                    else:
+                        # > outside template context (operator)
+                        result.append(">")
+                    i += 1
+            else:
+                result.append(char)
+                i += 1
+
+        return "".join(result)
 
     def _escape_name(self, name: str | None, include_c_name: bool = False) -> str:
         """Escape Python keywords by adding underscore suffix.

@@ -455,6 +455,7 @@ class Struct:
     template_params: list[str] = field(default_factory=list)
     cpp_name: Optional[str] = None
     notes: list[str] = field(default_factory=list)
+    inner_typedefs: dict[str, str] = field(default_factory=dict)  # name -> underlying_type
     location: Optional[SourceLocation] = None
 
     def __str__(self) -> str:
