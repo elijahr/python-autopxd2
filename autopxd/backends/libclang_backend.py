@@ -935,12 +935,25 @@ class ClangASTConverter:
         name = cursor.spelling or None
 
         # Check if this is a template specialization
+        # Method 1: Check specialized_template attribute (reliable when available)
+        is_specialization = False
         try:
             specialized_template = cursor.specialized_template
-            is_specialization = specialized_template is not None and specialized_template != cursor
+            if specialized_template is not None and specialized_template != cursor:
+                is_specialization = True
         except AttributeError:
-            # Older versions of libclang might not have this attribute
-            is_specialization = False
+            pass
+
+        # Method 2: Fallback detection using displayname pattern
+        # If cursor is CLASS_DECL/STRUCT_DECL (not CLASS_TEMPLATE) but displayname
+        # contains template args like "Vector<bool>", it's a specialization
+        if not is_specialization and is_cppclass:
+            displayname = cursor.displayname
+            if "<" in displayname and ">" in displayname:
+                # This is a specialization - displayname has template args but
+                # it's not a CLASS_TEMPLATE (which would be the primary template)
+                if cursor.kind != CursorKind.CLASS_TEMPLATE:
+                    is_specialization = True
 
         # Determine the key prefix for deduplication
         if is_cppclass:
