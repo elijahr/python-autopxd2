@@ -6,6 +6,9 @@ from autopxd.backends.libclang_backend import LibclangBackend
 from autopxd.ir import Typedef
 from autopxd.ir_writer import write_pxd
 
+# These tests require libclang
+pytestmark = pytest.mark.libclang
+
 
 @pytest.fixture
 def backend():
