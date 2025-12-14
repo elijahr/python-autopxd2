@@ -120,7 +120,6 @@ class TestTemplateEdgeCases:
         # Cython doesn't support these, so might skip or note
         assert "Tuple" in pxd
 
-    @pytest.mark.xfail(reason="Template specialization mangling not yet implemented")
     def test_template_specialization_name(self, libclang_backend):
         """Test template specialization gets distinct name."""
         code = """
