@@ -124,10 +124,18 @@ def translate(
     parse_varnames = parse_code.co_varnames if parse_code else ()
 
     # Extract include_dirs from extra_args for backends that support it
+    # Handle both "-I/path" and "-I", "/path" formats
     include_dirs: list[str] = []
     other_args: list[str] = []
-    for arg in extra_args or []:
-        if arg.startswith("-I"):
+    args_iter = iter(extra_args or [])
+    for arg in args_iter:
+        if arg == "-I":
+            # Next arg is the path
+            try:
+                include_dirs.append(next(args_iter))
+            except StopIteration:
+                pass  # -I at end with no path, ignore
+        elif arg.startswith("-I"):
             include_dirs.append(arg[2:])
         else:
             other_args.append(arg)
