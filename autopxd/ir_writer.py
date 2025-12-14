@@ -24,6 +24,7 @@ Example
         f.write(pxd_content)
 """
 
+import re
 from collections import defaultdict
 
 from autopxd.cython_types import (
@@ -1070,6 +1071,14 @@ class PxdWriter:
         if name in C_TO_CYTHON_TYPE_MAP:
             name = C_TO_CYTHON_TYPE_MAP[name]
 
+        # Strip C++ namespace prefixes (std::, boost::, library-specific namespaces)
+        # Cython uses bare names like "string" not "std::string"
+        # This handles both leading prefixes and embedded ones (in templates)
+        # Pattern: word characters followed by :: (the namespace prefix)
+        # Apply repeatedly to handle nested namespaces like std::chrono::
+        while "::" in name:
+            name = re.sub(r"\b\w+::", "", name)
+
         # Resolve inner typedefs (e.g., `iterator` -> `Iterator<T, PT>`)
         # This handles cases like `typedef Iterator<T, PT> iterator;` inside a class
         if self._current_inner_typedefs and name in self._current_inner_typedefs:
@@ -1101,7 +1110,13 @@ class PxdWriter:
                 name = union_name
         elif name.startswith("enum "):
             enum_name = name[5:]  # len("enum ") = 5
-            if enum_name in self.known_enums:
+            # In Cython, enum types are referenced by name alone (no "enum" prefix)
+            # This is especially important for C++ scoped enums (enum class)
+            # We strip the prefix if:
+            # 1. The enum is known (declared in this header), OR
+            # 2. The name contains no spaces (it's a single identifier, likely from another header)
+            # We keep the prefix only for anonymous enums with generated names
+            if enum_name in self.known_enums or " " not in enum_name:
                 name = enum_name
 
         # Convert C++ template syntax <> to Cython syntax []
@@ -1310,65 +1325,49 @@ class PxdWriter:
         - Multiple parameters: Map<K, V> -> Map[K, V]
         - Non-type parameters: Array<int, 10> -> Array[int, 10]
         - Operators in expressions: Array<int, (16>>2)> -> Array[int, (16>>2)]
+        - Templates inside function signatures: function<void (shared_ptr<T>)>
 
-        The key insight is to only convert < and > that are part of template
-        delimiters, not operators inside expressions (which are parenthesized).
+        The key insight is to convert < and > that follow identifiers (templates),
+        not those that appear as operators (which usually have spaces around them
+        or are inside numeric expressions).
         """
         result = []
         i = 0
         depth = 0  # Track template nesting depth
-        paren_depth = 0  # Track parenthesis depth
 
         while i < len(name):
             char = name[i]
 
-            if char == "(":
-                paren_depth += 1
+            if char == "(" or char == ")":
                 result.append(char)
                 i += 1
-            elif char == ")":
-                paren_depth -= 1
-                result.append(char)
-                i += 1
-            elif char == "<" and paren_depth == 0:
-                # This is a template opening bracket, not an operator
-                result.append("[")
-                depth += 1
-                i += 1
-            elif char == ">" and paren_depth == 0:
-                # Could be template closing bracket or >> operator
-                # Check if this is part of >> (two > in a row)
-                if i + 1 < len(name) and name[i + 1] == ">":
-                    # This is >>, but we need to determine context
-                    # If depth > 0, first > closes template, second might close another
-                    # We need to check if there are nested templates
-                    if depth > 0:
-                        # Close one level of template
-                        result.append("]")
-                        depth -= 1
-                        i += 1
-                        # Now check if the next > also closes a template
-                        if depth > 0:
-                            result.append("]")
-                            depth -= 1
-                            i += 1
-                        else:
-                            # Next > is not a template closer (shouldn't happen in valid code)
-                            result.append(">")
-                            i += 1
-                    else:
-                        # >> outside templates (shouldn't happen)
-                        result.append(">>")
-                        i += 2
+            elif char == "<":
+                # Check if this looks like a template (preceded by identifier/])
+                # vs an operator (preceded by space or digit)
+                is_template = False
+                if i > 0:
+                    prev = name[i - 1]
+                    # Template if preceded by identifier char or closing bracket
+                    if prev.isalnum() or prev == "_" or prev == "]":
+                        is_template = True
                 else:
-                    # Single >, close template bracket
-                    if depth > 0:
-                        result.append("]")
-                        depth -= 1
-                    else:
-                        # > outside template context (operator)
-                        result.append(">")
-                    i += 1
+                    # < at start of string - treat as template
+                    is_template = True
+
+                if is_template:
+                    result.append("[")
+                    depth += 1
+                else:
+                    result.append(char)
+                i += 1
+            elif char == ">":
+                # Check if this is a template closing bracket
+                if depth > 0:
+                    result.append("]")
+                    depth -= 1
+                else:
+                    result.append(char)
+                i += 1
             else:
                 result.append(char)
                 i += 1

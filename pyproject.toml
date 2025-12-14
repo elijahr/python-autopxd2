@@ -113,4 +113,5 @@ testpaths = ["test"]
 markers = [
     "pycparser: tests/parameterizations using the pycparser backend",
     "libclang: tests/parameterizations using the libclang backend (includes C++ tests)",
+    "real_headers: tests against real system libraries (requires library installation)",
 ]

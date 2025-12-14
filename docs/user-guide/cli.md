@@ -107,6 +107,45 @@ Disable automatic detection of system include directories. By default, the libcl
 autopxd --no-default-includes -I /my/custom/sysroot/include myheader.h
 ```
 
+### `-P, --project-prefix <path>` [libclang]
+
+Treat headers under the specified path as project headers rather than system headers. This is essential for umbrella headers—headers that include many sub-headers but have few declarations of their own (like `sodium.h`, `openssl/ssl.h`).
+
+Without this option, declarations from sub-headers in system locations (e.g., `/usr/include`, `/opt/homebrew/include`) are filtered out. The `--project-prefix` option whitelists paths so their declarations are included.
+
+Can be specified multiple times for multiple prefixes.
+
+```bash
+# Include declarations from all sodium/*.h sub-headers
+autopxd -I /opt/homebrew/include \
+    --project-prefix /opt/homebrew/include/sodium \
+    /opt/homebrew/include/sodium.h
+
+# Multiple prefixes
+autopxd -I /usr/include \
+    -P /usr/include/openssl \
+    -P /usr/include/crypto \
+    /usr/include/openssl/ssl.h
+```
+
+### `--no-recursive` [libclang]
+
+Disable recursive parsing of umbrella headers. By default, when an umbrella header is detected, autopxd recursively parses included project headers to collect all declarations. Use this option to only parse the top-level header.
+
+```bash
+autopxd --no-recursive -P /opt/homebrew/include/sodium \
+    /opt/homebrew/include/sodium.h
+```
+
+### `--max-depth <n>` [libclang]
+
+Set the maximum recursion depth for umbrella header processing (default: 10). This prevents infinite recursion in cases of circular includes.
+
+```bash
+autopxd --max-depth 5 -P /opt/homebrew/include/sodium \
+    /opt/homebrew/include/sodium.h
+```
+
 ### `-q, --quiet`
 
 Suppress warnings (e.g., backend fallback warnings).
@@ -157,10 +196,20 @@ autopxd --backend libclang --cpp myclass.hpp myclass.pxd
 autopxd -x --std c++17 modern.hpp modern.pxd
 ```
 
-### Fix problematic macros
+### Working with umbrella headers
+
+Umbrella headers like `sodium.h` include many sub-headers but define few declarations themselves. Use `--project-prefix` to include declarations from sub-headers:
 
 ```bash
-autopxd -R 's/__restrict//g' -R 's/__extension__//g' header.h header.pxd
+# Generate bindings for libsodium (installed via homebrew)
+autopxd -I /opt/homebrew/include \
+    -P /opt/homebrew/include/sodium \
+    /opt/homebrew/include/sodium.h sodium.pxd
+
+# Generate bindings for OpenSSL
+autopxd -I /usr/include \
+    -P /usr/include/openssl \
+    /usr/include/openssl/ssl.h ssl.pxd
 ```
 
 ### Check available backends
@@ -197,6 +246,23 @@ Make sure you're using the libclang backend:
 ```bash
 autopxd --backend libclang --cpp myheader.hpp
 ```
+
+### Empty output from umbrella headers
+
+If you're parsing an umbrella header (like `sodium.h`) and getting empty or minimal output, the sub-headers are probably in a system location. Use `--project-prefix` to whitelist them:
+
+```bash
+# Find where the library headers are installed
+pkg-config --cflags libsodium
+# Output: -I/opt/homebrew/include
+
+# Use --project-prefix with the sub-header directory
+autopxd -I /opt/homebrew/include \
+    -P /opt/homebrew/include/sodium \
+    /opt/homebrew/include/sodium.h
+```
+
+You can verify the prefix is working by using `--debug` to see which declarations are being found.
 
 ## Exit Codes
 

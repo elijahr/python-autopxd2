@@ -1,4 +1,4 @@
-cdef extern from "meta_header_simple.h":
+cdef extern from "umbrella_header_simple.h":
 
     ctypedef struct PointA:
         double x

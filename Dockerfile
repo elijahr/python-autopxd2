@@ -17,6 +17,9 @@
 #
 #   # Interactive shell
 #   docker run --rm -it -v $(pwd):/work -w /work ghcr.io/elijahr/python-autopxd2 bash
+#
+# Build args:
+#   TEST_MODE=1  Include test libraries for running real header tests
 
 FROM python:3.12-slim
 
@@ -27,6 +30,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     llvm-dev \
     cpp \
     && rm -rf /var/lib/apt/lists/*
+
+# Optional: Install test libraries (only when building with --build-arg TEST_MODE=1)
+ARG TEST_MODE=0
+COPY scripts/install-test-libs-linux.sh /tmp/install-test-libs.sh
+RUN if [ "$TEST_MODE" = "1" ]; then \
+        chmod +x /tmp/install-test-libs.sh && /tmp/install-test-libs.sh; \
+    fi && rm -f /tmp/install-test-libs.sh && rm -rf /var/lib/apt/lists/*
 
 # Find LLVM version and configure library path
 RUN LLVM_VERSION=$(ls /usr/lib/ | grep -oP 'llvm-\K\d+' | head -1) \

@@ -19,6 +19,7 @@ from autopxd.ir import Enum, Function, Struct
 from autopxd.ir_writer import write_pxd
 from test.assertions import assert_header_pxd_equals
 from test.cython_utils import validate_cython_compiles
+from test.library_detection import detect_library
 
 # Directory containing real header files
 REAL_HEADERS_DIR = os.path.join(os.path.dirname(__file__), "real_headers")
@@ -64,21 +65,29 @@ LIBRARY_CONFIGS = {
         "smoke_test": "cJSON_Version()",
         "cplus": False,
     },
-    # Note: nng library doesn't provide pkg-config on macOS, only cmake.
-    # Uncomment when pkg-config support is added or cmake detection is implemented.
-    # "nng": {
-    #     "pkg_config": "nng",
-    #     "system_header": "nng/nng.h",
-    #     "smoke_test": "nng_version()",
-    #     "cplus": False,
-    # },
-    # Note: sodium.h is an umbrella header that just includes sub-headers.
-    # The actual declarations are in sodium/*.h. No function smoke test.
+    # nng library uses cmake config (not pkg-config) on macOS
+    "nng": {
+        "detection": [
+            {"type": "pkg_config", "package": "nng"},
+            {"type": "cmake", "cmake_package": "nng"},
+            {
+                "type": "manual",
+                "include_dirs": ["/opt/homebrew/include", "/usr/local/include"],
+                "library_dirs": ["/opt/homebrew/lib", "/usr/local/lib"],
+                "libraries": ["nng"],
+            },
+        ],
+        "system_header": "nng/nng.h",
+        "smoke_test": "nng_version()",
+        "cplus": False,
+    },
+    # sodium.h is an umbrella header - use project_prefixes to include sodium/* sub-headers
     "libsodium": {
         "pkg_config": "libsodium",
         "system_header": "sodium.h",
-        "smoke_test": None,  # Umbrella header - no exported functions
+        "smoke_test": "sodium_init()",  # Now works with umbrella header support!
         "cplus": False,
+        "project_prefixes": ("sodium",),  # Include declarations from sodium/*.h
     },
     "utf8proc": {
         "pkg_config": "libutf8proc",
@@ -87,23 +96,121 @@ LIBRARY_CONFIGS = {
         "cplus": False,
     },
     # === C++ Libraries ===
-    # Note: nlohmann/json.hpp uses advanced C++ template metaprogramming
-    # (dependent types like "typename iterator::difference_type") that
-    # Cython cannot compile. The pxd generates but doesn't compile.
-    # "nlohmann_json": {
-    #     "pkg_config": "nlohmann_json",
-    #     "system_header": "nlohmann/json.hpp",
-    #     "smoke_test": None,  # Header-only, no exported functions
-    #     "cplus": True,
-    # },
-    # Note: fmt library has complex include dependencies (malloc, etc.) that
-    # require additional system header setup. Parsing fails before pxd generation.
-    # "fmt": {
-    #     "pkg_config": "fmt",
-    #     "system_header": "fmt/core.h",
-    #     "smoke_test": "fmt_version()",
-    #     "cplus": True,
-    # },
+    "catch2": {
+        "detection": [
+            {"type": "pkg_config", "package": "catch2"},
+            {"type": "cmake", "cmake_package": "Catch2"},
+            {
+                "type": "manual",
+                "include_dirs": ["/opt/homebrew/include", "/usr/local/include"],
+            },
+        ],
+        "system_header": "catch2/catch_all.hpp",
+        "smoke_test": None,  # Test framework - compile-only
+        "cplus": True,
+        "std": "c++17",
+        "header_only": True,
+    },
+    "fmt": {
+        "detection": [
+            {"type": "pkg_config", "package": "fmt"},
+            {"type": "cmake", "cmake_package": "fmt"},
+            {
+                "type": "manual",
+                "include_dirs": ["/opt/homebrew/include", "/usr/local/include"],
+                "library_dirs": ["/opt/homebrew/lib", "/usr/local/lib"],
+                "libraries": ["fmt"],
+            },
+        ],
+        "system_header": "fmt/core.h",
+        "smoke_test": None,  # Uses formatting - compile-only
+        "cplus": True,
+        "std": "c++17",
+        # fmt uses malloc without including cstdlib
+        "preamble": "#include <cstdlib>",
+        "pxd_only": True,  # Complex templates with forward refs
+    },
+    "spdlog": {
+        "detection": [
+            {"type": "pkg_config", "package": "spdlog"},
+            {"type": "cmake", "cmake_package": "spdlog"},
+            {
+                "type": "manual",
+                "include_dirs": ["/opt/homebrew/include", "/usr/local/include"],
+                "library_dirs": ["/opt/homebrew/lib", "/usr/local/lib"],
+                "libraries": ["spdlog"],
+            },
+        ],
+        "system_header": "spdlog/spdlog.h",
+        "smoke_test": None,
+        "cplus": True,
+        "std": "c++17",
+        # spdlog has complex internal forward references (logger class)
+        # that Cython can't resolve, so we only validate pxd generation
+        "pxd_only": True,
+    },
+    "doctest": {
+        "detection": [
+            {"type": "pkg_config", "package": "doctest"},
+            {"type": "cmake", "cmake_package": "doctest"},
+            {
+                "type": "manual",
+                "include_dirs": ["/opt/homebrew/include", "/usr/local/include"],
+            },
+        ],
+        "system_header": "doctest/doctest.h",
+        "smoke_test": None,  # Test framework - compile-only
+        "cplus": True,
+        "std": "c++17",
+        # doctest uses operator+= which Cython doesn't support
+        "pxd_only": True,
+    },
+    "boost_lockfree": {
+        "detection": [
+            {"type": "pkg_config", "package": "boost"},
+            {
+                "type": "manual",
+                "include_dirs": ["/opt/homebrew/include", "/usr/local/include"],
+            },
+        ],
+        "system_header": "boost/lockfree/queue.hpp",
+        "smoke_test": None,  # Template library - compile-only
+        "cplus": True,
+        "std": "c++17",
+        # boost uses typename dependent types that Cython can't parse
+        "pxd_only": True,
+    },
+    # === Python Libraries ===
+    "python": {
+        "detection": [
+            {
+                "type": "python_module",
+                "module": "sysconfig",
+                "include_getter": "get_path('include')",
+            },
+        ],
+        "system_header": "Python.h",
+        # Python.h is an umbrella header - functions are in sub-headers not exported
+        "smoke_test": None,
+        "cplus": False,
+        "header_only": True,
+    },
+    "numpy": {
+        "detection": [
+            {
+                "type": "python_module",
+                "module": "numpy",
+                "include_getter": "get_include()",
+            },
+        ],
+        "system_header": "numpy/arrayobject.h",
+        "smoke_test": None,  # Requires Py_Initialize() and import_array() - complex setup
+        "cplus": False,
+        # numpy/arrayobject.h includes Python.h, so we need Python's include path too
+        "extra_includes": ["python"],
+        # numpy uses _Complex double which Cython doesn't support
+        "pxd_only": True,
+    },
 }
 
 
@@ -191,8 +298,10 @@ def _get_system_include_args(cplus: bool = False) -> list[str]:
     return args
 
 
-# These tests require libclang - use pytest -m "not libclang" to exclude
-pytestmark = pytest.mark.libclang
+# These tests require libclang and real library installations
+# Use pytest -m "not libclang" to exclude libclang tests
+# Use pytest -m "not real_headers" to exclude tests requiring library installation
+pytestmark = [pytest.mark.libclang, pytest.mark.real_headers]
 
 
 @pytest.fixture
@@ -565,35 +674,52 @@ class TestFullCompilation:
         """Generate pxd from system header and compile against library."""
         config = LIBRARY_CONFIGS[library]
 
-        # Fail if library not installed - all libraries in LIBRARY_CONFIGS must be available
-        if not _check_pkg_config(config["pkg_config"]):
+        # Use multi-method detection
+        detection = detect_library(config)
+        if not detection or not detection.found:
+            # NOTE: Use pytest.fail here, NOT pytest.skip - missing libraries should fail loudly
+            # Build helpful error message listing tried methods
+            tried_methods = []
+            if "detection" in config:
+                tried_methods = [m.get("type", "unknown") for m in config["detection"]]
+            if "pkg_config" in config:
+                tried_methods.append(f"pkg_config:{config['pkg_config']}")
+            platform_script = "macos" if sys.platform == "darwin" else "linux"
             pytest.fail(
-                f"{config['pkg_config']} not installed (pkg-config). "
-                f"Install the library or remove '{library}' from LIBRARY_CONFIGS."
+                f"Library '{library}' not found (tried: {', '.join(tried_methods) or 'pkg_config'}).\n"
+                f"To install test libraries: ./scripts/install-test-libs-{platform_script}.sh\n"
+                f"Or run in Docker: docker build --build-arg TEST_MODE=1 -t autopxd2-test . && "
+                f"docker run --rm -v $(pwd):/app -w /app autopxd2-test pytest test/test_real_headers.py"
             )
 
-        # Find header
-        header_path = _get_header_path(config["system_header"], config["pkg_config"])
+        # Find header (detection should have found it)
+        header_path = detection.header_path
+        if not header_path:
+            # Try to find it in detected include dirs
+            for inc_dir in detection.include_dirs:
+                path = os.path.join(inc_dir, config["system_header"])
+                if os.path.exists(path):
+                    header_path = path
+                    break
+
         if not header_path:
             pytest.fail(
                 f"Header {config['system_header']} not found. "
-                f"Install the library or remove '{library}' from LIBRARY_CONFIGS."
+                f"Detection method: {detection.method}, include_dirs: {detection.include_dirs}"
             )
 
-        # Get pkg-config include directories for parsing
-        try:
-            cflags_result = subprocess.run(
-                ["pkg-config", "--cflags", config["pkg_config"]],
-                capture_output=True,
-                text=True,
-                check=True,
-            )
-            pkg_include_dirs = []
-            for flag in cflags_result.stdout.split():
-                if flag.startswith("-I"):
-                    pkg_include_dirs.append(flag[2:])
-        except (subprocess.CalledProcessError, FileNotFoundError):
-            pkg_include_dirs = []
+        # Build include directories from detection result
+        pkg_include_dirs = list(detection.include_dirs)
+
+        # Add extra includes from other library configs (e.g., numpy needs Python.h)
+        for extra_lib in config.get("extra_includes", []):
+            if extra_lib in LIBRARY_CONFIGS:
+                extra_config = LIBRARY_CONFIGS[extra_lib]
+                extra_detection = detect_library(extra_config)
+                if extra_detection:
+                    for inc_dir in extra_detection.include_dirs:
+                        if inc_dir not in pkg_include_dirs:
+                            pkg_include_dirs.append(inc_dir)
 
         # Add the directory containing the header file to include paths
         # This is needed for headers that use relative includes like #include "foo.h"
@@ -605,10 +731,30 @@ class TestFullCompilation:
         with open(header_path, encoding="utf-8", errors="replace") as f:
             code = f.read()
 
+        # Apply preamble if specified (for headers that need stdlib includes)
+        preamble = config.get("preamble", "")
+        if preamble:
+            code = preamble + "\n" + code
+
         is_cplus = config.get("cplus", False)
-        extra_args = _get_system_include_args(cplus=is_cplus)
+        std = config.get("std", "c++17" if is_cplus else None)
+        # Build extra_args - system includes are added automatically by backend
+        extra_args = []
         if is_cplus:
-            extra_args = ["-x", "c++", "-std=c++17"] + extra_args
+            extra_args = ["-x", "c++", f"-std={std}"]
+
+        # Build project_prefixes for umbrella headers
+        # This allows parsing declarations from sub-headers in system locations
+        project_prefixes = config.get("project_prefixes")
+        if project_prefixes:
+            # Expand relative prefixes to full paths within detection include dirs
+            expanded_prefixes = []
+            for prefix in project_prefixes:
+                for inc_dir in pkg_include_dirs:
+                    full_prefix = os.path.join(inc_dir, prefix)
+                    if os.path.isdir(full_prefix):
+                        expanded_prefixes.append(full_prefix)
+            project_prefixes = tuple(expanded_prefixes) if expanded_prefixes else None
 
         # Use the system_header as the filename for the extern block
         # This ensures #include directives match what's in the config
@@ -618,17 +764,26 @@ class TestFullCompilation:
             config["system_header"],
             include_dirs=pkg_include_dirs,
             extra_args=extra_args,
+            project_prefixes=project_prefixes,
         )
 
         # Generate pxd
         pxd = write_pxd(header_ir)
         assert pxd, f"Empty pxd generated for {library}"
 
+        # pxd_only: Only validate pxd generation, skip Cython compilation
+        # Used for C++ libraries with complex forward references that Cython can't resolve
+        if config.get("pxd_only", False):
+            return
+
         # Full compile with smoke test
+        # Use detection result for compile flags, with pkg_config fallback for backward compat
         validate_cython_compiles(
             pxd,
             tmp_path,
-            cplus=config.get("cplus", False),
-            pkg_config=config["pkg_config"],
+            cplus=is_cplus,
+            pkg_config=config.get("pkg_config"),
             smoke_test=config.get("smoke_test"),
+            header_only=config.get("header_only", False),
+            include_dirs=detection.include_dirs,
         )

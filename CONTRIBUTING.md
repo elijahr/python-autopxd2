@@ -74,6 +74,35 @@ Or with verbose output:
 pytest -v
 ```
 
+### Real Header Tests
+
+Some tests (`test_real_headers.py`) require actual C/C++ libraries to be installed. These tests are marked with `@pytest.mark.real_headers`.
+
+**Install test libraries:**
+
+```shell
+# macOS
+./scripts/install-test-libs-macos.sh
+
+# Linux (Debian/Ubuntu)
+sudo ./scripts/install-test-libs-linux.sh
+```
+
+**Skip real header tests** (if libraries aren't installed):
+
+```shell
+pytest -m "not real_headers"
+```
+
+### Docker Development Environment
+
+Build a Docker image with test libraries for running the full test suite:
+
+```shell
+docker build --build-arg TEST_MODE=1 -t autopxd2-test .
+docker run --rm -v $(pwd):/app -w /app autopxd2-test pytest
+```
+
 ## Building Documentation
 
 ```shell

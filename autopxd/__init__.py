@@ -78,6 +78,9 @@ def translate(
     whitelist: list[str] | None = None,
     debug: bool = False,
     use_default_includes: bool = True,
+    project_prefixes: tuple[str, ...] | None = None,
+    recursive_includes: bool = True,
+    max_depth: int = 10,
 ) -> str:
     """Generate Cython .pxd from C/C++ header code.
 
@@ -91,6 +94,13 @@ def translate(
         debug: Print debug info to stderr.
         use_default_includes: If True (default), automatically detect and add
             system include directories when using the libclang backend.
+        project_prefixes: [libclang] Tuple of path prefixes to treat as project
+            headers (not system). Use this for umbrella headers of libraries
+            installed in system locations (e.g., ("/opt/homebrew/include/sodium",)).
+        recursive_includes: [libclang] If True (default), detect umbrella headers
+            and recursively parse included project headers.
+        max_depth: [libclang] Maximum recursion depth for umbrella header
+            processing (default: 10).
 
     Returns:
         Cython .pxd file contents.
@@ -104,11 +114,39 @@ def translate(
     if debug:
         _debug_print(f"Backend: {backend_name}")
         _debug_print(f"Parsing: {hdrname}")
+        if project_prefixes:
+            _debug_print(f"Project prefixes: {project_prefixes}")
 
     # Parse with backend
     backend_obj = get_backend(backend_name)
-    # Check if backend supports use_default_includes (libclang only)
-    if hasattr(backend_obj.parse, "__code__") and "use_default_includes" in backend_obj.parse.__code__.co_varnames:
+    # Check if backend supports libclang-specific options
+    parse_code = getattr(backend_obj.parse, "__code__", None)
+    parse_varnames = parse_code.co_varnames if parse_code else ()
+
+    # Extract include_dirs from extra_args for backends that support it
+    include_dirs: list[str] = []
+    other_args: list[str] = []
+    for arg in extra_args or []:
+        if arg.startswith("-I"):
+            include_dirs.append(arg[2:])
+        else:
+            other_args.append(arg)
+
+    if "project_prefixes" in parse_varnames:
+        # libclang backend with full umbrella header support
+        # Using runtime introspection to detect supported kwargs, so ignore type check
+        header = backend_obj.parse(
+            code,
+            hdrname,
+            include_dirs=include_dirs or None,
+            extra_args=other_args or None,
+            use_default_includes=use_default_includes,  # type: ignore[call-arg]
+            project_prefixes=project_prefixes,
+            recursive_includes=recursive_includes,
+            max_depth=max_depth,
+        )
+    elif "use_default_includes" in parse_varnames:
+        # libclang backend without umbrella header params
         header = backend_obj.parse(
             code,
             hdrname,
@@ -116,6 +154,7 @@ def translate(
             use_default_includes=use_default_includes,  # type: ignore[call-arg]
         )
     else:
+        # pycparser or other backend
         header = backend_obj.parse(code, hdrname, extra_args=extra_args or [])
 
     if debug:
@@ -227,6 +266,9 @@ def validate_libclang_options(
     resolved_backend: str,
     std: str | None,
     clang_arg: tuple[str, ...],
+    project_prefixes: tuple[str, ...] | None = None,
+    no_recursive: bool = False,
+    max_depth: int = 10,
 ) -> None:
     """Validate that libclang-only options aren't used with pycparser.
 
@@ -244,6 +286,27 @@ def validate_libclang_options(
             click.echo(
                 f"Error: --clang-arg requires libclang backend (got {resolved_backend}).\n"
                 "Install LLVM/Clang or remove --clang-arg option.",
+                err=True,
+            )
+            raise SystemExit(1)
+        if project_prefixes:
+            click.echo(
+                f"Error: --project-prefix requires libclang backend (got {resolved_backend}).\n"
+                "Install LLVM/Clang or remove --project-prefix option.",
+                err=True,
+            )
+            raise SystemExit(1)
+        if no_recursive:
+            click.echo(
+                f"Error: --no-recursive requires libclang backend (got {resolved_backend}).\n"
+                "Install LLVM/Clang or remove --no-recursive option.",
+                err=True,
+            )
+            raise SystemExit(1)
+        if max_depth != 10:
+            click.echo(
+                f"Error: --max-depth requires libclang backend (got {resolved_backend}).\n"
+                "Install LLVM/Clang or remove --max-depth option.",
                 err=True,
             )
             raise SystemExit(1)
@@ -334,6 +397,29 @@ Options marked [libclang] require the libclang backend.
     is_flag=True,
     help="[libclang] Disable system include auto-detection.",
 )
+# === Umbrella header options ===
+@click.option(
+    "--project-prefix",
+    "-P",
+    "project_prefixes",
+    multiple=True,
+    metavar="<path>",
+    help="[libclang] Treat path as project (not system) for umbrella headers. "
+    "Declarations from headers matching this prefix will be included. "
+    "Can be specified multiple times.",
+)
+@click.option(
+    "--no-recursive",
+    is_flag=True,
+    help="[libclang] Disable recursive parsing of umbrella headers.",
+)
+@click.option(
+    "--max-depth",
+    type=int,
+    default=10,
+    metavar="<n>",
+    help="[libclang] Max recursion depth for umbrella headers (default: 10).",
+)
 # === Deprecated (hidden) ===
 @click.option(
     "--compiler-directive",
@@ -368,6 +454,9 @@ def cli(
     clang_arg: tuple[str, ...],
     whitelist: tuple[str, ...],
     no_default_includes: bool,
+    project_prefixes: tuple[str, ...],
+    no_recursive: bool,
+    max_depth: int,
 ) -> None:
     if version:
         print(__version__)
@@ -390,7 +479,7 @@ def cli(
         raise SystemExit(2)
 
     resolved_backend = resolve_backend(backend, cpp, quiet)
-    validate_libclang_options(resolved_backend, std, clang_arg)
+    validate_libclang_options(resolved_backend, std, clang_arg, project_prefixes, no_recursive, max_depth)
 
     # Merge deprecated --compiler-directive into --define
     all_defines = defines + defines_deprecated
@@ -415,6 +504,9 @@ def cli(
 
     whitelist_list = list(whitelist) if whitelist else None
 
+    # Convert project_prefixes tuple to tuple or None
+    project_prefixes_arg = project_prefixes if project_prefixes else None
+
     outfile.write(
         translate(
             code=infile.read(),
@@ -424,5 +516,8 @@ def cli(
             whitelist=whitelist_list,
             debug=debug,
             use_default_includes=not no_default_includes,
+            project_prefixes=project_prefixes_arg,
+            recursive_includes=not no_recursive,
+            max_depth=max_depth,
         )
     )

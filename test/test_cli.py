@@ -358,6 +358,69 @@ class TestEndToEnd:
             assert "uint" in output
 
 
+class TestProjectPrefixOption:
+    """Tests for --project-prefix option."""
+
+    def test_project_prefix_accepted(self, simple_header_file) -> None:
+        """--project-prefix should be accepted."""
+        runner = CliRunner()
+        result = runner.invoke(cli, ["--project-prefix", "/some/path", simple_header_file])
+        assert "No such option" not in result.output
+
+    def test_project_prefix_short_form(self, simple_header_file) -> None:
+        """-P should work as short form."""
+        runner = CliRunner()
+        result = runner.invoke(cli, ["-P", "/some/path", simple_header_file])
+        assert "No such option" not in result.output
+
+    def test_project_prefix_multiple(self, simple_header_file) -> None:
+        """--project-prefix can be specified multiple times."""
+        runner = CliRunner()
+        result = runner.invoke(cli, ["-P", "/path1", "-P", "/path2", simple_header_file])
+        assert "No such option" not in result.output
+
+    def test_project_prefix_with_pycparser_errors(self, simple_header_file) -> None:
+        """--project-prefix with pycparser backend should error."""
+        runner = CliRunner()
+        result = runner.invoke(cli, ["--backend", "pycparser", "-P", "/path", simple_header_file])
+        assert result.exit_code != 0
+        assert "--project-prefix requires libclang" in result.output
+
+
+class TestNoRecursiveOption:
+    """Tests for --no-recursive option."""
+
+    def test_no_recursive_accepted(self, simple_header_file) -> None:
+        """--no-recursive should be accepted."""
+        runner = CliRunner()
+        result = runner.invoke(cli, ["--no-recursive", simple_header_file])
+        assert "No such option" not in result.output
+
+    def test_no_recursive_with_pycparser_errors(self, simple_header_file) -> None:
+        """--no-recursive with pycparser backend should error."""
+        runner = CliRunner()
+        result = runner.invoke(cli, ["--backend", "pycparser", "--no-recursive", simple_header_file])
+        assert result.exit_code != 0
+        assert "--no-recursive requires libclang" in result.output
+
+
+class TestMaxDepthOption:
+    """Tests for --max-depth option."""
+
+    def test_max_depth_accepted(self, simple_header_file) -> None:
+        """--max-depth should be accepted."""
+        runner = CliRunner()
+        result = runner.invoke(cli, ["--max-depth", "5", simple_header_file])
+        assert "No such option" not in result.output
+
+    def test_max_depth_with_pycparser_errors(self, simple_header_file) -> None:
+        """--max-depth with pycparser backend should error (when non-default)."""
+        runner = CliRunner()
+        result = runner.invoke(cli, ["--backend", "pycparser", "--max-depth", "5", simple_header_file])
+        assert result.exit_code != 0
+        assert "--max-depth requires libclang" in result.output
+
+
 @pytest.mark.libclang
 class TestLibclangEndToEnd:
     """End-to-end CLI tests using libclang backend."""

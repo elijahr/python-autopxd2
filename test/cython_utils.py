@@ -3,9 +3,64 @@
 import shlex
 import subprocess
 import sys
+from typing import Any
 
 from Cython.Build.Dependencies import cythonize_one
 from Cython.Compiler.Main import CompilationOptions
+
+
+def _generate_smoke_test_pyx(
+    smoke_test: str | dict[str, Any] | None,
+    pxd_module: str = "test",
+) -> str:
+    """Generate pyx content with smoke test.
+
+    Args:
+        smoke_test: Can be:
+            - None: Just import the module
+            - str: Simple expression (backward compat)
+            - dict with type="expression": Expression
+            - dict with type="program": Multi-line code block
+
+    Returns:
+        Complete pyx file content as string
+    """
+    if smoke_test is None:
+        return f"from {pxd_module} cimport *\n"
+
+    if isinstance(smoke_test, str):
+        # Backward compatible: simple expression
+        return f"""from {pxd_module} cimport *
+
+def test_smoke():
+    cdef result = {smoke_test}
+    return result is not None
+"""
+
+    smoke_type = smoke_test.get("type", "expression")
+
+    if smoke_type == "expression":
+        expression = smoke_test["expression"]
+        return f"""from {pxd_module} cimport *
+
+def test_smoke():
+    cdef result = {expression}
+    return result is not None
+"""
+
+    if smoke_type == "program":
+        code = smoke_test["code"]
+        # Indent each line of the code block
+        lines = code.strip().split("\n")
+        indented_lines = ["    " + line for line in lines]
+        indented_code = "\n".join(indented_lines)
+        return f"""from {pxd_module} cimport *
+
+def test_smoke():
+{indented_code}
+"""
+
+    raise ValueError(f"Unknown smoke_test type: {smoke_type}")
 
 
 def validate_cython_compiles(
@@ -13,7 +68,7 @@ def validate_cython_compiles(
     tmp_path,
     cplus: bool = False,
     pkg_config: str | None = None,
-    smoke_test: str | None = None,
+    smoke_test: str | dict[str, Any] | None = None,
     header_only: bool = False,
     include_dirs: list[str] | None = None,
     cython_only: bool = False,
@@ -25,7 +80,7 @@ def validate_cython_compiles(
         tmp_path: pytest tmp_path fixture
         cplus: If True, compile as C++
         pkg_config: Package name for pkg-config (enables full compile)
-        smoke_test: Expression to call in smoke test function
+        smoke_test: Expression or dict config for smoke test function
         header_only: If True, compile to .o only (no linking)
         include_dirs: Extra -I paths for compilation
         cython_only: If True, only validate Cython→C, skip C compilation
@@ -39,17 +94,10 @@ def validate_cython_compiles(
     pxd_file = tmp_path / "test.pxd"
     pxd_file.write_text(pxd_content)
 
-    # Write pyx with optional smoke test
+    # Generate and write pyx with optional smoke test
+    pyx_content = _generate_smoke_test_pyx(smoke_test)
     pyx_file = tmp_path / "test.pyx"
-    if smoke_test:
-        pyx_file.write_text(f"""from test cimport *
-
-def test_smoke():
-    cdef result = {smoke_test}
-    return result is not None
-""")
-    else:
-        pyx_file.write_text("from test cimport *\n")
+    pyx_file.write_text(pyx_content)
 
     # Cythonize
     src = pyx_file

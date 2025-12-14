@@ -1,11 +1,11 @@
-"""Tests for meta-header (all-includes header) support.
+"""Tests for umbrella header (all-includes header) support.
 
-Meta-headers are headers that contain no definitions of their own,
+Umbrella headers are headers that contain no definitions of their own,
 but only include other headers. Examples include library-wide headers
 like LibraryAll.h that aggregate all sub-modules.
 
 This module tests:
-- Meta-header detection
+- Umbrella header detection
 - Recursive include parsing
 - Declaration deduplication
 - System header filtering
@@ -58,9 +58,9 @@ Size size_from_point(Point* p);
 int size_area(Size* s);
 """)
 
-    # Create meta-header that includes everything
+    # Create umbrella header that includes everything
     (headers_dir / "all.h").write_text("""
-// Meta-header that includes all modules
+// Umbrella header that includes all modules
 #include "types.h"
 #include "functions.h"
 #include "utils.h"
@@ -75,11 +75,11 @@ def backend():
     return get_backend("libclang")
 
 
-class TestMetaHeaderDetection:
-    """Test meta-header detection heuristics."""
+class TestUmbrellaHeaderDetection:
+    """Test umbrella header detection heuristics."""
 
-    def test_detects_simple_meta_header(self, backend, temp_headers):
-        """Meta-header with 3+ includes and no declarations is detected."""
+    def test_detects_simple_umbrella_header(self, backend, temp_headers):
+        """Umbrella header with 3+ includes and no declarations is detected."""
         with open(temp_headers / "all.h") as f:
             code = f.read()
 
@@ -90,13 +90,13 @@ class TestMetaHeaderDetection:
             recursive_includes=False,  # Test detection first
         )
 
-        # Should detect as meta-header
-        from autopxd.backends.libclang_backend import _is_meta_header
+        # Should detect as umbrella header
+        from autopxd.backends.libclang_backend import _is_umbrella_header
 
-        assert _is_meta_header(header)
+        assert _is_umbrella_header(header)
 
     def test_normal_header_not_detected(self, backend, temp_headers):
-        """Normal header with declarations is not a meta-header."""
+        """Normal header with declarations is not a umbrella header."""
         with open(temp_headers / "types.h") as f:
             code = f.read()
 
@@ -107,16 +107,16 @@ class TestMetaHeaderDetection:
             recursive_includes=False,
         )
 
-        from autopxd.backends.libclang_backend import _is_meta_header
+        from autopxd.backends.libclang_backend import _is_umbrella_header
 
-        assert not _is_meta_header(header)
+        assert not _is_umbrella_header(header)
 
 
 class TestRecursiveIncludes:
     """Test recursive include parsing."""
 
     def test_parses_included_headers(self, backend, temp_headers):
-        """Meta-header includes declarations from all included files."""
+        """Umbrella header includes declarations from all included files."""
         with open(temp_headers / "all.h") as f:
             code = f.read()
 
@@ -395,10 +395,10 @@ typedef struct ProjectC { int z; } ProjectC;
 
 
 class TestPXDGeneration:
-    """Test .pxd generation for meta-headers."""
+    """Test .pxd generation for umbrella headers."""
 
     def test_generates_valid_pxd(self, backend, temp_headers, tmp_path):
-        """Generated .pxd from meta-header is valid Cython."""
+        """Generated .pxd from umbrella header is valid Cython."""
         with open(temp_headers / "all.h") as f:
             code = f.read()
 
@@ -429,7 +429,7 @@ class TestRealWorldPatterns:
     """Test patterns from real-world libraries."""
 
     def test_fusion_api_pattern(self, backend, tmp_path):
-        """Test FusionAll.h-style meta-header."""
+        """Test FusionAll.h-style umbrella header."""
         headers_dir = tmp_path / "fusion_style"
         headers_dir.mkdir()
 

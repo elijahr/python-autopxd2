@@ -69,16 +69,7 @@ jobs:
 
       - name: Install test libraries (Ubuntu)
         if: runner.os == 'Linux'
-        run: |
-          sudo apt-get install -y \
-            libz-dev \
-            libjansson-dev \
-            libsqlite3-dev \
-            libcurl4-openssl-dev \
-            libuv1-dev \
-            libcjson-dev \
-            libsodium-dev \
-            libutf8proc-dev
+        run: sudo ./scripts/install-test-libs-linux.sh
 
       - name: Install libclang (macOS)
         if: runner.os == 'macOS'
@@ -92,11 +83,6 @@ jobs:
           echo "LLVM_MAJOR_VERSION=${LLVM_VERSION}" >> $GITHUB_ENV
           echo "Found LLVM version: $LLVM_VERSION, prefix: $LLVM_PREFIX"
 
-      - name: Install test libraries (macOS)
-        if: runner.os == 'macOS'
-        run: |
-          brew install zlib jansson sqlite curl libuv cjson libsodium utf8proc
-
       - name: Install dependencies
         run: uv pip install --system -e .[test]
 
@@ -105,8 +91,13 @@ jobs:
           # Install clang2 package version matching system libclang
           uv pip install --system "clang2==${LLVM_MAJOR_VERSION}.*"
 
-      - name: Test all backends
+      - name: Test all backends (Linux)
+        if: runner.os == 'Linux'
         run: pytest ./test
+
+      - name: Test (macOS, skip real headers)
+        if: runner.os == 'macOS'
+        run: pytest ./test -m "not real_headers"
 
   test-windows:
     name: Test Windows (pycparser)

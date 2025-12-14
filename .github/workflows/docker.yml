@@ -49,12 +49,13 @@ jobs:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
-      - name: Build Docker image for testing
+      - name: Build Docker image for testing (with test libraries)
         uses: docker/build-push-action@v6
         with:
           context: .
           load: true
           tags: autopxd2:test
+          build-args: TEST_MODE=1
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -65,11 +66,10 @@ jobs:
           # Verify help command works
           docker run --rm autopxd2:test autopxd --help
 
-          # Run the full test suite inside the container
-          # This ensures the Docker image has all dependencies and works correctly
+          # Run the full test suite inside the container (including real header tests)
           docker run --rm -w /app autopxd2:test pytest test/ -v --tb=short
 
-      - name: Build and push multi-platform Docker image
+      - name: Build and push multi-platform Docker image (production, no test libraries)
         if: github.event_name != 'pull_request'
         uses: docker/build-push-action@v6
         with:

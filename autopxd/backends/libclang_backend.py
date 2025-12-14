@@ -145,7 +145,7 @@ def get_system_include_dirs(cplus: bool = False) -> list[str]:
     return result_cache
 
 
-def _is_system_header(header_path: str) -> bool:
+def _is_system_header(header_path: str, project_prefixes: tuple[str, ...] | None = None) -> bool:
     """Check if a header path is a system header.
 
     System headers are identified by:
@@ -154,10 +154,21 @@ def _is_system_header(header_path: str) -> bool:
     - Being in compiler-specific paths (clang/include, gcc/include)
     - Being in framework directories
 
+    Headers can be whitelisted as "project" headers using project_prefixes.
+    This is useful for umbrella headers where the library is installed in
+    a system location but we want to recursively parse its sub-headers.
+
     :param header_path: Path to the header file
+    :param project_prefixes: Optional tuple of path prefixes to treat as project (not system)
     :returns: True if this is a system header
     """
     path_str = str(header_path).lower()
+
+    # Check project prefixes first - if path matches, it's NOT a system header
+    if project_prefixes:
+        for prefix in project_prefixes:
+            if prefix.lower() in path_str:
+                return False
 
     # Common system header locations
     system_prefixes = (
@@ -177,21 +188,26 @@ def _is_system_header(header_path: str) -> bool:
     return any(prefix.lower() in path_str for prefix in system_prefixes)
 
 
-def _is_meta_header(header: Header, threshold: int = 3) -> bool:
-    """Detect if a header is a meta-header.
+def _is_umbrella_header(
+    header: Header,
+    threshold: int = 3,
+    project_prefixes: tuple[str, ...] | None = None,
+) -> bool:
+    """Detect if a header is an umbrella header.
 
-    A meta-header is characterized by:
+    An umbrella header is characterized by:
     - Having multiple included headers (>= threshold)
     - Having few or no declarations of its own (< threshold)
 
     :param header: The parsed Header IR
-    :param threshold: Minimum number of includes to consider meta-header (default: 3)
-    :returns: True if this appears to be a meta-header
+    :param threshold: Minimum number of includes to consider umbrella header (default: 3)
+    :param project_prefixes: Optional tuple of path prefixes to treat as project (not system)
+    :returns: True if this appears to be an umbrella header
     """
     # Count non-system included headers
-    project_includes = [h for h in header.included_headers if not _is_system_header(h)]
+    project_includes = [h for h in header.included_headers if not _is_system_header(h, project_prefixes)]
 
-    # Meta-header criteria:
+    # Umbrella header criteria:
     # 1. Multiple project includes (at least threshold)
     # 2. Few or no declarations in the main file
     return len(project_includes) >= threshold and len(header.declarations) < threshold
@@ -286,6 +302,8 @@ class ClangASTConverter:
 
     :param filename: Source filename for filtering declarations.
         Only declarations from this file are included (system headers excluded).
+    :param project_prefixes: Optional tuple of path prefixes to treat as project headers.
+        Declarations from these paths will be included in addition to the main file.
 
     Note
     ----
@@ -293,8 +311,9 @@ class ClangASTConverter:
     :class:`LibclangBackend` for the public API.
     """
 
-    def __init__(self, filename: str) -> None:
+    def __init__(self, filename: str, project_prefixes: tuple[str, ...] | None = None) -> None:
         self.filename = filename
+        self.project_prefixes = project_prefixes
         self.declarations: list[Declaration] = []
         # Track seen declarations to avoid duplicates
         self._seen: dict[str, bool] = {}
@@ -655,11 +674,29 @@ class ClangASTConverter:
             self._process_cursor(child)
 
     def _is_from_target_file(self, cursor: "clang.cindex.Cursor") -> bool:
-        """Check if cursor is from the target file."""
+        """Check if cursor is from the target file or a whitelisted project path.
+
+        Returns True if cursor is from:
+        1. The main target file (self.filename), OR
+        2. A path matching one of the project_prefixes (for umbrella headers)
+        """
         loc = cursor.location
         if loc.file is None:
             return False
-        return bool(loc.file.name == self.filename)
+
+        file_path = loc.file.name
+
+        # Check main file
+        if file_path == self.filename:
+            return True
+
+        # Check project prefixes (for umbrella headers)
+        if self.project_prefixes:
+            for prefix in self.project_prefixes:
+                if prefix.lower() in file_path.lower():
+                    return True
+
+        return False
 
     def _process_cursor(self, cursor: "clang.cindex.Cursor") -> None:
         """Process a top-level cursor."""
@@ -1604,6 +1641,7 @@ class LibclangBackend:
         use_default_includes: bool,
         max_depth: int,
         current_depth: int = 0,
+        project_prefixes: tuple[str, ...] | None = None,
     ) -> Header:
         """Recursively parse included headers and combine declarations.
 
@@ -1614,6 +1652,7 @@ class LibclangBackend:
         :param use_default_includes: Whether to use system includes
         :param max_depth: Maximum recursion depth
         :param current_depth: Current recursion depth
+        :param project_prefixes: Optional tuple of path prefixes to treat as project (not system)
         :returns: Combined Header with declarations from all includes
         """
         if current_depth >= max_depth:
@@ -1624,8 +1663,8 @@ class LibclangBackend:
 
         # Process each included header
         for include_path in main_header.included_headers:
-            # Skip system headers
-            if _is_system_header(include_path):
+            # Skip system headers (unless whitelisted via project_prefixes)
+            if _is_system_header(include_path, project_prefixes):
                 continue
 
             # Get absolute path
@@ -1663,6 +1702,7 @@ class LibclangBackend:
                     use_default_includes,
                     max_depth,
                     current_depth + 1,
+                    project_prefixes,
                 )
 
                 # Add declarations from sub-header
@@ -1692,14 +1732,15 @@ class LibclangBackend:
         use_default_includes: bool = True,
         recursive_includes: bool = True,
         max_depth: int = 10,
+        project_prefixes: tuple[str, ...] | None = None,
     ) -> Header:
         """Parse C/C++ code using libclang.
 
         Unlike the pycparser backend, this method handles raw (unpreprocessed)
         code and performs preprocessing internally.
 
-        Meta-header support: If the header has few/no declarations but many
-        includes (meta-header pattern), this method can recursively parse the
+        Umbrella header support: If the header has few/no declarations but many
+        includes (umbrella header pattern), this method can recursively parse the
         included headers and combine their declarations.
 
         :param code: C/C++ source code to parse (raw, not preprocessed).
@@ -1709,11 +1750,14 @@ class LibclangBackend:
         :param use_default_includes: If True (default), automatically detect and add
             system include directories by querying the system clang compiler.
             Set to False to disable this behavior.
-        :param recursive_includes: If True (default), detect meta-headers and
+        :param recursive_includes: If True (default), detect umbrella headers and
             recursively parse included project headers. System headers are always
             skipped. Set to False to only parse the main file.
         :param max_depth: Maximum recursion depth for include processing (default 10).
             Prevents infinite recursion from circular includes.
+        :param project_prefixes: Optional tuple of path prefixes to treat as project
+            headers (not system). Use this for umbrella headers of libraries installed
+            in system locations (e.g., ``("/opt/homebrew/include/sodium",)``).
         :returns: :class:`~autopxd.ir.Header` containing parsed declarations.
         :raises RuntimeError: If parsing fails with errors.
 
@@ -1729,26 +1773,37 @@ class LibclangBackend:
                 extra_args=["-std=c++17", "-DNDEBUG"]
             )
 
-            # Meta-header (all-includes) pattern
+            # Umbrella header (all-includes) pattern
             header = backend.parse(
                 code,
                 "LibraryAll.h",
                 include_dirs=["./include"],
                 recursive_includes=True  # Auto-detect and expand includes
             )
+
+            # Umbrella header in system location
+            header = backend.parse(
+                code,
+                "sodium.h",
+                include_dirs=["/opt/homebrew/include"],
+                project_prefixes=("/opt/homebrew/include/sodium",)  # Whitelist sodium/*
+            )
         """
         args: list[str] = []
 
-        # Add system include directories if enabled and no -I flags provided
-        if use_default_includes:
-            has_include_flags = bool(include_dirs) or any(arg.startswith("-I") for arg in (extra_args or []))
-            if not has_include_flags:
-                args.extend(get_system_include_dirs())
+        # Detect C++ mode from extra_args
+        is_cplus = bool(extra_args and any(arg in ("-x", "c++") or arg.startswith("-std=c++") for arg in extra_args))
 
-        # Add include directories
+        # Add user-specified include directories FIRST
+        # This is important for C++ where user headers may need to come before system libc++
         if include_dirs:
             for inc_dir in include_dirs:
                 args.append(f"-I{inc_dir}")
+
+        # Add system include directories if enabled
+        # Always add them when use_default_includes=True, regardless of other -I flags
+        if use_default_includes:
+            args.extend(get_system_include_dirs(cplus=is_cplus))
 
         # Add extra arguments
         if extra_args:
@@ -1777,14 +1832,14 @@ class LibclangBackend:
             included_headers.add(header_path)
 
         # Convert to IR
-        converter = ClangASTConverter(filename)
+        converter = ClangASTConverter(filename, project_prefixes=project_prefixes)
         header = converter.convert(tu)
 
         # Attach included headers to the IR
         header.included_headers = included_headers
 
         # Check if we should do recursive include processing
-        if recursive_includes and _is_meta_header(header):
+        if recursive_includes and _is_umbrella_header(header, project_prefixes=project_prefixes):
             # Reset visited set for each top-level parse
             self._visited = set()
             # Add current file to visited
@@ -1803,6 +1858,7 @@ class LibclangBackend:
                 extra_args or [],
                 use_default_includes,
                 max_depth,
+                project_prefixes=project_prefixes,
             )
 
         return header
