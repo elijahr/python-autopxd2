@@ -260,10 +260,11 @@ int json_dumpf(const json_t* json, void* output, unsigned long flags);
 NETWORK_PROTOCOL = """
 /* Network protocol header - complex struct patterns */
 
-typedef unsigned char uint8_t;
-typedef unsigned short uint16_t;
-typedef unsigned int uint32_t;
-typedef unsigned long long uint64_t;
+/* Use custom type names to avoid conflicts with system stdint.h types */
+typedef unsigned char net_uint8_t;
+typedef unsigned short net_uint16_t;
+typedef unsigned int net_uint32_t;
+typedef unsigned long long net_uint64_t;
 
 /* Protocol version */
 #define PROTOCOL_VERSION_MAJOR 2
@@ -288,36 +289,36 @@ typedef enum msg_type {
 
 /* Message header (fixed size) */
 typedef struct msg_header {
-    uint8_t version;
-    uint8_t type;
-    uint8_t flags;
-    uint8_t reserved;
-    uint32_t sequence;
-    uint32_t length;
-    uint32_t checksum;
+    net_uint8_t version;
+    net_uint8_t type;
+    net_uint8_t flags;
+    net_uint8_t reserved;
+    net_uint32_t sequence;
+    net_uint32_t length;
+    net_uint32_t checksum;
 } msg_header_t;
 
 /* Connection request */
 typedef struct connect_request {
     msg_header_t header;
     char client_id[64];
-    uint16_t port;
-    uint16_t padding;
-    uint32_t capabilities;
+    net_uint16_t port;
+    net_uint16_t padding;
+    net_uint32_t capabilities;
 } connect_request_t;
 
 /* Data message with variable payload */
 typedef struct data_message {
     msg_header_t header;
-    uint32_t channel_id;
-    uint32_t fragment_offset;
-    uint8_t payload[];  /* Flexible array member */
+    net_uint32_t channel_id;
+    net_uint32_t fragment_offset;
+    net_uint8_t payload[];  /* Flexible array member */
 } data_message_t;
 
 /* Error response */
 typedef struct error_response {
     msg_header_t header;
-    uint32_t error_code;
+    net_uint32_t error_code;
     char message[256];
 } error_response_t;
 
@@ -347,11 +348,11 @@ typedef struct callbacks {
 } callbacks_t;
 
 /* API functions */
-connection_t* conn_create(const char* host, uint16_t port);
+connection_t* conn_create(const char* host, net_uint16_t port);
 void conn_destroy(connection_t* conn);
 int conn_connect(connection_t* conn, const callbacks_t* callbacks);
 int conn_disconnect(connection_t* conn);
-int conn_send(connection_t* conn, uint32_t channel, const void* data, uint32_t length);
+int conn_send(connection_t* conn, net_uint32_t channel, const void* data, net_uint32_t length);
 int conn_poll(connection_t* conn, int timeout_ms);
 int conn_is_connected(const connection_t* conn);
 """
