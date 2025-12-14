@@ -124,47 +124,58 @@ def validate_cython_compiles(
         header_only = True
 
     # Get compile flags from pkg-config
-    cflags = ""
-    libs = ""
+    # Note: We keep pkg-config output as strings and split them with shlex
+    # But we keep paths we construct ourselves as lists to avoid shlex mangling
+    # backslashes on Windows
+    pkg_cflags: list[str] = []
+    pkg_libs: list[str] = []
     if pkg_config:
         try:
-            cflags = subprocess.check_output(
+            cflags_str = subprocess.check_output(
                 ["pkg-config", "--cflags", pkg_config],
                 text=True,
                 stderr=subprocess.DEVNULL,
             ).strip()
-            libs = subprocess.check_output(
+            libs_str = subprocess.check_output(
                 ["pkg-config", "--libs", pkg_config],
                 text=True,
                 stderr=subprocess.DEVNULL,
             ).strip()
+            pkg_cflags = shlex.split(cflags_str)
+            pkg_libs = shlex.split(libs_str)
         except (subprocess.CalledProcessError, FileNotFoundError) as e:
             raise RuntimeError(f"pkg-config failed for {pkg_config}: {e}") from e
 
-    # Add include dirs
+    # Add include dirs as separate list items (not string concatenation)
+    # to preserve Windows backslashes
+    extra_include_flags: list[str] = []
     if include_dirs:
         for d in include_dirs:
-            cflags += f" -I{d}"
+            extra_include_flags.append(f"-I{d}")
 
     # Get Python flags for extension modules
+    python_cflags: list[str] = []
+    python_ldflags: list[str] = []
     try:
-        python_cflags = subprocess.check_output(
+        python_cflags_str = subprocess.check_output(
             [sys.executable + "-config", "--cflags"],
             text=True,
             stderr=subprocess.DEVNULL,
         ).strip()
-        python_ldflags = subprocess.check_output(
+        python_ldflags_str = subprocess.check_output(
             [sys.executable + "-config", "--ldflags"],
             text=True,
             stderr=subprocess.DEVNULL,
         ).strip()
+        python_cflags = shlex.split(python_cflags_str)
+        python_ldflags = shlex.split(python_ldflags_str)
     except (subprocess.CalledProcessError, FileNotFoundError):
         # Fallback for systems without python3-config
         # Use sysconfig to get the correct include path (works in venvs too)
         import sysconfig
 
-        python_cflags = f"-I{sysconfig.get_path('include')}"
-        python_ldflags = ""
+        python_cflags = [f"-I{sysconfig.get_path('include')}"]
+        python_ldflags = []
 
     # Compile
     compiler = "c++" if cplus else "cc"
@@ -182,8 +193,9 @@ def validate_cython_compiles(
                 str(tmp_path / "test.o"),
                 "-fPIC",
             ]
-            + shlex.split(cflags)
-            + shlex.split(python_cflags)
+            + extra_include_flags
+            + pkg_cflags
+            + python_cflags
         )
         result = subprocess.run(cmd, capture_output=True, text=True)
         if result.returncode != 0:
@@ -213,10 +225,11 @@ def validate_cython_compiles(
                 "-o",
                 str(so_file),
             ]
-            + shlex.split(cflags)
-            + shlex.split(libs)
-            + shlex.split(python_cflags)
-            + shlex.split(python_ldflags)
+            + extra_include_flags
+            + pkg_cflags
+            + pkg_libs
+            + python_cflags
+            + python_ldflags
         )
         result = subprocess.run(cmd, capture_output=True, text=True)
         if result.returncode != 0:
