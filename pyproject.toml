@@ -33,7 +33,7 @@ dependencies = ["Click", "pycparser", "clang2"]
 
 [project.optional-dependencies]
 # Testing
-test = ["pytest", "cython"]
+test = ["pytest", "pytest-timeout", "cython"]
 
 # Linting and type checking
 lint = ["ruff", "mypy", "pre-commit"]

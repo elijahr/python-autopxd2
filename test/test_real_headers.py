@@ -669,6 +669,7 @@ class TestHeaderDiscovery:
 class TestFullCompilation:
     """Tests that compile generated pxd against real libraries."""
 
+    @pytest.mark.timeout(300)  # 5 minute timeout per library test
     @pytest.mark.parametrize("library", LIBRARY_CONFIGS.keys())
     def test_library_compiles(self, library, libclang_backend, tmp_path, request):
         """Generate pxd from system header and compile against library."""
