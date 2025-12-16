@@ -179,6 +179,8 @@ LIBRARY_CONFIGS = {
         "smoke_test": None,  # Template library - compile-only
         "cplus": True,
         "std": "c++17",
+        # boost headers are very slow to parse - skip in CI
+        "skip_reason": "boost header parsing takes >5 minutes",
         # boost uses typename dependent types that Cython can't parse
         "pxd_only": True,
     },
