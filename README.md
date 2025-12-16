@@ -15,11 +15,42 @@ autopxd2 parses C header files and generates Cython `.pxd` files, enabling you t
 **Key features:**
 
 - Generates complete `.pxd` files from C/C++ headers
-- Full C++ support with libclang backend (classes, templates, namespaces)
+- Full C++ support with libclang backend
 - Automatic system include path detection
-- Extracts `#define` macros as typed constants
 - Auto-generates `cimport` statements for standard library types
 - Cross-platform support (Linux, macOS, Windows)
+
+## Supported Features
+
+### C Features
+
+| Feature | pycparser | libclang |
+|---------|:---------:|:--------:|
+| Structs and unions | ✓ | ✓ |
+| Enums (with expressions) | ✓ | ✓ |
+| Typedefs | ✓ | ✓ |
+| Function declarations | ✓ | ✓ |
+| Function pointers | ✓ | ✓ |
+| Arrays (fixed and flexible) | ✓ | ✓ |
+| Pointers and const qualifiers | ✓ | ✓ |
+| Forward declarations | ✓ | ✓ |
+| Anonymous structs/unions | ✓ | ✓ |
+| Bit fields | ✓ | ✓ |
+| `#define` macros (int, float, string) | | ✓ |
+| Circular type dependencies | | ✓ |
+
+### C++ Features (libclang only)
+
+| Feature | Supported |
+|---------|:---------:|
+| Classes with fields and methods | ✓ |
+| Namespaces (including nested) | ✓ |
+| Templates with type parameters | ✓ |
+| Template specializations | ✓ |
+| Operator overloading (renamed for Cython) | ✓ |
+| References and const references | ✓ |
+| Inheritance declarations | ✓ |
+| Static methods and fields | ✓ |
 
 ## Installation
 
