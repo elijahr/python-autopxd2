@@ -1253,6 +1253,12 @@ class ClangASTConverter:
 
         underlying = cursor.underlying_typedef_type
 
+        # Skip typedefs that reference compiler builtin types
+        # These are internal to GCC/Clang and cannot be used in Cython
+        underlying_spelling = underlying.spelling
+        if underlying_spelling.startswith("__builtin_"):
+            return
+
         # Special handling for struct/union typedefs that have inline definitions
         # e.g., typedef struct foo { int x; } foo_t;
         # We need to emit the struct definition first, then the typedef

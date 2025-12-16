@@ -91,6 +91,10 @@ jobs:
           # Install clang2 package version matching system libclang
           uv pip install --system "clang2==${LLVM_MAJOR_VERSION}.*"
 
+      - name: Install numpy for test headers (Linux)
+        if: runner.os == 'Linux'
+        run: uv pip install --system numpy
+
       - name: Test all backends (Linux)
         if: runner.os == 'Linux'
         run: pytest ./test
