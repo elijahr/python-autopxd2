@@ -6,7 +6,7 @@ struct counter_state {
     atomic_long total;
 };
 ---
-cdef extern from "atomic_typedef.cpptest":
+cdef extern from "atomic_typedef.test":
 
     ctypedef int atomic_int
 
