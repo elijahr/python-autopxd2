@@ -11,8 +11,6 @@ cdef extern from "jansson.h":
 
     ctypedef void* (*json_malloc_t)(size_t)
 
-    ctypedef void* (*json_realloc_t)(void*, size_t)
-
     ctypedef void (*json_free_t)(void*)
 
 
@@ -297,10 +295,6 @@ cdef extern from "jansson.h":
     void json_set_alloc_funcs(json_malloc_t malloc_fn, json_free_t free_fn)
 
     void json_get_alloc_funcs(json_malloc_t* malloc_fn, json_free_t* free_fn)
-
-    void json_set_alloc_funcs2(json_malloc_t malloc_fn, json_realloc_t realloc_fn, json_free_t free_fn)
-
-    void json_get_alloc_funcs2(json_malloc_t* malloc_fn, json_realloc_t* realloc_fn, json_free_t* free_fn)
 
     const char* jansson_version_str()
 

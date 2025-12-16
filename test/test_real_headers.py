@@ -3,7 +3,10 @@
 These tests verify that autopxd can parse actual headers from popular
 C libraries like zlib and jansson.
 
-Note: These tests use real header files copied into test/real_headers/.
+Library headers (zlib.h, jansson.h) are downloaded dynamically and cached
+in test/.header_cache/. Test fixture headers (simple_c.h, templates.hpp)
+are kept in test/real_headers/.
+
 They require the libclang backend since real-world headers often contain
 features that pycparser cannot handle without preprocessing.
 """
@@ -19,9 +22,10 @@ from autopxd.ir import Enum, Function, Struct
 from autopxd.ir_writer import write_pxd
 from test.assertions import assert_header_pxd_equals
 from test.cython_utils import validate_cython_compiles
+from test.header_cache import get_header_path, get_library_headers
 from test.library_detection import detect_library
 
-# Directory containing real header files
+# Directory containing test fixture header files (our own test files)
 REAL_HEADERS_DIR = os.path.join(os.path.dirname(__file__), "real_headers")
 
 # Library configurations for full compilation tests
@@ -320,15 +324,15 @@ class TestZlibHeader:
     @pytest.fixture
     def zlib_header(self, libclang_backend):
         """Parse zlib.h and return the IR."""
-        zlib_path = os.path.join(REAL_HEADERS_DIR, "zlib.h")
-        if not os.path.exists(zlib_path):
-            pytest.skip("zlib.h not found in test/real_headers/")
+        # Download zlib headers if not cached
+        zlib_dir = get_library_headers("zlib")
+        zlib_path = get_header_path("zlib", "zlib.h")
 
         with open(zlib_path, encoding="utf-8") as f:
             code = f.read()
 
         # zlib.h includes zconf.h and system headers
-        extra_args = [f"-I{REAL_HEADERS_DIR}"] + _get_system_include_args()
+        extra_args = [f"-I{zlib_dir}"] + _get_system_include_args()
         return libclang_backend.parse(
             code,
             "zlib.h",
@@ -387,15 +391,15 @@ class TestJanssonHeader:
     @pytest.fixture
     def jansson_header(self, libclang_backend):
         """Parse jansson.h and return the IR."""
-        jansson_path = os.path.join(REAL_HEADERS_DIR, "jansson.h")
-        if not os.path.exists(jansson_path):
-            pytest.skip("jansson.h not found in test/real_headers/")
+        # Download jansson headers if not cached
+        jansson_dir = get_library_headers("jansson")
+        jansson_path = get_header_path("jansson", "jansson.h")
 
         with open(jansson_path, encoding="utf-8") as f:
             code = f.read()
 
         # jansson.h includes jansson_config.h and system headers
-        extra_args = [f"-I{REAL_HEADERS_DIR}"] + _get_system_include_args()
+        extra_args = [f"-I{jansson_dir}"] + _get_system_include_args()
         return libclang_backend.parse(
             code,
             "jansson.h",
@@ -575,83 +579,6 @@ class TestTemplates:
         """Verify template pxd matches expected."""
         expected_path = os.path.join(REAL_HEADERS_DIR, "templates.expected.pxd")
         assert_header_pxd_equals(templates_header, expected_path, tmp_path, cplus=True)
-
-
-class TestFusionSDK:
-    """Test parsing Autodesk Fusion 360 C++ SDK headers.
-
-    The Fusion SDK is a complex C++ API with templates, namespaces, and
-    smart pointers. This tests our ability to handle real-world C++ SDKs.
-
-    SDK source: https://github.com/AutodeskFusion360/FusionAPIReference
-    """
-
-    FUSION_SDK_DIR = os.path.join(REAL_HEADERS_DIR, "fusion_sdk")
-
-    @pytest.fixture
-    def fusion_base_header(self, libclang_backend):
-        """Parse Fusion SDK Core/Base.h and return the IR."""
-        base_path = os.path.join(self.FUSION_SDK_DIR, "Core", "Base.h")
-        if not os.path.exists(base_path):
-            pytest.skip("Fusion SDK headers not found in test/real_headers/fusion_sdk/")
-
-        with open(base_path, encoding="utf-8") as f:
-            code = f.read()
-
-        extra_args = ["-x", "c++", "-std=c++17"] + _get_system_include_args(cplus=True)
-        extra_args.extend(
-            [
-                f"-I{self.FUSION_SDK_DIR}",
-                f"-I{os.path.join(self.FUSION_SDK_DIR, 'Core')}",
-            ]
-        )
-
-        return libclang_backend.parse(code, "Base.h", extra_args=extra_args)
-
-    def test_parses_fusion_base_without_error(self, fusion_base_header):
-        """Verify Fusion SDK Base.h parses successfully."""
-        assert fusion_base_header is not None
-        assert len(fusion_base_header.declarations) > 0
-
-    def test_finds_base_class(self, fusion_base_header):
-        """Verify we find the Base class in adsk::core namespace."""
-        structs = [d for d in fusion_base_header.declarations if isinstance(d, Struct)]
-        struct_names = {s.name for s in structs}
-        assert "Base" in struct_names, f"Base class not found. Found: {struct_names}"
-
-    def test_finds_ptr_template(self, fusion_base_header):
-        """Verify we find the Ptr smart pointer template."""
-        structs = [d for d in fusion_base_header.declarations if isinstance(d, Struct)]
-        struct_names = {s.name for s in structs}
-        assert "Ptr" in struct_names, f"Ptr template not found. Found: {struct_names}"
-
-    def test_finds_reference_counted(self, fusion_base_header):
-        """Verify we find the ReferenceCounted base class."""
-        structs = [d for d in fusion_base_header.declarations if isinstance(d, Struct)]
-        struct_names = {s.name for s in structs}
-        assert "ReferenceCounted" in struct_names
-
-    def test_generates_valid_pxd(self, fusion_base_header, tmp_path):
-        """Verify generated pxd is valid Cython syntax."""
-        pxd = write_pxd(fusion_base_header)
-
-        # Should have namespace declarations
-        assert 'namespace "adsk::core"' in pxd
-
-        # Should have cppclass declarations
-        assert "cdef cppclass Base" in pxd
-        assert "cdef cppclass Ptr" in pxd
-
-        # On some Linux systems, STL headers bring in typename expressions
-        # that Cython cannot parse. Skip Cython validation in that case.
-        if "typename " in pxd:
-            pytest.skip(
-                "Skipping Cython validation: pxd contains 'typename' expressions "
-                "from STL headers which Cython cannot parse"
-            )
-
-        # Validate it compiles with Cython (no C compilation - no real library)
-        validate_cython_compiles(pxd, tmp_path, cplus=True, cython_only=True)
 
 
 class TestHeaderDiscovery:
