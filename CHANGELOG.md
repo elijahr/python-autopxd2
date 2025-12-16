@@ -7,17 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.2.0] - 2025-12-16
+
 ### Added
+- **Umbrella header support** - New CLI options for parsing library-wide "umbrella" headers that aggregate sub-headers:
+  - `--project-prefix` / `-p` - Whitelist paths containing this prefix for recursive parsing
+  - `--no-recursive` - Disable recursive include parsing
+  - `--max-depth` - Limit recursion depth for included headers
+- **C++ template support** - libclang backend now handles C++ templates:
+  - Template class declarations with type parameters (`template<typename T>`)
+  - Template specialization detection with explanatory comments
+  - Non-type template parameters detected with notes (Cython limitation)
+- **Operator aliasing** - C++ operators are renamed to Cython-compatible names (e.g., `operator[]` → `__getitem__`, `operator==` → `__eq__`)
 - **Circular dependency resolution** - Multi-phase output generation that correctly handles circular type dependencies. Libraries like libuv and sqlite3 that have function pointer typedefs referencing structs now generate valid Cython.
 - **New POSIX stubs** - `sys_un.pxd` (Unix domain sockets), `semaphore.pxd` (POSIX semaphores), `regex.pxd` (POSIX regex), `sys_statvfs.pxd` (filesystem stats).
 - **C11 stdatomic stub** - `stdatomic.pxd` provides atomic types and memory ordering for C11 code.
 - **C++ stubs** - `cppthread.pxd` (std::thread), `cppchrono.pxd` (std::chrono), `cppfilesystem.pxd` (std::filesystem).
-- **Template specialization detection** - Partial template specializations and non-type template parameters are now detected and emit explanatory comments (Cython cannot represent these features directly).
-- **Meta-header support** - Headers that only contain `#include` directives are detected and recursively parsed to gather all declarations.
 
 ### Changed
-- **Compile-verified tests** - Test suite now performs actual C compilation to verify generated pxd files produce valid code. This catches type definition issues that were previously hidden.
-- **Improved test infrastructure** - Assertion helpers write header content to temp directories so C compiler can find included files.
+- **clang2 is now optional** - The `clang2` package is no longer a hard dependency. When the libclang backend is requested but clang2 is not installed, autopxd2 detects your system's LLVM version and provides the exact install command (e.g., `pip install 'clang2==18.*'`).
+- **Improved installation docs** - Added one-liner install commands for matching clang2 to your LLVM version.
+
+### Fixed
+- **`__builtin_va_list` filtering** - GCC/Clang internal types starting with `__builtin_` are now filtered from generated pxd output, fixing Cython compilation errors when parsing system headers.
+- **Windows path handling** - Fixed backslash stripping in compilation paths that caused test failures on Windows.
+- **Template specialization LLVM compatibility** - Added fallback detection for template specializations that works across LLVM versions 16-21.
 
 ## [3.1.1] - 2025-12-11
 
@@ -150,7 +164,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - macOS support
 
-[Unreleased]: https://github.com/elijahr/python-autopxd2/compare/v3.1.1...HEAD
+[Unreleased]: https://github.com/elijahr/python-autopxd2/compare/v3.2.0...HEAD
+[3.2.0]: https://github.com/elijahr/python-autopxd2/compare/v3.1.1...v3.2.0
 [3.1.1]: https://github.com/elijahr/python-autopxd2/compare/v3.1.0...v3.1.1
 [3.1.0]: https://github.com/elijahr/python-autopxd2/compare/v3.0.0...v3.1.0
 [3.0.0]: https://github.com/elijahr/python-autopxd2/compare/v2.5.0...v3.0.0

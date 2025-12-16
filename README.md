@@ -69,6 +69,9 @@ Options:
   --std <std>                [libclang] Language standard (e.g., c11, c++17).
   --clang-arg <arg>          [libclang] Pass argument to clang.
   --no-default-includes      [libclang] Disable system include auto-detection.
+  -p, --project-prefix       [libclang] Whitelist paths for umbrella headers.
+  --no-recursive             [libclang] Disable recursive include parsing.
+  --max-depth <n>            [libclang] Max depth for recursive includes.
   -h, --help                 Show this message and exit.
 ```
 
