@@ -24,8 +24,8 @@ autopxd2 parses C header files and generates Cython `.pxd` files, enabling you t
 
 ### C Features
 
-| Feature | pycparser | libclang |
-|---------|:---------:|:--------:|
+| Feature | libclang | pycparser (legacy) |
+|---------|:--------:|:------------------:|
 | Structs and unions | ✓ | ✓ |
 | Enums (with expressions) | ✓ | ✓ |
 | Typedefs | ✓ | ✓ |
@@ -36,8 +36,8 @@ autopxd2 parses C header files and generates Cython `.pxd` files, enabling you t
 | Forward declarations | ✓ | ✓ |
 | Anonymous structs/unions | ✓ | ✓ |
 | Bit fields | ✓ | ✓ |
-| `#define` macros (int, float, string) | | ✓ |
-| Circular type dependencies | | ✓ |
+| `#define` macros (int, float, string) | ✓ | |
+| Circular type dependencies | ✓ | |
 
 ### C++ Features (libclang only)
 
@@ -58,14 +58,16 @@ autopxd2 parses C header files and generates Cython `.pxd` files, enabling you t
 pip install autopxd2
 ```
 
-This installs the pycparser backend (C99 support). For **C++ support**, install the clang2 package matching your system's LLVM version:
+**Recommended:** Install the libclang backend for full C/C++ support. The `clang2` package version must match your system's LLVM version:
 
 ```shell
 # One-liner: detect LLVM version and install matching clang2
 pip install "clang2==$(llvm-config --version | cut -d. -f1).*"
 ```
 
-See the [installation docs](https://elijahr.github.io/python-autopxd2/getting-started/installation/) for detailed libclang setup instructions.
+Without `clang2`, autopxd2 falls back to the legacy pycparser backend (C99 only, no macros, no circular dependency handling).
+
+See the [installation docs](https://elijahr.github.io/python-autopxd2/getting-started/installation/) for platform-specific LLVM setup.
 
 ## Quick Start
 
