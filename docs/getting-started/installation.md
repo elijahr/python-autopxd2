@@ -1,20 +1,26 @@
 # Installation
 
-## Basic Installation
+## Recommended Installation
 
-Install autopxd2 from PyPI:
+Install autopxd2 and the libclang backend for full C/C++ support:
 
 ```bash
 pip install autopxd2
 ```
 
-This installs the package with the **pycparser** backend (pure Python C99 parser).
+Then install the `clang2` package matching your system's LLVM version:
 
-For **C++ support**, you also need the libclang backend - see [libclang Installation](#libclang-installation-c-support) below.
+```bash
+# One-liner: detect LLVM version and install matching clang2
+pip install "clang2==$(llvm-config --version | cut -d. -f1).*"
+```
 
-!!! note "Backend Selection"
-    autopxd2 automatically uses libclang if available, falling back to pycparser
-    otherwise. Use `autopxd --list-backends` to see which backends are available.
+See [libclang Setup](#libclang-setup) below for platform-specific LLVM installation.
+
+!!! warning "Without clang2"
+    Without the `clang2` package, autopxd2 falls back to the legacy **pycparser** backend,
+    which only supports C99 and lacks macro extraction, circular dependency handling,
+    and C++ support. **libclang is strongly recommended for all use cases.**
 
 ## Development Installation
 
@@ -36,9 +42,9 @@ docker run --rm -v $(pwd):/work -w /work ghcr.io/elijahr/python-autopxd2 autopxd
 
 See [Docker Usage](docker.md) for more details.
 
-## libclang Installation (C++ Support)
+## libclang Setup
 
-The libclang backend requires:
+The libclang backend (recommended for all use cases) requires:
 
 1. The system libclang library (LLVM)
 2. The Python `clang2` package matching your LLVM version

@@ -2,25 +2,22 @@
 
 **Automatically generate Cython pxd files from C/C++ headers.**
 
-autopxd2 parses C header files and generates Cython `.pxd` declaration files, enabling you to call C code from Python with minimal manual effort.
+autopxd2 parses C/C++ header files and generates Cython `.pxd` declaration files, enabling you to call C code from Python with minimal manual effort.
 
 ## Features
 
-- **Automatic pxd generation** - Convert C headers to Cython declarations
-- **Multiple parser backends** - pycparser (pure Python) and libclang (C++ support)
-- **Docker support** - Generate headers without installing clang locally
-- **CLI and Python API** - Use from command line or integrate into your build
+- **Full C/C++ support** - Structs, enums, typedefs, functions, classes, templates, namespaces
+- **Macro extraction** - `#define` constants as typed declarations
+- **Automatic imports** - Generates `cimport` statements for standard library types
+- **Docker support** - Generate headers without installing LLVM locally
 
 ## Quick Example
 
 ```bash
-# Generate pxd from a C header
+# Generate pxd from a C/C++ header
 autopxd myheader.h > myheader.pxd
 
-# Use libclang backend for C++ support (requires clang)
-autopxd --backend libclang myheader.hpp > myheader.pxd
-
-# Or use Docker for libclang without local installation
+# Or use Docker without local LLVM installation
 docker run --rm -v $(pwd):/work -w /work ghcr.io/elijahr/python-autopxd2 autopxd myheader.h
 ```
 
@@ -28,10 +25,12 @@ docker run --rm -v $(pwd):/work -w /work ghcr.io/elijahr/python-autopxd2 autopxd
 
 ```bash
 pip install autopxd2
+
+# Install clang2 matching your LLVM version (recommended)
+pip install "clang2==$(llvm-config --version | cut -d. -f1).*"
 ```
 
-The libclang backend is used automatically if your system has libclang installed.
-See [Installation Guide](getting-started/installation.md) for setting up libclang.
+See [Installation Guide](getting-started/installation.md) for platform-specific LLVM setup.
 
 ## Next Steps
 

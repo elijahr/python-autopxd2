@@ -1,34 +1,12 @@
 # Parser Backends
 
-autopxd2 supports multiple parser backends for converting C/C++ headers to Cython declarations.
+autopxd2 supports two parser backends. **libclang is strongly recommended** for all use cases.
 
 ## Available Backends
 
-### pycparser (Default)
+### libclang (Recommended)
 
-A pure Python C99 parser. Works out of the box with no external dependencies.
-
-**Pros:**
-
-- No external dependencies
-- Works on all platforms
-- Fast for simple headers
-
-**Cons:**
-
-- C99 only (no C++ support)
-- Requires preprocessed code (no comments or macros in input)
-- May struggle with complex headers
-
-**Usage:**
-
-```bash
-autopxd --backend pycparser myheader.h
-```
-
-### libclang
-
-Uses LLVM's clang library for parsing. Provides the same parser used by actual compilers.
+Uses LLVM's clang library for parsing. Provides the same parser used by production compilers.
 
 **Pros:**
 
@@ -76,15 +54,39 @@ You can still add additional include directories:
 autopxd -I /my/project/include myheader.h
 ```
 
+### pycparser (Legacy)
+
+A pure Python C99 parser. Falls back to this if libclang is not available.
+
+!!! warning "Legacy Backend"
+    pycparser is maintained for backwards compatibility but is **not recommended**.
+    It lacks C++ support, macro extraction, and circular dependency handling.
+
+**Cons:**
+
+- C99 only (no C++ support)
+- No macro extraction
+- No circular dependency handling
+- Requires preprocessed code
+- May struggle with complex headers
+
+**Usage:**
+
+```bash
+autopxd --backend pycparser myheader.h
+```
+
 ## Choosing a Backend
+
+**Use libclang for everything.** The only reason to use pycparser is if you cannot install LLVM on your system.
 
 | Use Case | Recommended Backend |
 |----------|---------------------|
-| Simple C headers | pycparser |
+| C headers | libclang |
 | C++ headers | libclang |
-| Headers with complex macros | libclang |
-| Cross-platform without dependencies | pycparser |
-| Production use with complex libraries | libclang |
+| Headers with macros | libclang |
+| Complex library headers | libclang |
+| Cannot install LLVM | pycparser (fallback) |
 
 ## Backend Comparison
 
