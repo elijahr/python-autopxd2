@@ -39,6 +39,7 @@ from autopxd.ir import (
 _BACKEND_REGISTRY: dict[str, type[ParserBackend]] = {}
 _DEFAULT_BACKEND: str | None = None
 _BACKENDS_LOADED: bool = False  # Track if we've tried to load all backends
+_LIBCLANG_IMPORT_ERROR: str | None = None  # Store libclang import error for better messages
 
 
 def register_backend(name: str, backend_class: type[ParserBackend], is_default: bool = False) -> None:
@@ -145,6 +146,10 @@ def get_backend(name: str | None = None) -> ParserBackend:
         name = _DEFAULT_BACKEND
 
     if name not in _BACKEND_REGISTRY:
+        # Provide helpful error for libclang if we know why it failed
+        if name == "libclang" and _LIBCLANG_IMPORT_ERROR:
+            raise ValueError(_LIBCLANG_IMPORT_ERROR)
+
         available = ", ".join(_BACKEND_REGISTRY.keys()) or "(none)"
         raise ValueError(f"Unknown backend: {name!r}. Available: {available}")
 
@@ -176,9 +181,59 @@ def get_default_backend() -> str:
     return _DEFAULT_BACKEND
 
 
+def _detect_system_clang_version() -> str | None:
+    """Detect the system libclang/LLVM version.
+
+    :returns: Version string like "18" or None if not detected.
+    """
+    import shutil
+    import subprocess
+
+    # Try llvm-config first (most reliable)
+    llvm_config = shutil.which("llvm-config")
+    if llvm_config:
+        try:
+            result = subprocess.run(
+                [llvm_config, "--version"],
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+            if result.returncode == 0:
+                version = result.stdout.strip()
+                # Extract major version (e.g., "18.1.0" -> "18")
+                major = version.split(".")[0]
+                if major.isdigit():
+                    return major
+        except (subprocess.SubprocessError, OSError):
+            pass
+
+    # Try clang --version as fallback
+    clang = shutil.which("clang")
+    if clang:
+        try:
+            result = subprocess.run(
+                [clang, "--version"],
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+            if result.returncode == 0:
+                # Parse "clang version X.Y.Z" or "Apple clang version X.Y.Z"
+                import re
+
+                match = re.search(r"clang version (\d+)", result.stdout)
+                if match:
+                    return match.group(1)
+        except (subprocess.SubprocessError, OSError):
+            pass
+
+    return None
+
+
 def _ensure_backends_loaded() -> None:
     """Lazily load backend modules to populate the registry."""
-    global _BACKENDS_LOADED  # pylint: disable=global-statement
+    global _BACKENDS_LOADED, _LIBCLANG_IMPORT_ERROR  # pylint: disable=global-statement
 
     if _BACKENDS_LOADED:
         return  # Already tried to load all backends
@@ -196,10 +251,25 @@ def _ensure_backends_loaded() -> None:
     except ImportError:
         pass
 
-    # Try to import libclang backend (may fail if clang not installed)
+    # Try to import libclang backend (may fail if clang2 not installed)
     try:
         from autopxd.backends import (  # noqa: F401
             libclang_backend,
         )
-    except ImportError:
-        pass
+    except ImportError as e:
+        # Store error details for helpful message later
+        if "clang" in str(e).lower() or "No module named 'clang'" in str(e):
+            version = _detect_system_clang_version()
+            if version:
+                _LIBCLANG_IMPORT_ERROR = (
+                    f"libclang backend requires the clang2 package.\n"
+                    f"Detected LLVM version {version} on your system.\n"
+                    f"Install with: pip install 'clang2=={version}.*'"
+                )
+            else:
+                _LIBCLANG_IMPORT_ERROR = (
+                    "libclang backend requires the clang2 package.\n"
+                    "Install with: pip install clang2\n"
+                    "Note: clang2 version must match your system's LLVM version.\n"
+                    "Example: pip install 'clang2==18.*' for LLVM 18"
+                )

@@ -29,9 +29,14 @@ classifiers = [
   "Programming Language :: C++",
 ]
 requires-python = ">=3.10"
-dependencies = ["Click", "pycparser", "clang2"]
+dependencies = ["Click", "pycparser"]
 
 [project.optional-dependencies]
+# libclang backend (C++ support)
+# Note: clang2 version must match system libclang version
+# e.g., for LLVM 18: pip install 'autopxd2[libclang]' clang2==18.*
+libclang = ["clang2"]
+
 # Testing
 test = ["pytest", "pytest-timeout", "cython"]
 
