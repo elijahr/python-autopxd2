@@ -2,12 +2,14 @@
 
 import pytest
 
-from autopxd.backends.libclang_backend import LibclangBackend
-from autopxd.ir import Typedef
-from autopxd.ir_writer import write_pxd
-
 # These tests require libclang
 pytestmark = pytest.mark.libclang
+
+# Guard import for when clang2 is not installed
+clang = pytest.importorskip("clang")
+from autopxd.backends.libclang_backend import LibclangBackend  # noqa: E402
+from autopxd.ir import Typedef  # noqa: E402
+from autopxd.ir_writer import write_pxd  # noqa: E402
 
 
 @pytest.fixture

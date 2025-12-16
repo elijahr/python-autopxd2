@@ -27,9 +27,14 @@ autopxd2 parses C header files and generates Cython `.pxd` files, enabling you t
 pip install autopxd2
 ```
 
-This installs both parser backends. The libclang backend (with full C++ support) is used by default if the system libclang library is available; otherwise autopxd2 falls back to the pycparser backend (C99 only).
+This installs the pycparser backend (C99 support). For **C++ support**, install the clang2 package matching your system's LLVM version:
 
-See the [installation docs](https://elijahr.github.io/python-autopxd2/getting-started/installation/) for system libclang setup.
+```shell
+# One-liner: detect LLVM version and install matching clang2
+pip install "clang2==$(llvm-config --version | cut -d. -f1).*"
+```
+
+See the [installation docs](https://elijahr.github.io/python-autopxd2/getting-started/installation/) for detailed libclang setup instructions.
 
 ## Quick Start
 

@@ -8,15 +8,13 @@ Install autopxd2 from PyPI:
 pip install autopxd2
 ```
 
-This installs the package with both parser backends:
+This installs the package with the **pycparser** backend (pure Python C99 parser).
 
-- **libclang** - Full C/C++ support via LLVM (default if system libclang available)
-- **pycparser** - Pure Python C99 parser (fallback)
+For **C++ support**, you also need the libclang backend - see [libclang Installation](#libclang-installation-c-support) below.
 
-!!! note "Automatic Fallback"
-    autopxd2 automatically uses libclang if the system library is available,
-    falling back to pycparser otherwise. Use `autopxd --list-backends` to see
-    which backends are available on your system.
+!!! note "Backend Selection"
+    autopxd2 automatically uses libclang if available, falling back to pycparser
+    otherwise. Use `autopxd --list-backends` to see which backends are available.
 
 ## Development Installation
 
@@ -38,49 +36,99 @@ docker run --rm -v $(pwd):/work -w /work ghcr.io/elijahr/python-autopxd2 autopxd
 
 See [Docker Usage](docker.md) for more details.
 
-## System libclang Installation
+## libclang Installation (C++ Support)
 
-The libclang backend requires both:
+The libclang backend requires:
 
-1. The system libclang library
-2. The Python `clang2` package (included with autopxd2)
+1. The system libclang library (LLVM)
+2. The Python `clang2` package matching your LLVM version
 
 !!! important "Version Matching Required"
-    The Python `clang2` package provides libclang bindings and **must match your system's libclang version**. For example, if you have LLVM 18 installed, you need `clang2==18.*`.
+    The `clang2` Python package **must match your system's LLVM version**.
+    For example, LLVM 18 requires `clang2==18.*`.
+
+### Quick Install (One-Liner)
+
+If you have LLVM already installed, use this one-liner to install the matching clang2 package:
+
+=== "pip"
 
     ```bash
-    # Check your LLVM version
-    llvm-config --version  # e.g., 18.1.3
+    pip install "clang2==$(llvm-config --version | cut -d. -f1).*"
+    ```
 
-    # Install matching Python package
-    pip install "clang2==18.*"
+=== "uv"
+
+    ```bash
+    uv pip install "clang2==$(llvm-config --version | cut -d. -f1).*"
     ```
 
 ### macOS
 
 ```bash
+# Install LLVM (if not already installed)
 brew install llvm
 
-# Install matching Python clang2 package
-LLVM_VERSION=$($(brew --prefix llvm)/bin/llvm-config --version | cut -d. -f1)
-pip install "clang2==${LLVM_VERSION}.*"
+# Install matching clang2 package (one-liner)
+pip install "clang2==$($(brew --prefix llvm)/bin/llvm-config --version | cut -d. -f1).*"
+```
+
+Or with uv:
+
+```bash
+uv pip install "clang2==$($(brew --prefix llvm)/bin/llvm-config --version | cut -d. -f1).*"
 ```
 
 ### Ubuntu/Debian
 
 ```bash
+# Install LLVM (if not already installed)
 sudo apt-get install libclang-dev llvm
 
-# Install matching Python clang2 package
-LLVM_VERSION=$(llvm-config --version | cut -d. -f1)
-pip install "clang2==${LLVM_VERSION}.*"
+# Install matching clang2 package (one-liner)
+pip install "clang2==$(llvm-config --version | cut -d. -f1).*"
+```
+
+Or with uv:
+
+```bash
+uv pip install "clang2==$(llvm-config --version | cut -d. -f1).*"
+```
+
+### Fedora/RHEL
+
+```bash
+# Install LLVM
+sudo dnf install clang-devel llvm
+
+# Install matching clang2 package
+pip install "clang2==$(llvm-config --version | cut -d. -f1).*"
 ```
 
 ### Windows
 
 1. Install LLVM from [releases.llvm.org](https://releases.llvm.org/)
-2. Add LLVM to your PATH
-3. Install matching Python clang2 package: `pip install "clang2==<version>.*"`
+2. Add LLVM `bin` directory to your PATH
+3. Install matching clang2 package:
+
+```powershell
+# Check version first
+llvm-config --version
+
+# Install matching package (replace XX with major version)
+pip install "clang2==XX.*"
+```
+
+### Manual Version Check
+
+If the one-liner doesn't work, check your version manually:
+
+```bash
+llvm-config --version
+# Output: 18.1.3 (means you need clang2==18.*)
+
+pip install "clang2==18.*"
+```
 
 ### Verifying Installation
 
@@ -98,4 +146,14 @@ Available backends:
   pycparser    Legacy C99 parser [available]
 
 Default: libclang
+```
+
+### Troubleshooting
+
+If you try to use the libclang backend without clang2 installed, autopxd2 will detect your LLVM version and show the exact install command:
+
+```
+ValueError: libclang backend requires the clang2 package.
+Detected LLVM version 18 on your system.
+Install with: pip install 'clang2==18.*'
 ```
