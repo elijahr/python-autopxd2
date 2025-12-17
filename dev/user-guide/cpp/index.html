@@ -1180,7 +1180,9 @@
 <p>Class methods are not included in the generated <code>.pxd</code>. Only public data members are extracted.</p>
 <p>For full method support, you'll need to manually add method declarations or use Cython's <code>cppclass</code> syntax.</p>
 <h3 id="templates">Templates<a class="headerlink" href="#templates" title="Permanent link">&para;</a></h3>
-<p>Template classes and functions are not currently supported.</p>
+<p>Template classes are supported through the libclang backend, including primary templates
+and full specializations. See <a href="../backends/#c-template-support-libclang-only">C++ Template Support</a>
+for details.</p>
 <h3 id="overloading">Overloading<a class="headerlink" href="#overloading" title="Permanent link">&para;</a></h3>
 <p>Multiple overloaded functions with the same name may produce conflicts. You may need to manually select which overload to use.</p>
 <h2 id="best-practices">Best Practices<a class="headerlink" href="#best-practices" title="Permanent link">&para;</a></h2>

@@ -929,29 +929,28 @@
 
 <h1 id="autopxd2">autopxd2<a class="headerlink" href="#autopxd2" title="Permanent link">&para;</a></h1>
 <p><strong>Automatically generate Cython pxd files from C/C++ headers.</strong></p>
-<p>autopxd2 parses C header files and generates Cython <code>.pxd</code> declaration files, enabling you to call C code from Python with minimal manual effort.</p>
+<p>autopxd2 parses C/C++ header files and generates Cython <code>.pxd</code> declaration files, enabling you to call C code from Python with minimal manual effort.</p>
 <h2 id="features">Features<a class="headerlink" href="#features" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Automatic pxd generation</strong> - Convert C headers to Cython declarations</li>
-<li><strong>Multiple parser backends</strong> - pycparser (pure Python) and libclang (C++ support)</li>
-<li><strong>Docker support</strong> - Generate headers without installing clang locally</li>
-<li><strong>CLI and Python API</strong> - Use from command line or integrate into your build</li>
+<li><strong>Full C/C++ support</strong> - Structs, enums, typedefs, functions, classes, templates, namespaces</li>
+<li><strong>Macro extraction</strong> - <code>#define</code> constants as typed declarations</li>
+<li><strong>Automatic imports</strong> - Generates <code>cimport</code> statements for standard library types</li>
+<li><strong>Docker support</strong> - Generate headers without installing LLVM locally</li>
 </ul>
 <h2 id="quick-example">Quick Example<a class="headerlink" href="#quick-example" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Generate pxd from a C header</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Generate pxd from a C/C++ header</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>autopxd<span class="w"> </span>myheader.h<span class="w"> </span>&gt;<span class="w"> </span>myheader.pxd
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Use libclang backend for C++ support (requires clang)</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>autopxd<span class="w"> </span>--backend<span class="w"> </span>libclang<span class="w"> </span>myheader.hpp<span class="w"> </span>&gt;<span class="w"> </span>myheader.pxd
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1"># Or use Docker for libclang without local installation</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>-v<span class="w"> </span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>:/work<span class="w"> </span>-w<span class="w"> </span>/work<span class="w"> </span>ghcr.io/elijahr/python-autopxd2<span class="w"> </span>autopxd<span class="w"> </span>myheader.h
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Or use Docker without local LLVM installation</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>-v<span class="w"> </span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>:/work<span class="w"> </span>-w<span class="w"> </span>/work<span class="w"> </span>ghcr.io/elijahr/python-autopxd2<span class="w"> </span>autopxd<span class="w"> </span>myheader.h
 </code></pre></div>
 <h2 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pip<span class="w"> </span>install<span class="w"> </span>autopxd2
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="c1"># Install clang2 matching your LLVM version (recommended)</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;clang2==</span><span class="k">$(</span>llvm-config<span class="w"> </span>--version<span class="w"> </span><span class="p">|</span><span class="w"> </span>cut<span class="w"> </span>-d.<span class="w"> </span>-f1<span class="k">)</span><span class="s2">.*&quot;</span>
 </code></pre></div>
-<p>The libclang backend is used automatically if your system has libclang installed.
-See <a href="getting-started/installation/">Installation Guide</a> for setting up libclang.</p>
+<p>See <a href="getting-started/installation/">Installation Guide</a> for platform-specific LLVM setup.</p>
 <h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="getting-started/installation/">Installation Guide</a> - Detailed installation options</li>

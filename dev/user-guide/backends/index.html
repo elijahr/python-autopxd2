@@ -592,21 +592,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#pycparser-default" class="md-nav__link">
+  <a href="#libclang-recommended" class="md-nav__link">
     <span class="md-ellipsis">
       
-        pycparser (Default)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#libclang" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        libclang
+        libclang (Recommended)
       
     </span>
   </a>
@@ -626,6 +615,23 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="System Include Paths">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pycparser-legacy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        pycparser (Legacy)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -712,6 +718,45 @@
     <span class="md-ellipsis">
       
         Unsupported Macros (silently ignored)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#c-template-support-libclang-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C++ Template Support (libclang only)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="C++ Template Support (libclang only)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#primary-templates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Primary Templates
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#template-specializations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Template Specializations
       
     </span>
   </a>
@@ -1000,21 +1045,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#pycparser-default" class="md-nav__link">
+  <a href="#libclang-recommended" class="md-nav__link">
     <span class="md-ellipsis">
       
-        pycparser (Default)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#libclang" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        libclang
+        libclang (Recommended)
       
     </span>
   </a>
@@ -1034,6 +1068,23 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="System Include Paths">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pycparser-legacy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        pycparser (Legacy)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1132,6 +1183,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#c-template-support-libclang-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C++ Template Support (libclang only)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="C++ Template Support (libclang only)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#primary-templates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Primary Templates
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#template-specializations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Template Specializations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#using-docker-for-libclang" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1174,27 +1264,10 @@
 
 
 <h1 id="parser-backends">Parser Backends<a class="headerlink" href="#parser-backends" title="Permanent link">&para;</a></h1>
-<p>autopxd2 supports multiple parser backends for converting C/C++ headers to Cython declarations.</p>
+<p>autopxd2 supports two parser backends. <strong>libclang is strongly recommended</strong> for all use cases.</p>
 <h2 id="available-backends">Available Backends<a class="headerlink" href="#available-backends" title="Permanent link">&para;</a></h2>
-<h3 id="pycparser-default">pycparser (Default)<a class="headerlink" href="#pycparser-default" title="Permanent link">&para;</a></h3>
-<p>A pure Python C99 parser. Works out of the box with no external dependencies.</p>
-<p><strong>Pros:</strong></p>
-<ul>
-<li>No external dependencies</li>
-<li>Works on all platforms</li>
-<li>Fast for simple headers</li>
-</ul>
-<p><strong>Cons:</strong></p>
-<ul>
-<li>C99 only (no C++ support)</li>
-<li>Requires preprocessed code (no comments or macros in input)</li>
-<li>May struggle with complex headers</li>
-</ul>
-<p><strong>Usage:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>autopxd<span class="w"> </span>--backend<span class="w"> </span>pycparser<span class="w"> </span>myheader.h
-</code></pre></div>
-<h3 id="libclang">libclang<a class="headerlink" href="#libclang" title="Permanent link">&para;</a></h3>
-<p>Uses LLVM's clang library for parsing. Provides the same parser used by actual compilers.</p>
+<h3 id="libclang-recommended">libclang (Recommended)<a class="headerlink" href="#libclang-recommended" title="Permanent link">&para;</a></h3>
+<p>Uses LLVM's clang library for parsing. Provides the same parser used by production compilers.</p>
 <p><strong>Pros:</strong></p>
 <ul>
 <li>Full C++ support (classes, templates, namespaces)</li>
@@ -1212,23 +1285,42 @@
 <li>Function-like macros are not extracted</li>
 </ul>
 <p><strong>Usage:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>autopxd<span class="w"> </span>--backend<span class="w"> </span>libclang<span class="w"> </span>myheader.h
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="c1"># For C++ headers</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>autopxd<span class="w"> </span>--backend<span class="w"> </span>libclang<span class="w"> </span>myheader.hpp
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>autopxd<span class="w"> </span>--backend<span class="w"> </span>libclang<span class="w"> </span>myheader.h
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="c1"># For C++ headers</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>autopxd<span class="w"> </span>--backend<span class="w"> </span>libclang<span class="w"> </span>myheader.hpp
 </code></pre></div>
 <h2 id="system-include-paths">System Include Paths<a class="headerlink" href="#system-include-paths" title="Permanent link">&para;</a></h2>
 <p>The libclang backend automatically detects system include directories by querying the system clang compiler. This means headers like <code>&lt;stddef.h&gt;</code> and <code>&lt;stdint.h&gt;</code> work without requiring manual <code>-I</code> flags.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># This works automatically - system includes are detected</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>autopxd<span class="w"> </span>myheader.h
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># This works automatically - system includes are detected</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>autopxd<span class="w"> </span>myheader.h
 </code></pre></div>
 <p>To disable automatic include detection:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>autopxd<span class="w"> </span>--no-default-includes<span class="w"> </span>myheader.h
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>autopxd<span class="w"> </span>--no-default-includes<span class="w"> </span>myheader.h
 </code></pre></div>
 <p>You can still add additional include directories:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>autopxd<span class="w"> </span>-I<span class="w"> </span>/my/project/include<span class="w"> </span>myheader.h
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>autopxd<span class="w"> </span>-I<span class="w"> </span>/my/project/include<span class="w"> </span>myheader.h
+</code></pre></div>
+<h3 id="pycparser-legacy">pycparser (Legacy)<a class="headerlink" href="#pycparser-legacy" title="Permanent link">&para;</a></h3>
+<p>A pure Python C99 parser. Falls back to this if libclang is not available.</p>
+<div class="admonition warning">
+<p class="admonition-title">Legacy Backend</p>
+<p>pycparser is maintained for backwards compatibility but is <strong>not recommended</strong>.
+It lacks C++ support, macro extraction, and circular dependency handling.</p>
+</div>
+<p><strong>Cons:</strong></p>
+<ul>
+<li>C99 only (no C++ support)</li>
+<li>No macro extraction</li>
+<li>No circular dependency handling</li>
+<li>Requires preprocessed code</li>
+<li>May struggle with complex headers</li>
+</ul>
+<p><strong>Usage:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>autopxd<span class="w"> </span>--backend<span class="w"> </span>pycparser<span class="w"> </span>myheader.h
 </code></pre></div>
 <h2 id="choosing-a-backend">Choosing a Backend<a class="headerlink" href="#choosing-a-backend" title="Permanent link">&para;</a></h2>
+<p><strong>Use libclang for everything.</strong> The only reason to use pycparser is if you cannot install LLVM on your system.</p>
 <table>
 <thead>
 <tr>
@@ -1238,24 +1330,24 @@
 </thead>
 <tbody>
 <tr>
-<td>Simple C headers</td>
-<td>pycparser</td>
+<td>C headers</td>
+<td>libclang</td>
 </tr>
 <tr>
 <td>C++ headers</td>
 <td>libclang</td>
 </tr>
 <tr>
-<td>Headers with complex macros</td>
+<td>Headers with macros</td>
 <td>libclang</td>
 </tr>
 <tr>
-<td>Cross-platform without dependencies</td>
-<td>pycparser</td>
+<td>Complex library headers</td>
+<td>libclang</td>
 </tr>
 <tr>
-<td>Production use with complex libraries</td>
-<td>libclang</td>
+<td>Cannot install LLVM</td>
+<td>pycparser (fallback)</td>
 </tr>
 </tbody>
 </table>
@@ -1334,22 +1426,76 @@
 <li><strong>String concatenation:</strong> <code>#define CONCAT "hello" "world"</code></li>
 </ul>
 <p>The pycparser backend does not extract macros since it requires preprocessed input.</p>
+<h2 id="c-template-support-libclang-only">C++ Template Support (libclang only)<a class="headerlink" href="#c-template-support-libclang-only" title="Permanent link">&para;</a></h2>
+<p>The libclang backend supports C++ templates, including primary templates and full specializations.</p>
+<h3 id="primary-templates">Primary Templates<a class="headerlink" href="#primary-templates" title="Permanent link">&para;</a></h3>
+<p>C++ class templates with type parameters are translated to Cython's template syntax:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">T</span><span class="o">&gt;</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">Container</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="k">public</span><span class="o">:</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="w">    </span><span class="n">T</span><span class="w"> </span><span class="n">value</span><span class="p">;</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="w">    </span><span class="n">T</span><span class="w"> </span><span class="nf">get</span><span class="p">();</span>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="nf">set</span><span class="p">(</span><span class="n">T</span><span class="w"> </span><span class="n">v</span><span class="p">);</span>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="p">};</span>
+</code></pre></div>
+<p>Generates:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="k">cdef</span><span class="w"> </span><span class="kt">cppclass</span> <span class="kt">Container</span>[<span class="kt">T</span>]<span class="p">:</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>    <span class="n">T</span> <span class="n">value</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>    <span class="n">T</span> <span class="n">get</span><span class="p">()</span>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>    <span class="n">void</span> <span class="nb">set</span><span class="p">(</span><span class="n">T</span> <span class="n">v</span><span class="p">)</span>
+</code></pre></div>
+<p>Multiple type parameters are supported:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">K</span><span class="p">,</span><span class="w"> </span><span class="k">typename</span><span class="w"> </span><span class="nc">V</span><span class="o">&gt;</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">Map</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="k">public</span><span class="o">:</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="w">    </span><span class="n">V</span><span class="w"> </span><span class="n">lookup</span><span class="p">(</span><span class="n">K</span><span class="w"> </span><span class="n">key</span><span class="p">);</span>
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="nf">insert</span><span class="p">(</span><span class="n">K</span><span class="w"> </span><span class="n">key</span><span class="p">,</span><span class="w"> </span><span class="n">V</span><span class="w"> </span><span class="n">value</span><span class="p">);</span>
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a><span class="p">};</span>
+</code></pre></div>
+<p>Generates:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="k">cdef</span><span class="w"> </span><span class="kt">cppclass</span> <span class="kt">Map</span>[<span class="nf">K</span><span class="p">,</span> <span class="kt">V</span>]<span class="p">:</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>    <span class="n">V</span> <span class="n">lookup</span><span class="p">(</span><span class="n">K</span> <span class="n">key</span><span class="p">)</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>    <span class="n">void</span> <span class="n">insert</span><span class="p">(</span><span class="n">K</span> <span class="n">key</span><span class="p">,</span> <span class="n">V</span> <span class="n">value</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="template-specializations">Template Specializations<a class="headerlink" href="#template-specializations" title="Permanent link">&para;</a></h3>
+<p>Full template specializations are emitted with mangled Python-safe names and the original C++ name as a string literal:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="k">template</span><span class="o">&lt;&gt;</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">Container</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="k">public</span><span class="o">:</span>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">special_value</span><span class="p">;</span>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="nf">get_special</span><span class="p">();</span>
+<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a><span class="p">};</span>
+</code></pre></div>
+<p>Generates:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="k">cdef</span><span class="w"> </span><span class="kt">cppclass</span> <span class="kt">Container_int</span> <span class="s">&quot;Container&lt;int&gt;&quot;</span><span class="p">:</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>    <span class="nb">int</span> <span class="n">special_value</span>
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>    <span class="nb">int</span> <span class="n">get_special</span><span class="p">()</span>
+</code></pre></div>
+<p>The mangling scheme converts special characters to valid Python identifiers:
+- <code>&lt;</code> and <code>&gt;</code> are removed, contents become underscore-separated
+- <code>*</code> becomes <code>_ptr</code>
+- <code>&amp;</code> becomes <code>_ref</code>
+- <code>::</code> becomes <code>_</code></p>
+<p>Examples:
+- <code>Container&lt;int&gt;</code> → <code>Container_int</code>
+- <code>Map&lt;int, double&gt;</code> → <code>Map_int_double</code>
+- <code>Foo&lt;int*&gt;</code> → <code>Foo_int_ptr</code></p>
 <h2 id="using-docker-for-libclang">Using Docker for libclang<a class="headerlink" href="#using-docker-for-libclang" title="Permanent link">&para;</a></h2>
 <p>If you don't want to install libclang locally, use the Docker image:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>-v<span class="w"> </span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>:/work<span class="w"> </span>-w<span class="w"> </span>/work<span class="w"> </span>ghcr.io/elijahr/python-autopxd2<span class="w"> </span>autopxd<span class="w"> </span>myheader.h
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>-v<span class="w"> </span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>:/work<span class="w"> </span>-w<span class="w"> </span>/work<span class="w"> </span>ghcr.io/elijahr/python-autopxd2<span class="w"> </span>autopxd<span class="w"> </span>myheader.h
 </code></pre></div>
 <p>See <a href="../../getting-started/docker/">Docker Usage</a> for details.</p>
 <h2 id="programmatic-backend-selection">Programmatic Backend Selection<a class="headerlink" href="#programmatic-backend-selection" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">autopxd.backends</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_backend</span><span class="p">,</span> <span class="n">list_backends</span>
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>
-<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="c1"># List available backends</span>
-<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="nb">print</span><span class="p">(</span><span class="n">list_backends</span><span class="p">())</span>  <span class="c1"># [&#39;pycparser&#39;, &#39;libclang&#39;] (if libclang installed)</span>
-<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>
-<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="c1"># Get a specific backend</span>
-<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="n">backend</span> <span class="o">=</span> <span class="n">get_backend</span><span class="p">(</span><span class="s2">&quot;libclang&quot;</span><span class="p">)</span>
-<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>
-<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a><span class="c1"># Parse a header</span>
-<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a><span class="n">header</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="s2">&quot;myheader.h&quot;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">autopxd.backends</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_backend</span><span class="p">,</span> <span class="n">list_backends</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="c1"># List available backends</span>
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="nb">print</span><span class="p">(</span><span class="n">list_backends</span><span class="p">())</span>  <span class="c1"># [&#39;pycparser&#39;, &#39;libclang&#39;] (if libclang installed)</span>
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>
+<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a><span class="c1"># Get a specific backend</span>
+<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a><span class="n">backend</span> <span class="o">=</span> <span class="n">get_backend</span><span class="p">(</span><span class="s2">&quot;libclang&quot;</span><span class="p">)</span>
+<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a>
+<a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a><span class="c1"># Parse a header</span>
+<a id="__codelineno-22-10" name="__codelineno-22-10" href="#__codelineno-22-10"></a><span class="n">header</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="s2">&quot;myheader.h&quot;</span><span class="p">)</span>
 </code></pre></div>
 
 

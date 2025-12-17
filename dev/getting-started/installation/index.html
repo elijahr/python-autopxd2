@@ -407,10 +407,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#basic-installation" class="md-nav__link">
+  <a href="#recommended-installation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Basic Installation
+        Recommended Installation
       
     </span>
   </a>
@@ -440,16 +440,27 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#system-libclang-installation" class="md-nav__link">
+  <a href="#libclang-setup" class="md-nav__link">
     <span class="md-ellipsis">
       
-        System libclang Installation
+        libclang Setup
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="System libclang Installation">
+    <nav class="md-nav" aria-label="libclang Setup">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#quick-install-one-liner" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Install (One-Liner)
+      
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#macos" class="md-nav__link">
@@ -474,6 +485,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#fedorarhel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fedora/RHEL
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#windows" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -485,10 +507,32 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#manual-version-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Manual Version Check
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#verifying-installation" class="md-nav__link">
     <span class="md-ellipsis">
       
         Verifying Installation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
       
     </span>
   </a>
@@ -916,10 +960,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#basic-installation" class="md-nav__link">
+  <a href="#recommended-installation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Basic Installation
+        Recommended Installation
       
     </span>
   </a>
@@ -949,16 +993,27 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#system-libclang-installation" class="md-nav__link">
+  <a href="#libclang-setup" class="md-nav__link">
     <span class="md-ellipsis">
       
-        System libclang Installation
+        libclang Setup
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="System libclang Installation">
+    <nav class="md-nav" aria-label="libclang Setup">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#quick-install-one-liner" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Install (One-Liner)
+      
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#macos" class="md-nav__link">
@@ -983,6 +1038,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#fedorarhel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fedora/RHEL
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#windows" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -994,10 +1060,32 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#manual-version-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Manual Version Check
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#verifying-installation" class="md-nav__link">
     <span class="md-ellipsis">
       
         Verifying Installation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
       
     </span>
   </a>
@@ -1030,78 +1118,119 @@
 
 
 <h1 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h1>
-<h2 id="basic-installation">Basic Installation<a class="headerlink" href="#basic-installation" title="Permanent link">&para;</a></h2>
-<p>Install autopxd2 from PyPI:</p>
+<h2 id="recommended-installation">Recommended Installation<a class="headerlink" href="#recommended-installation" title="Permanent link">&para;</a></h2>
+<p>Install autopxd2 and the libclang backend for full C/C++ support:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip<span class="w"> </span>install<span class="w"> </span>autopxd2
 </code></pre></div>
-<p>This installs the package with both parser backends:</p>
-<ul>
-<li><strong>libclang</strong> - Full C/C++ support via LLVM (default if system libclang available)</li>
-<li><strong>pycparser</strong> - Pure Python C99 parser (fallback)</li>
-</ul>
-<div class="admonition note">
-<p class="admonition-title">Automatic Fallback</p>
-<p>autopxd2 automatically uses libclang if the system library is available,
-falling back to pycparser otherwise. Use <code>autopxd --list-backends</code> to see
-which backends are available on your system.</p>
+<p>Then install the <code>clang2</code> package matching your system's LLVM version:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># One-liner: detect LLVM version and install matching clang2</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;clang2==</span><span class="k">$(</span>llvm-config<span class="w"> </span>--version<span class="w"> </span><span class="p">|</span><span class="w"> </span>cut<span class="w"> </span>-d.<span class="w"> </span>-f1<span class="k">)</span><span class="s2">.*&quot;</span>
+</code></pre></div>
+<p>See <a href="#libclang-setup">libclang Setup</a> below for platform-specific LLVM installation.</p>
+<div class="admonition warning">
+<p class="admonition-title">Without clang2</p>
+<p>Without the <code>clang2</code> package, autopxd2 falls back to the legacy <strong>pycparser</strong> backend,
+which only supports C99 and lacks macro extraction, circular dependency handling,
+and C++ support. <strong>libclang is strongly recommended for all use cases.</strong></p>
 </div>
 <h2 id="development-installation">Development Installation<a class="headerlink" href="#development-installation" title="Permanent link">&para;</a></h2>
 <p>For development, clone the repository and install with development dependencies:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/elijahr/python-autopxd2.git
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nb">cd</span><span class="w"> </span>python-autopxd2
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.<span class="o">[</span>dev<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/elijahr/python-autopxd2.git
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nb">cd</span><span class="w"> </span>python-autopxd2
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.<span class="o">[</span>dev<span class="o">]</span>
 </code></pre></div>
 <h2 id="docker-no-installation-required">Docker (No Installation Required)<a class="headerlink" href="#docker-no-installation-required" title="Permanent link">&para;</a></h2>
 <p>Use the Docker image for libclang support without installing anything locally:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>-v<span class="w"> </span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>:/work<span class="w"> </span>-w<span class="w"> </span>/work<span class="w"> </span>ghcr.io/elijahr/python-autopxd2<span class="w"> </span>autopxd<span class="w"> </span>myheader.h
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>-v<span class="w"> </span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>:/work<span class="w"> </span>-w<span class="w"> </span>/work<span class="w"> </span>ghcr.io/elijahr/python-autopxd2<span class="w"> </span>autopxd<span class="w"> </span>myheader.h
 </code></pre></div>
 <p>See <a href="../docker/">Docker Usage</a> for more details.</p>
-<h2 id="system-libclang-installation">System libclang Installation<a class="headerlink" href="#system-libclang-installation" title="Permanent link">&para;</a></h2>
-<p>The libclang backend requires both:</p>
+<h2 id="libclang-setup">libclang Setup<a class="headerlink" href="#libclang-setup" title="Permanent link">&para;</a></h2>
+<p>The libclang backend (recommended for all use cases) requires:</p>
 <ol>
-<li>The system libclang library</li>
-<li>The Python <code>clang2</code> package (included with autopxd2)</li>
+<li>The system libclang library (LLVM)</li>
+<li>The Python <code>clang2</code> package matching your LLVM version</li>
 </ol>
 <div class="admonition important">
 <p class="admonition-title">Version Matching Required</p>
-<p>The Python <code>clang2</code> package provides libclang bindings and <strong>must match your system's libclang version</strong>. For example, if you have LLVM 18 installed, you need <code>clang2==18.*</code>.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Check your LLVM version</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>llvm-config<span class="w"> </span>--version<span class="w">  </span><span class="c1"># e.g., 18.1.3</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># Install matching Python package</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;clang2==18.*&quot;</span>
+<p>The <code>clang2</code> Python package <strong>must match your system's LLVM version</strong>.
+For example, LLVM 18 requires <code>clang2==18.*</code>.</p>
+</div>
+<h3 id="quick-install-one-liner">Quick Install (One-Liner)<a class="headerlink" href="#quick-install-one-liner" title="Permanent link">&para;</a></h3>
+<p>If you have LLVM already installed, use this one-liner to install the matching clang2 package:</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">pip</label><label for="__tabbed_1_2">uv</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;clang2==</span><span class="k">$(</span>llvm-config<span class="w"> </span>--version<span class="w"> </span><span class="p">|</span><span class="w"> </span>cut<span class="w"> </span>-d.<span class="w"> </span>-f1<span class="k">)</span><span class="s2">.*&quot;</span>
 </code></pre></div>
 </div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;clang2==</span><span class="k">$(</span>llvm-config<span class="w"> </span>--version<span class="w"> </span><span class="p">|</span><span class="w"> </span>cut<span class="w"> </span>-d.<span class="w"> </span>-f1<span class="k">)</span><span class="s2">.*&quot;</span>
+</code></pre></div>
+</div>
+</div>
+</div>
 <h3 id="macos">macOS<a class="headerlink" href="#macos" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>brew<span class="w"> </span>install<span class="w"> </span>llvm
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="c1"># Install matching Python clang2 package</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="nv">LLVM_VERSION</span><span class="o">=</span><span class="k">$($(</span>brew<span class="w"> </span>--prefix<span class="w"> </span>llvm<span class="k">)</span>/bin/llvm-config<span class="w"> </span>--version<span class="w"> </span><span class="p">|</span><span class="w"> </span>cut<span class="w"> </span>-d.<span class="w"> </span>-f1<span class="k">)</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;clang2==</span><span class="si">${</span><span class="nv">LLVM_VERSION</span><span class="si">}</span><span class="s2">.*&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># Install LLVM (if not already installed)</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>brew<span class="w"> </span>install<span class="w"> </span>llvm
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1"># Install matching clang2 package (one-liner)</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;clang2==</span><span class="k">$($(</span>brew<span class="w"> </span>--prefix<span class="w"> </span>llvm<span class="k">)</span>/bin/llvm-config<span class="w"> </span>--version<span class="w"> </span><span class="p">|</span><span class="w"> </span>cut<span class="w"> </span>-d.<span class="w"> </span>-f1<span class="k">)</span><span class="s2">.*&quot;</span>
+</code></pre></div>
+<p>Or with uv:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;clang2==</span><span class="k">$($(</span>brew<span class="w"> </span>--prefix<span class="w"> </span>llvm<span class="k">)</span>/bin/llvm-config<span class="w"> </span>--version<span class="w"> </span><span class="p">|</span><span class="w"> </span>cut<span class="w"> </span>-d.<span class="w"> </span>-f1<span class="k">)</span><span class="s2">.*&quot;</span>
 </code></pre></div>
 <h3 id="ubuntudebian">Ubuntu/Debian<a class="headerlink" href="#ubuntudebian" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>sudo<span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>libclang-dev<span class="w"> </span>llvm
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="c1"># Install matching Python clang2 package</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="nv">LLVM_VERSION</span><span class="o">=</span><span class="k">$(</span>llvm-config<span class="w"> </span>--version<span class="w"> </span><span class="p">|</span><span class="w"> </span>cut<span class="w"> </span>-d.<span class="w"> </span>-f1<span class="k">)</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;clang2==</span><span class="si">${</span><span class="nv">LLVM_VERSION</span><span class="si">}</span><span class="s2">.*&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Install LLVM (if not already installed)</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>sudo<span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>libclang-dev<span class="w"> </span>llvm
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># Install matching clang2 package (one-liner)</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;clang2==</span><span class="k">$(</span>llvm-config<span class="w"> </span>--version<span class="w"> </span><span class="p">|</span><span class="w"> </span>cut<span class="w"> </span>-d.<span class="w"> </span>-f1<span class="k">)</span><span class="s2">.*&quot;</span>
+</code></pre></div>
+<p>Or with uv:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;clang2==</span><span class="k">$(</span>llvm-config<span class="w"> </span>--version<span class="w"> </span><span class="p">|</span><span class="w"> </span>cut<span class="w"> </span>-d.<span class="w"> </span>-f1<span class="k">)</span><span class="s2">.*&quot;</span>
+</code></pre></div>
+<h3 id="fedorarhel">Fedora/RHEL<a class="headerlink" href="#fedorarhel" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># Install LLVM</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>sudo<span class="w"> </span>dnf<span class="w"> </span>install<span class="w"> </span>clang-devel<span class="w"> </span>llvm
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="c1"># Install matching clang2 package</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;clang2==</span><span class="k">$(</span>llvm-config<span class="w"> </span>--version<span class="w"> </span><span class="p">|</span><span class="w"> </span>cut<span class="w"> </span>-d.<span class="w"> </span>-f1<span class="k">)</span><span class="s2">.*&quot;</span>
 </code></pre></div>
 <h3 id="windows">Windows<a class="headerlink" href="#windows" title="Permanent link">&para;</a></h3>
 <ol>
 <li>Install LLVM from <a href="https://releases.llvm.org/">releases.llvm.org</a></li>
-<li>Add LLVM to your PATH</li>
-<li>Install matching Python clang2 package: <code>pip install "clang2==&lt;version&gt;.*"</code></li>
+<li>Add LLVM <code>bin</code> directory to your PATH</li>
+<li>Install matching clang2 package:</li>
 </ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c"># Check version first</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="n">llvm-config</span> <span class="p">-</span><span class="n">-version</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="c"># Install matching package (replace XX with major version)</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="n">pip</span> <span class="n">install</span> <span class="s2">&quot;clang2==XX.*&quot;</span>
+</code></pre></div>
+<h3 id="manual-version-check">Manual Version Check<a class="headerlink" href="#manual-version-check" title="Permanent link">&para;</a></h3>
+<p>If the one-liner doesn't work, check your version manually:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>llvm-config<span class="w"> </span>--version
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="c1"># Output: 18.1.3 (means you need clang2==18.*)</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;clang2==18.*&quot;</span>
+</code></pre></div>
 <h3 id="verifying-installation">Verifying Installation<a class="headerlink" href="#verifying-installation" title="Permanent link">&para;</a></h3>
 <p>Check that autopxd2 can find libclang:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>autopxd<span class="w"> </span>--list-backends
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>autopxd<span class="w"> </span>--list-backends
 </code></pre></div>
 <p>If libclang is installed correctly, you should see:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>Available backends:
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>  libclang     Full C/C++ support via LLVM [available] (default)
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>  pycparser    Legacy C99 parser [available]
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>Default: libclang
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>Available backends:
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>  libclang     Full C/C++ support via LLVM [available] (default)
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>  pycparser    Legacy C99 parser [available]
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>Default: libclang
+</code></pre></div>
+<h3 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h3>
+<p>If you try to use the libclang backend without clang2 installed, autopxd2 will detect your LLVM version and show the exact install command:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>ValueError: libclang backend requires the clang2 package.
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>Detected LLVM version 18 on your system.
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>Install with: pip install &#39;clang2==18.*&#39;
 </code></pre></div>
 
 
