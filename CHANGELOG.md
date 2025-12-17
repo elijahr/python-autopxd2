@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.2.1] - 2025-12-17
+
+### Fixed
+- **Automatic libclang discovery** - autopxd2 now automatically searches common platform-specific locations for libclang when it's not in the default library search path. This eliminates the need to manually set `DYLD_FALLBACK_LIBRARY_PATH` or `LD_LIBRARY_PATH` on systems where LLVM is installed via package managers like Homebrew.
+  - macOS: Searches Homebrew (Apple Silicon and Intel), Xcode Command Line Tools
+  - Linux: Searches `/usr/lib/llvm-*/lib`, `/usr/lib64`, `/usr/lib`, `/usr/local/lib`
+  - Windows: Searches `C:\Program Files\LLVM\bin`
+
 ## [3.2.0] - 2025-12-17
 
 ### Added

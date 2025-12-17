@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "autopxd2"
-version = "3.2.0"
+version = "3.2.1"
 description = "Automatically generate Cython pxd files from C headers"
 readme = "README.md"
 license = { file = "LICENSE" }

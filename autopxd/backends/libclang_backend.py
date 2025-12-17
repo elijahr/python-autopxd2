@@ -36,6 +36,7 @@ Example
     header = backend.parse(code, "myheader.hpp", extra_args=["-std=c++17"])
 """
 
+import glob
 import os
 import subprocess
 import sys
@@ -70,6 +71,102 @@ from autopxd.ir import (
 )
 
 
+def _get_libclang_search_paths() -> list[str]:
+    """Get platform-specific paths to search for libclang.
+
+    Returns a list of candidate paths where libclang might be installed,
+    ordered by preference (most common/preferred locations first).
+    """
+    paths: list[str] = []
+
+    if sys.platform == "darwin":
+        # Homebrew on Apple Silicon (most common modern setup)
+        paths.append("/opt/homebrew/opt/llvm/lib/libclang.dylib")
+        # Homebrew versioned installs on Apple Silicon (sorted newest first)
+        paths.extend(sorted(glob.glob("/opt/homebrew/Cellar/llvm/*/lib/libclang.dylib"), reverse=True))
+        # Homebrew on Intel Macs
+        paths.append("/usr/local/opt/llvm/lib/libclang.dylib")
+        paths.extend(sorted(glob.glob("/usr/local/Cellar/llvm/*/lib/libclang.dylib"), reverse=True))
+        # Xcode Command Line Tools
+        paths.append("/Library/Developer/CommandLineTools/usr/lib/libclang.dylib")
+        # Xcode.app
+        paths.append(
+            "/Applications/Xcode.app/Contents/Developer/Toolchains/" "XcodeDefault.xctoolchain/usr/lib/libclang.dylib"
+        )
+
+    elif sys.platform == "linux":
+        # Debian/Ubuntu versioned LLVM packages (sorted newest first)
+        paths.extend(sorted(glob.glob("/usr/lib/llvm-*/lib/libclang.so*"), reverse=True))
+        # RHEL/Fedora/CentOS (64-bit)
+        paths.append("/usr/lib64/libclang.so")
+        # Generic Linux
+        paths.append("/usr/lib/libclang.so")
+        paths.append("/usr/local/lib/libclang.so")
+
+    elif sys.platform == "win32":
+        # Official LLVM installer locations
+        paths.append(r"C:\Program Files\LLVM\bin\libclang.dll")
+        paths.append(r"C:\Program Files (x86)\LLVM\bin\libclang.dll")
+
+    return paths
+
+
+def _find_libclang_path() -> str | None:
+    """Search common locations for libclang library.
+
+    :returns: Path to libclang if found, None otherwise.
+    """
+    for path in _get_libclang_search_paths():
+        if os.path.isfile(path):
+            return path
+    return None
+
+
+# Module-level flag to track if we've already attempted configuration
+_libclang_configured: bool = False
+
+
+def _configure_libclang() -> bool:
+    """Configure clang.cindex to find libclang library.
+
+    Attempts default loading first (respects DYLD_LIBRARY_PATH, LD_LIBRARY_PATH,
+    etc.), then searches common platform-specific locations.
+
+    :returns: True if libclang is available and configured, False otherwise.
+    """
+    global _libclang_configured  # pylint: disable=global-statement
+
+    if _libclang_configured:
+        # Already configured, just check if it works
+        try:
+            clang.cindex.Config().get_cindex_library()
+            return True
+        except clang.cindex.LibclangError:
+            return False
+
+    _libclang_configured = True
+
+    # First, try default loading (respects environment variables)
+    try:
+        clang.cindex.Config().get_cindex_library()
+        return True
+    except clang.cindex.LibclangError:
+        pass
+
+    # Default failed, search common locations
+    libclang_path = _find_libclang_path()
+    if libclang_path:
+        clang.cindex.Config.set_library_file(libclang_path)
+        # Verify it works now
+        try:
+            clang.cindex.Config().get_cindex_library()
+            return True
+        except clang.cindex.LibclangError:
+            return False
+
+    return False
+
+
 def is_system_libclang_available() -> bool:
     """Check if the system libclang library is available.
 
@@ -77,14 +174,16 @@ def is_system_libclang_available() -> bool:
     system libclang shared library (libclang.so/dylib) to function.
     This checks if that library can be loaded.
 
+    If libclang is not in the default library search path, this function
+    automatically searches common platform-specific locations:
+
+    - macOS: Homebrew (Apple Silicon and Intel), Xcode Command Line Tools
+    - Linux: /usr/lib/llvm-*/lib, /usr/lib64, /usr/lib, /usr/local/lib
+    - Windows: C:\\Program Files\\LLVM\\bin
+
     :returns: True if system libclang is available and can be used.
     """
-    try:
-        # Attempt to load the library - this is the definitive test
-        clang.cindex.Config().get_cindex_library()
-        return True
-    except clang.cindex.LibclangError:
-        return False
+    return _configure_libclang()
 
 
 # Cache for system include directories (computed once per process)
