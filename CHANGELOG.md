@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [3.2.0] - 2025-12-16
+## [3.2.0] - 2025-12-17
 
 ### Added
 - **Umbrella header support** - New CLI options for parsing library-wide "umbrella" headers that aggregate sub-headers:
@@ -23,10 +23,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **New POSIX stubs** - `sys_un.pxd` (Unix domain sockets), `semaphore.pxd` (POSIX semaphores), `regex.pxd` (POSIX regex), `sys_statvfs.pxd` (filesystem stats).
 - **C11 stdatomic stub** - `stdatomic.pxd` provides atomic types and memory ordering for C11 code.
 - **C++ stubs** - `cppthread.pxd` (std::thread), `cppchrono.pxd` (std::chrono), `cppfilesystem.pxd` (std::filesystem).
+- **Full compilation test suite** - Tests now compile generated pxd files against real libraries (zlib, jansson, curl, sqlite3, libuv, libsodium, etc.) to verify correctness.
 
 ### Changed
 - **clang2 is now optional** - The `clang2` package is no longer a hard dependency. When the libclang backend is requested but clang2 is not installed, autopxd2 detects your system's LLVM version and provides the exact install command (e.g., `pip install 'clang2==18.*'`).
-- **Improved installation docs** - Added one-liner install commands for matching clang2 to your LLVM version.
+- **libclang is now the recommended backend** - Documentation updated to recommend libclang for all use cases. pycparser is now marked as legacy (C99 only, no macros, no circular dependency handling).
+- **Test headers downloaded dynamically** - Library headers (zlib.h, jansson.h) are now downloaded from official GitHub repositories and cached locally, reducing repository size.
 
 ### Fixed
 - **`__builtin_va_list` filtering** - GCC/Clang internal types starting with `__builtin_` are now filtered from generated pxd output, fixing Cython compilation errors when parsing system headers.
