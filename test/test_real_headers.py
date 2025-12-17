@@ -588,15 +588,20 @@ class TestHeaderDiscovery:
         """Verify the real_headers directory exists."""
         assert os.path.isdir(REAL_HEADERS_DIR), f"Missing directory: {REAL_HEADERS_DIR}"
 
-    def test_has_required_headers(self):
-        """Verify we have the expected header files."""
-        expected_headers = ["zlib.h", "zconf.h", "jansson.h", "jansson_config.h"]
-        for header in expected_headers:
-            path = os.path.join(REAL_HEADERS_DIR, header)
-            assert os.path.exists(path), f"Missing header: {header}"
+    def test_can_download_library_headers(self):
+        """Verify library headers can be downloaded and cached."""
+        # zlib headers
+        zlib_dir = get_library_headers("zlib")
+        assert (zlib_dir / "zlib.h").exists(), "zlib.h not downloaded"
+        assert (zlib_dir / "zconf.h").exists(), "zconf.h not downloaded"
+
+        # jansson headers
+        jansson_dir = get_library_headers("jansson")
+        assert (jansson_dir / "jansson.h").exists(), "jansson.h not downloaded"
+        assert (jansson_dir / "jansson_config.h").exists(), "jansson_config.h not downloaded"
 
     def test_headers_are_valid_files(self):
-        """Verify header files have content."""
+        """Verify test fixture header files have content."""
         for filename in os.listdir(REAL_HEADERS_DIR):
             if filename.endswith((".h", ".hpp")):
                 path = os.path.join(REAL_HEADERS_DIR, filename)
