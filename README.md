@@ -63,11 +63,15 @@ pip install autopxd2
 ```shell
 # One-liner: detect LLVM version and install matching clang2
 pip install "clang2==$(llvm-config --version | cut -d. -f1).*"
+
+# Or check version manually first
+llvm-config --version  # e.g., 18.1.3 means you need clang2==18.*
+pip install "clang2==18.*"
 ```
 
-Without `clang2`, autopxd2 falls back to the legacy pycparser backend (C99 only, no macros, no circular dependency handling).
+Without `clang2`, autopxd2 falls back to the legacy pycparser backend (C99 only, no macros, no circular dependency handling). If clang2 is missing, autopxd2 will detect your LLVM version and show the exact install command.
 
-See the [installation docs](https://elijahr.github.io/python-autopxd2/getting-started/installation/) for platform-specific LLVM setup.
+See the [installation docs](https://elijahr.github.io/python-autopxd2/dev/getting-started/installation/) for platform-specific LLVM setup (macOS with Homebrew, Ubuntu/Debian, Windows).
 
 ## Quick Start
 
@@ -187,7 +191,7 @@ A Docker image with libclang pre-installed is available:
 docker run --rm -v $(pwd):/work -w /work ghcr.io/elijahr/python-autopxd2 autopxd myheader.h
 ```
 
-See [Docker Usage](https://elijahr.github.io/python-autopxd2/getting-started/docker/) for more examples.
+See [Docker Usage](https://elijahr.github.io/python-autopxd2/dev/getting-started/docker/) for more examples.
 
 ## Contributing
 
