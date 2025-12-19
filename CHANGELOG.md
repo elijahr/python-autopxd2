@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.2.2] - 2025-12-19
+
+### Fixed
+- **Docker numpy test** - Install numpy via pip instead of apt in Docker test builds, fixing numpy header generation tests in CI.
+
 ## [3.2.1] - 2025-12-17
 
 ### Fixed
