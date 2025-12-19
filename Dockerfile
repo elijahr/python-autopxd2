@@ -51,9 +51,11 @@ WORKDIR /app
 
 # Detect LLVM version and install matching clang2 package
 # Install with test dependencies for in-container testing
+# Also install numpy for testing numpy header generation
 RUN LLVM_VERSION=$(ls /usr/lib/ | grep -oP 'llvm-\K\d+' | head -1) \
     && pip install --no-cache-dir -e ".[test]" \
-    && pip install --no-cache-dir "clang2==${LLVM_VERSION}.*"
+    && pip install --no-cache-dir "clang2==${LLVM_VERSION}.*" \
+    && if [ "$TEST_MODE" = "1" ]; then pip install --no-cache-dir numpy; fi
 
 # Set working directory for volume mounts
 WORKDIR /work

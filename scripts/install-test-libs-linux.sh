@@ -42,7 +42,6 @@ fi
 
 # Python development headers (for Python.h tests)
 apt-get install -y --no-install-recommends \
-    python3-dev \
-    python3-numpy
+    python3-dev
 
 echo "Done installing test libraries."
