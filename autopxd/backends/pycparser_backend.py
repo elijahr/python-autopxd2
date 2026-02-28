@@ -1127,6 +1127,11 @@ class PycparserBackend:
         filename: str,
         include_dirs: list[str] | None = None,
         extra_args: list[str] | None = None,
+        *,
+        use_default_includes: bool = True,
+        recursive_includes: bool = True,
+        max_depth: int = 10,
+        project_prefixes: tuple[str, ...] | None = None,
     ) -> Header:
         """Parse C code using pycparser.
 

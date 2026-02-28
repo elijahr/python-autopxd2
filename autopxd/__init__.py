@@ -148,7 +148,7 @@ def translate(
             hdrname,
             include_dirs=include_dirs or None,
             extra_args=other_args or None,
-            use_default_includes=use_default_includes,  # type: ignore[call-arg]
+            use_default_includes=use_default_includes,
             project_prefixes=project_prefixes,
             recursive_includes=recursive_includes,
             max_depth=max_depth,
@@ -159,7 +159,7 @@ def translate(
             code,
             hdrname,
             extra_args=extra_args or [],
-            use_default_includes=use_default_includes,  # type: ignore[call-arg]
+            use_default_includes=use_default_includes,
         )
     else:
         # pycparser or other backend
