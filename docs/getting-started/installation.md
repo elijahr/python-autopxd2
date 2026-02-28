@@ -18,9 +18,8 @@ pip install "clang2==$(llvm-config --version | cut -d. -f1).*"
 See [libclang Setup](#libclang-setup) below for platform-specific LLVM installation.
 
 !!! warning "Without clang2"
-    Without the `clang2` package, autopxd2 falls back to the legacy **pycparser** backend,
-    which only supports C99 and lacks macro extraction, circular dependency handling,
-    and C++ support. **libclang is strongly recommended for all use cases.**
+    Without the `clang2` package, autopxd2 cannot parse headers. You can also use
+    headerkit's `install_libclang` to install libclang: `python -m headerkit.install_libclang`
 
 ## Development Installation
 
@@ -149,7 +148,6 @@ If libclang is installed correctly, you should see:
 ```
 Available backends:
   libclang     Full C/C++ support via LLVM [available] (default)
-  pycparser    Legacy C99 parser [available]
 
 Default: libclang
 ```

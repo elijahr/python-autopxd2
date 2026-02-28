@@ -14,9 +14,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - IR classes, PxdWriter, and type registries now provided by headerkit (re-exported via shim modules for backward compatibility)
-- `PycparserBackend.parse()` signature updated to match headerkit's `ParserBackend` protocol
+- libclang is now the only backend
+- `--backend auto` now requires libclang (no pycparser fallback)
 
 ### Removed
+- `pycparser` backend and all pycparser-specific code
+- `autopxd.declarations` module
+- `regenerate_stubs.py` script
+- `stubs/include/` and `stubs/darwin-include/` directories (pycparser fake headers)
+- `pycparser` runtime dependency
+- `--backend pycparser` CLI option
+- Fallback from libclang to pycparser behavior
 - `autopxd.cython_types` module (use `headerkit.writers._cython_types` directly)
 - `autopxd.keywords` module (use `headerkit.writers._cython_keywords` directly)
 - `IGNORE_DECLARATIONS` and `STDINT_DECLARATIONS` from `autopxd.declarations` (unused)

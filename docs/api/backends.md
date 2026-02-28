@@ -13,15 +13,6 @@ Parser backends convert C/C++ source code into the autopxd IR.
         - list_backends
         - register_backend
 
-## pycparser Backend
-
-::: autopxd.backends.pycparser_backend
-    options:
-      show_root_heading: true
-      show_source: true
-      members:
-        - PycparserBackend
-
 ## libclang Backend
 
 ::: autopxd.backends.libclang_backend

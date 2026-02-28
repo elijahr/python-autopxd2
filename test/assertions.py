@@ -17,7 +17,7 @@ def assert_pxd_equals(
     code: str,
     expected: str,
     tmp_path,
-    backend: str = "pycparser",
+    backend: str = "libclang",
     filename: str = "test.h",
     cplus: bool = False,
     extra_args: list[str] | None = None,
@@ -29,7 +29,7 @@ def assert_pxd_equals(
         code: C/C++ input code
         expected: Expected pxd output (full text, must match exactly)
         tmp_path: pytest tmp_path fixture for Cython compilation
-        backend: Parser backend to use ("pycparser" or "libclang")
+        backend: Parser backend to use
         filename: Filename for the header
         cplus: If True, validate as C++ with Cython
         extra_args: Extra args for the parser
@@ -44,7 +44,8 @@ def assert_pxd_equals(
     )
 
     assert actual == expected, (
-        f"\n{'='*60}\nEXPECTED:\n{'='*60}\n{repr(expected)}\n" f"{'='*60}\nACTUAL:\n{'='*60}\n{repr(actual)}\n{'='*60}"
+        f"\n{'=' * 60}\nEXPECTED:\n{'=' * 60}\n{repr(expected)}\n"
+        f"{'=' * 60}\nACTUAL:\n{'=' * 60}\n{repr(actual)}\n{'=' * 60}"
     )
 
     # Write header to tmp_path so C compilation can find it
@@ -74,7 +75,8 @@ def assert_ir_to_pxd_equals(
     actual = write_pxd(header)
 
     assert actual == expected, (
-        f"\n{'='*60}\nEXPECTED:\n{'='*60}\n{repr(expected)}\n" f"{'='*60}\nACTUAL:\n{'='*60}\n{repr(actual)}\n{'='*60}"
+        f"\n{'=' * 60}\nEXPECTED:\n{'=' * 60}\n{repr(expected)}\n"
+        f"{'=' * 60}\nACTUAL:\n{'=' * 60}\n{repr(actual)}\n{'=' * 60}"
     )
 
     if header_code is not None:
@@ -91,7 +93,7 @@ def assert_pxd_file_equals(
     code: str,
     expected_path: str,
     tmp_path,
-    backend: str = "pycparser",
+    backend: str = "libclang",
     filename: str = "test.h",
     cplus: bool = False,
     extra_args: list[str] | None = None,
@@ -120,8 +122,8 @@ def assert_pxd_file_equals(
     )
 
     assert actual == expected, (
-        f"\n{'='*60}\nEXPECTED ({os.path.basename(expected_path)}):\n{'='*60}\n{repr(expected)}\n"
-        f"{'='*60}\nACTUAL:\n{'='*60}\n{repr(actual)}\n{'='*60}"
+        f"\n{'=' * 60}\nEXPECTED ({os.path.basename(expected_path)}):\n{'=' * 60}\n{repr(expected)}\n"
+        f"{'=' * 60}\nACTUAL:\n{'=' * 60}\n{repr(actual)}\n{'=' * 60}"
     )
 
     # Write header to tmp_path so C compilation can find it
@@ -156,8 +158,8 @@ def assert_header_pxd_equals(
     actual = write_pxd(header)
 
     assert actual == expected, (
-        f"\n{'='*60}\nEXPECTED ({os.path.basename(expected_path)}):\n{'='*60}\n{repr(expected)}\n"
-        f"{'='*60}\nACTUAL:\n{'='*60}\n{repr(actual)}\n{'='*60}"
+        f"\n{'=' * 60}\nEXPECTED ({os.path.basename(expected_path)}):\n{'=' * 60}\n{repr(expected)}\n"
+        f"{'=' * 60}\nACTUAL:\n{'=' * 60}\n{repr(actual)}\n{'=' * 60}"
     )
 
     if header_code is not None:
@@ -173,7 +175,7 @@ def assert_header_pxd_equals(
 def assert_test_file_equals(
     test_file_path: str,
     tmp_path,
-    backend: str = "pycparser",
+    backend: str = "libclang",
     cplus: bool = False,
     extra_args: list[str] | None = None,
 ):
@@ -199,16 +201,24 @@ def assert_test_file_equals(
     expected_pxd = expected_pxd.strip() + "\n"
     filename = os.path.basename(test_file_path)
 
+    # For libclang, non-standard extensions (.test, .cpptest) need explicit
+    # language specification since clang infers language from the extension
+    test_extra_args = list(extra_args) if extra_args else []
+    if filename.endswith(".cpptest") and "-x" not in test_extra_args:
+        test_extra_args = ["-x", "c++"] + test_extra_args
+    elif filename.endswith(".test") and "-x" not in test_extra_args:
+        test_extra_args = ["-x", "c"] + test_extra_args
+
     actual_pxd = autopxd.translate(
         header_code.strip(),
         filename,
         backend=backend,
-        extra_args=extra_args,
+        extra_args=test_extra_args if test_extra_args else None,
     )
 
     assert actual_pxd == expected_pxd, (
-        f"\n{'='*60}\nEXPECTED ({filename}):\n{'='*60}\n{repr(expected_pxd)}\n"
-        f"{'='*60}\nACTUAL:\n{'='*60}\n{repr(actual_pxd)}\n{'='*60}"
+        f"\n{'=' * 60}\nEXPECTED ({filename}):\n{'=' * 60}\n{repr(expected_pxd)}\n"
+        f"{'=' * 60}\nACTUAL:\n{'=' * 60}\n{repr(actual_pxd)}\n{'=' * 60}"
     )
 
     # Write header to tmp_path so C compilation can find it

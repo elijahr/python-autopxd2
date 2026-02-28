@@ -14,10 +14,9 @@ The Intermediate Representation (IR) module defines data structures for represen
 
 ### [Backends](backends.md)
 
-Parser backend implementations:
+Parser backend implementation:
 
-- `PycparserBackend` - Pure Python C99 parser
-- `LibclangBackend` - LLVM clang-based parser with C++ support
+- `LibclangBackend` - LLVM clang-based parser with full C/C++ support
 
 ## Quick Example
 
@@ -26,7 +25,7 @@ from autopxd.backends import get_backend
 from autopxd.ir_writer import write_pxd
 
 # Parse a header
-backend = get_backend()  # Uses default (pycparser)
+backend = get_backend()  # Uses default (libclang)
 with open("myheader.h") as f:
     code = f.read()
 
@@ -62,7 +61,7 @@ for decl in header.declarations:
 from autopxd.backends import get_backend, list_backends
 
 # List available backends
-print(list_backends())  # ['pycparser', 'libclang']
+print(list_backends())  # ['libclang']
 
 # Get a specific backend
 backend = get_backend("libclang")

@@ -11,12 +11,12 @@ Requirements
 * Python clang2 bindings version must match system libclang version
   (e.g., ``clang2==18.*`` for LLVM 18)
 
-If system libclang is not available, autopxd2 automatically falls back
-to the pycparser backend (C99 only).
+If system libclang is not available, use headerkit's ``install_libclang``
+to install it, or install LLVM manually.
 
-Advantages over pycparser
--------------------------
-* Full C++ support (classes, templates, namespaces)
+Features
+--------
+* Full C/C++ support (classes, templates, namespaces)
 * Handles complex preprocessor constructs
 * Uses the same parser as production compilers
 * Better error messages with source locations
@@ -91,7 +91,7 @@ def _get_libclang_search_paths() -> list[str]:
         paths.append("/Library/Developer/CommandLineTools/usr/lib/libclang.dylib")
         # Xcode.app
         paths.append(
-            "/Applications/Xcode.app/Contents/Developer/Toolchains/" "XcodeDefault.xctoolchain/usr/lib/libclang.dylib"
+            "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libclang.dylib"
         )
 
     elif sys.platform == "linux":
@@ -1854,8 +1854,8 @@ class LibclangBackend:
     ) -> Header:
         """Parse C/C++ code using libclang.
 
-        Unlike the pycparser backend, this method handles raw (unpreprocessed)
-        code and performs preprocessing internally.
+        This method handles raw (unpreprocessed) code and performs
+        preprocessing internally.
 
         Umbrella header support: If the header has few/no declarations but many
         includes (umbrella header pattern), this method can recursively parse the
@@ -1983,6 +1983,5 @@ class LibclangBackend:
 
 
 # Only register this backend if system libclang is available
-# If not available, autopxd2 falls back to pycparser automatically
 if is_system_libclang_available():
     register_backend("libclang", LibclangBackend)

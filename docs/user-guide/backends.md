@@ -1,14 +1,12 @@
-# Parser Backends
+# Parser Backend
 
-autopxd2 supports two parser backends. **libclang is strongly recommended** for all use cases.
+autopxd2 uses the **libclang** parser backend for all C/C++ parsing.
 
-## Available Backends
-
-### libclang (Recommended)
+## libclang
 
 Uses LLVM's clang library for parsing. Provides the same parser used by production compilers.
 
-**Pros:**
+**Features:**
 
 - Full C++ support (classes, templates, namespaces)
 - Extracts macros as constants (integers, floats, strings, expressions)
@@ -17,20 +15,19 @@ Uses LLVM's clang library for parsing. Provides the same parser used by producti
 - Better error messages
 - Handles complex headers reliably
 
-**Cons:**
+**Limitations:**
 
-- Requires libclang to be installed
+- Requires libclang to be installed (use `python -m headerkit.install_libclang` or install LLVM manually)
 - Python `clang2` package version must match system libclang (these are official LLVM bindings)
-- Slightly slower startup time
 - Function-like macros are not extracted
 
 **Usage:**
 
 ```bash
-autopxd --backend libclang myheader.h
+autopxd myheader.h
 
 # For C++ headers
-autopxd --backend libclang myheader.hpp
+autopxd myheader.hpp
 ```
 
 ## System Include Paths
@@ -54,67 +51,7 @@ You can still add additional include directories:
 autopxd -I /my/project/include myheader.h
 ```
 
-### pycparser (Legacy)
-
-A pure Python C99 parser. Falls back to this if libclang is not available.
-
-!!! warning "Legacy Backend"
-    pycparser is maintained for backwards compatibility but is **not recommended**.
-    It lacks C++ support, macro extraction, and circular dependency handling.
-
-**Cons:**
-
-- C99 only (no C++ support)
-- No macro extraction
-- No circular dependency handling
-- Requires preprocessed code
-- May struggle with complex headers
-
-**Usage:**
-
-```bash
-autopxd --backend pycparser myheader.h
-```
-
-## Choosing a Backend
-
-**Use libclang for everything.** The only reason to use pycparser is if you cannot install LLVM on your system.
-
-| Use Case | Recommended Backend |
-|----------|---------------------|
-| C headers | libclang |
-| C++ headers | libclang |
-| Headers with macros | libclang |
-| Complex library headers | libclang |
-| Cannot install LLVM | pycparser (fallback) |
-
-## Backend Comparison
-
-Both backends produce equivalent output for standard C constructs:
-
-```c
-// input.h
-struct Point {
-    int x;
-    int y;
-};
-
-int distance(struct Point a, struct Point b);
-```
-
-Both backends produce:
-
-```cython
-cdef extern from "input.h":
-
-    cdef struct Point:
-        int x
-        int y
-
-    int distance(Point a, Point b)
-```
-
-## Macro Extraction (libclang only)
+## Macro Extraction
 
 The libclang backend extracts `#define` macros as Cython constant declarations. The type is automatically detected from the macro value.
 
@@ -196,9 +133,7 @@ Expression macros that consist of numeric literals, operators, and other macro r
 - **Empty macros:** `#define EMPTY`
 - **String concatenation:** `#define CONCAT "hello" "world"`
 
-The pycparser backend does not extract macros since it requires preprocessed input.
-
-## C++ Template Support (libclang only)
+## C++ Template Support
 
 The libclang backend supports C++ templates, including primary templates and full specializations.
 
@@ -272,9 +207,9 @@ The mangling scheme converts special characters to valid Python identifiers:
 - `::` becomes `_`
 
 Examples:
-- `Container<int>` → `Container_int`
-- `Map<int, double>` → `Map_int_double`
-- `Foo<int*>` → `Foo_int_ptr`
+- `Container<int>` -> `Container_int`
+- `Map<int, double>` -> `Map_int_double`
+- `Foo<int*>` -> `Foo_int_ptr`
 
 ## Using Docker for libclang
 
@@ -292,9 +227,9 @@ See [Docker Usage](../getting-started/docker.md) for details.
 from autopxd.backends import get_backend, list_backends
 
 # List available backends
-print(list_backends())  # ['pycparser', 'libclang'] (if libclang installed)
+print(list_backends())  # ['libclang']
 
-# Get a specific backend
+# Get the backend
 backend = get_backend("libclang")
 
 # Parse a header

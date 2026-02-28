@@ -1,6 +1,17 @@
 cdef extern from "json_lib.h":
 
-    ctypedef enum json_type:
+
+
+
+    int JSON_COMPACT
+
+    int JSON_ENSURE_ASCII
+
+    int JSON_SORT_KEYS
+
+    int JSON_PRESERVE_ORDER
+
+    cdef enum json_type:
         JSON_OBJECT
         JSON_ARRAY
         JSON_STRING
@@ -12,27 +23,38 @@ cdef extern from "json_lib.h":
 
     cdef struct json_t
 
-    json_type json_typeof(const json_t* json)
 
-    int json_is_object(const json_t* json)
+    ctypedef struct json_error_t:
+        int line
+        int column
+        int position
+        char source[80]
+        char text[160]
 
-    int json_is_array(const json_t* json)
 
-    int json_is_string(const json_t* json)
+    const char* json_object_iter_key(void* iter)
 
-    int json_is_integer(const json_t* json)
+    json_type json_typeof(json_t* json)
 
-    int json_is_real(const json_t* json)
+    int json_is_object(json_t* json)
 
-    int json_is_number(const json_t* json)
+    int json_is_array(json_t* json)
 
-    int json_is_true(const json_t* json)
+    int json_is_string(json_t* json)
 
-    int json_is_false(const json_t* json)
+    int json_is_integer(json_t* json)
 
-    int json_is_boolean(const json_t* json)
+    int json_is_real(json_t* json)
 
-    int json_is_null(const json_t* json)
+    int json_is_number(json_t* json)
+
+    int json_is_true(json_t* json)
+
+    int json_is_false(json_t* json)
+
+    int json_is_boolean(json_t* json)
+
+    int json_is_null(json_t* json)
 
     json_t* json_incref(json_t* json)
 
@@ -54,7 +76,7 @@ cdef extern from "json_lib.h":
 
     json_t* json_null()
 
-    json_t* json_object_get(const json_t* object, const char* key)
+    json_t* json_object_get(json_t* object, const char* key)
 
     int json_object_set_new(json_t* object, const char* key, json_t* value)
 
@@ -68,15 +90,13 @@ cdef extern from "json_lib.h":
 
     void* json_object_iter_next(json_t* object, void* iter)
 
-    const char* json_object_iter_key(void* iter)
-
     json_t* json_object_iter_value(void* iter)
 
-    unsigned long json_object_size(const json_t* object)
+    unsigned long json_object_size(json_t* object)
 
-    unsigned long json_array_size(const json_t* array)
+    unsigned long json_array_size(json_t* array)
 
-    json_t* json_array_get(const json_t* array, unsigned long index)
+    json_t* json_array_get(json_t* array, unsigned long index)
 
     int json_array_set_new(json_t* array, unsigned long index, json_t* value)
 
@@ -88,25 +108,18 @@ cdef extern from "json_lib.h":
 
     int json_array_clear(json_t* array)
 
-    const char* json_string_value(const json_t* string)
+    const char* json_string_value(json_t* string)
 
-    long long json_integer_value(const json_t* integer)
+    long long json_integer_value(json_t* integer)
 
-    double json_real_value(const json_t* real)
+    double json_real_value(json_t* real)
 
-    double json_number_value(const json_t* json)
-
-    ctypedef struct json_error_t:
-        int line
-        int column
-        int position
-        char source[80]
-        char text[160]
+    double json_number_value(json_t* json)
 
     json_t* json_loads(const char* input, unsigned long flags, json_error_t* error)
 
     json_t* json_loadf(void* input, unsigned long flags, json_error_t* error)
 
-    char* json_dumps(const json_t* json, unsigned long flags)
+    char* json_dumps(json_t* json, unsigned long flags)
 
-    int json_dumpf(const json_t* json, void* output, unsigned long flags)
+    int json_dumpf(json_t* json, void* output, unsigned long flags)

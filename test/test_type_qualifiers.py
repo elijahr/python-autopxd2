@@ -36,19 +36,7 @@ implemented. The qualifiers are only "stripped" from Cython's view of the
 types; the actual C code still has full qualifier information.
 """
 
-import pytest
-
 from autopxd.backends import get_backend
-
-
-def _libclang_available():
-    """Check if libclang backend is available."""
-    try:
-        from autopxd.backends import list_backends
-
-        return "libclang" in list_backends()
-    except Exception:
-        return False
 
 
 class TestAtomicQualifier:
@@ -117,7 +105,6 @@ class TestAtomicQualifier:
 class TestRestrictQualifier:
     """Test __restrict and __restrict__ qualifier handling."""
 
-    @pytest.mark.skipif(not _libclang_available(), reason="__restrict is a GCC extension, not supported by pycparser")
     def test_restrict_in_function(self):
         """Test __restrict in function parameters."""
         code = """
@@ -135,7 +122,6 @@ class TestRestrictQualifier:
         assert "__restrict" not in pxd
         assert "const" in pxd  # const is supported by Cython
 
-    @pytest.mark.skipif(not _libclang_available(), reason="__restrict__ is a GCC extension, not supported by pycparser")
     def test_restrict_double_underscore(self):
         """Test __restrict__ (double underscore variant)."""
         code = "void copy(char* __restrict__ dst, const char* __restrict__ src);"
@@ -153,7 +139,6 @@ class TestRestrictQualifier:
 class TestNoreturnQualifier:
     """Test _Noreturn qualifier handling."""
 
-    @pytest.mark.skipif(not _libclang_available(), reason="_Noreturn is a C11 keyword, not supported by pycparser")
     def test_noreturn_function(self):
         """Test _Noreturn in function declarations."""
         code = "_Noreturn void abort_program(void);"
@@ -171,7 +156,6 @@ class TestNoreturnQualifier:
 class TestMixedQualifiers:
     """Test combinations of supported and unsupported qualifiers."""
 
-    @pytest.mark.skipif(not _libclang_available(), reason="__restrict is a GCC extension, not supported by pycparser")
     def test_const_volatile_atomic_mix(self):
         """Test const, volatile (supported) with _Atomic (unsupported)."""
         code = """

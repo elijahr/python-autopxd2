@@ -5,33 +5,6 @@ name: Test
 on: [push, pull_request]
 
 jobs:
-  test-pycparser:
-    name: Test pycparser (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        include:
-          - os: ubuntu-latest
-            python-version: '3.10'
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: astral-sh/setup-uv@v4
-        with:
-          enable-cache: true
-          cache-dependency-glob: "**/pyproject.toml"
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install dependencies
-        run: uv pip install --system -e .[test]
-
-      - name: Test pycparser backend
-        run: pytest ./test -m "not libclang"
-
   test-libclang:
     name: Test libclang (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
@@ -102,25 +75,3 @@ jobs:
       - name: Test (macOS, skip real headers)
         if: runner.os == 'macOS'
         run: pytest ./test -m "not real_headers"
-
-  test-windows:
-    name: Test Windows (pycparser)
-    runs-on: windows-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: astral-sh/setup-uv@v4
-        with:
-          enable-cache: true
-          cache-dependency-glob: "**/pyproject.toml"
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.13'
-
-      - name: Install dependencies
-        run: uv pip install --system -e .[test]
-
-      - name: Test pycparser backend
-        run: pytest ./test -m "not libclang"

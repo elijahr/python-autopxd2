@@ -87,7 +87,7 @@ def translate(
     Args:
         code: C/C++ header source code.
         hdrname: Header filename (used in cdef extern from).
-        backend: Backend name ("auto", "pycparser", "libclang").
+        backend: Backend name ("auto", "libclang").
         extra_args: Extra arguments passed to backend (e.g., ["-I/usr/include"]).
         whitelist: Only include declarations from files matching these patterns.
             Supports fnmatch patterns like "*.h", "include/*.h".
@@ -198,115 +198,30 @@ def _print_backends_json() -> None:
 
 DOCKER_DOCS_URL = "https://elijahr.github.io/python-autopxd2/getting-started/docker/"
 
-FALLBACK_WARNING = f"""Warning: libclang not available, falling back to pycparser (legacy).
-Limitations: No C++ support, limited preprocessor handling, may fail on complex headers.
-To fix: Install LLVM/Clang (e.g., apt install libclang-dev, brew install llvm)
-Or use Docker: {DOCKER_DOCS_URL}
-"""
-
-LIBCLANG_REQUIRED_ERROR = f"""Error: libclang backend required but not available.
-Install LLVM/Clang (e.g., apt install libclang-dev, brew install llvm)
+LIBCLANG_REQUIRED_ERROR = f"""Error: libclang backend not available.
+Install libclang with headerkit: python -m headerkit.install_libclang
+Or install LLVM/Clang manually (e.g., apt install libclang-dev, brew install llvm)
 Or use Docker: {DOCKER_DOCS_URL}
 """
 
 
 def resolve_backend(
     backend: str,
-    cpp: bool,
-    quiet: bool,
 ) -> str:
     """Resolve which backend to use based on options.
 
-    :param backend: Backend option value (auto, libclang, pycparser).
-    :param cpp: Whether --cpp was specified.
-    :param quiet: Whether to suppress warnings.
+    :param backend: Backend option value (auto, libclang).
     :returns: Resolved backend name.
     :raises SystemExit: If required backend is unavailable.
     """
-    # Check for conflicting options: --backend pycparser --cpp
-    if cpp and backend == "pycparser":
-        click.echo(
-            "Error: --cpp requires libclang backend (pycparser does not support C++).\n"
-            "Remove --backend pycparser or --cpp.",
-            err=True,
-        )
-        raise SystemExit(1)
-
-    # --cpp implies libclang
-    if cpp:
+    if backend in ("auto", "libclang"):
         if not is_backend_available("libclang"):
             click.echo(LIBCLANG_REQUIRED_ERROR, err=True)
             raise SystemExit(1)
         return "libclang"
 
-    # Explicit backend selection
-    if backend == "libclang":
-        if not is_backend_available("libclang"):
-            click.echo(LIBCLANG_REQUIRED_ERROR, err=True)
-            raise SystemExit(1)
-        return "libclang"
-
-    if backend == "pycparser":
-        return "pycparser"
-
-    # Auto mode
-    if is_backend_available("libclang"):
-        return "libclang"
-
-    # Fallback to pycparser with warning
-    if not quiet:
-        click.echo(FALLBACK_WARNING, err=True)
-    return "pycparser"
-
-
-def validate_libclang_options(
-    resolved_backend: str,
-    std: str | None,
-    clang_arg: tuple[str, ...],
-    project_prefixes: tuple[str, ...] | None = None,
-    no_recursive: bool = False,
-    max_depth: int = 10,
-) -> None:
-    """Validate that libclang-only options aren't used with pycparser.
-
-    :raises SystemExit: If validation fails.
-    """
-    if resolved_backend != "libclang":
-        if std:
-            click.echo(
-                f"Error: --std requires libclang backend (got {resolved_backend}).\n"
-                "Install LLVM/Clang or remove --std option.",
-                err=True,
-            )
-            raise SystemExit(1)
-        if clang_arg:
-            click.echo(
-                f"Error: --clang-arg requires libclang backend (got {resolved_backend}).\n"
-                "Install LLVM/Clang or remove --clang-arg option.",
-                err=True,
-            )
-            raise SystemExit(1)
-        if project_prefixes:
-            click.echo(
-                f"Error: --project-prefix requires libclang backend (got {resolved_backend}).\n"
-                "Install LLVM/Clang or remove --project-prefix option.",
-                err=True,
-            )
-            raise SystemExit(1)
-        if no_recursive:
-            click.echo(
-                f"Error: --no-recursive requires libclang backend (got {resolved_backend}).\n"
-                "Install LLVM/Clang or remove --no-recursive option.",
-                err=True,
-            )
-            raise SystemExit(1)
-        if max_depth != 10:
-            click.echo(
-                f"Error: --max-depth requires libclang backend (got {resolved_backend}).\n"
-                "Install LLVM/Clang or remove --max-depth option.",
-                err=True,
-            )
-            raise SystemExit(1)
+    click.echo(f"Error: Unknown backend: {backend!r}", err=True)
+    raise SystemExit(1)
 
 
 @click.command(
@@ -322,7 +237,7 @@ Options marked [libclang] require the libclang backend.
 @click.option(
     "--backend",
     "-b",
-    type=click.Choice(["auto", "libclang", "pycparser"], case_sensitive=False),
+    type=click.Choice(["auto", "libclang"], case_sensitive=False),
     default="auto",
     help="Parser backend (default: auto, prefers libclang).",
 )
@@ -475,8 +390,7 @@ def cli(
         click.echo("Error: Missing argument 'INFILE'.", err=True)
         raise SystemExit(2)
 
-    resolved_backend = resolve_backend(backend, cpp, quiet)
-    validate_libclang_options(resolved_backend, std, clang_arg, project_prefixes, no_recursive, max_depth)
+    resolved_backend = resolve_backend(backend)
 
     # Merge deprecated --compiler-directive into --define
     all_defines = defines + defines_deprecated
@@ -488,6 +402,9 @@ def cli(
 
     # Build extra_args list from CLI options
     extra_args: list[str] = []
+    if cpp:
+        extra_args.append("-x")
+        extra_args.append("c++")
     for define in all_defines:
         extra_args.append(f"-D{define}")
     for directory in include_dir:

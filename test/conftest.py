@@ -7,18 +7,16 @@ from autopxd.backends import get_backend, is_backend_available
 
 @pytest.fixture(
     params=[
-        pytest.param("pycparser", marks=pytest.mark.pycparser),
         pytest.param("libclang", marks=pytest.mark.libclang),
     ]
 )
 def backend(request: pytest.FixtureRequest):
-    """Parameterized fixture providing each available backend.
+    """Parameterized fixture providing the libclang backend.
 
     Each parameter is marked with its backend name, so you can filter:
         pytest -m "not libclang"      # exclude libclang parameterizations
-        pytest -m "not pycparser"     # exclude pycparser parameterizations
 
-    Fails if a backend is not available.
+    Fails if the backend is not available.
     """
     name: str = request.param
 

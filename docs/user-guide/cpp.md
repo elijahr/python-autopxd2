@@ -3,7 +3,7 @@
 autopxd2 supports C++ headers through the libclang backend.
 
 !!! important
-    C++ support requires the libclang backend. The default pycparser backend only supports C99.
+    C++ support requires the libclang backend, which is the only backend in autopxd2.
 
 ## Basic C++ Usage
 
