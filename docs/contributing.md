@@ -40,7 +40,7 @@ pytest
 pytest -v
 
 # Run specific test file
-pytest test/test_ir.py
+pytest test/test_autopxd.py
 
 # Run tests with coverage
 pytest --cov=autopxd

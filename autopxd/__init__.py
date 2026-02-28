@@ -153,17 +153,6 @@ def translate(
             recursive_includes=recursive_includes,
             max_depth=max_depth,
         )
-    elif "use_default_includes" in parse_varnames:
-        # libclang backend without umbrella header params
-        header = backend_obj.parse(
-            code,
-            hdrname,
-            extra_args=extra_args or [],
-            use_default_includes=use_default_includes,
-        )
-    else:
-        # pycparser or other backend
-        header = backend_obj.parse(code, hdrname, extra_args=extra_args or [])
 
     if debug:
         _debug_print(f"Found {len(header.declarations)} declarations")

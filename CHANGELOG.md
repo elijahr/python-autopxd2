@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.0.0] - 2026-02-28
+
+### Added
+- `headerkit` as a runtime dependency
+
+### Changed
+- IR classes, PxdWriter, and type registries now provided by headerkit (re-exported via shim modules for backward compatibility)
+- `PycparserBackend.parse()` signature updated to match headerkit's `ParserBackend` protocol
+
+### Removed
+- `autopxd.cython_types` module (use `headerkit.writers._cython_types` directly)
+- `autopxd.keywords` module (use `headerkit.writers._cython_keywords` directly)
+- `IGNORE_DECLARATIONS` and `STDINT_DECLARATIONS` from `autopxd.declarations` (unused)
+- Dead code branches in `translate()` for backends not supporting full ParserBackend protocol
+- `test/test_ir.py` and `test/test_cython_types.py` (tests moved to headerkit)
+
 ## [3.2.2] - 2025-12-19
 
 ### Fixed
@@ -179,7 +195,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - macOS support
 
-[Unreleased]: https://github.com/elijahr/python-autopxd2/compare/v3.2.0...HEAD
+[Unreleased]: https://github.com/elijahr/python-autopxd2/compare/v4.0.0...HEAD
+[4.0.0]: https://github.com/elijahr/python-autopxd2/compare/v3.2.2...v4.0.0
+[3.2.2]: https://github.com/elijahr/python-autopxd2/compare/v3.2.1...v3.2.2
+[3.2.1]: https://github.com/elijahr/python-autopxd2/compare/v3.2.0...v3.2.1
 [3.2.0]: https://github.com/elijahr/python-autopxd2/compare/v3.1.1...v3.2.0
 [3.1.1]: https://github.com/elijahr/python-autopxd2/compare/v3.1.0...v3.1.1
 [3.1.0]: https://github.com/elijahr/python-autopxd2/compare/v3.0.0...v3.1.0
