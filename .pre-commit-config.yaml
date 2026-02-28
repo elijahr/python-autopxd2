@@ -24,4 +24,4 @@ repos:
         additional_dependencies:
           - pycparser
           - click
-          - headerkit @ git+https://github.com/axiomantic/headerkit.git@elijahr/autopxd2-migration
+          - headerkit @ git+https://github.com/axiomantic/headerkit.git@v0.6.0
