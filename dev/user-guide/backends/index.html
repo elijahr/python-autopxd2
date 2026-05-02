@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
@@ -1364,7 +1364,7 @@ It lacks C++ support, macro extraction, and circular dependency handling.</p>
 <p>Both backends produce:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">cdef</span><span class="w"> </span><span class="kr">extern</span> <span class="k">from</span> <span class="s">&quot;input.h&quot;</span><span class="p">:</span>
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    <span class="k">cdef</span><span class="w"> </span><span class="k">struct</span> <span class="nf">Point</span><span class="p">:</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    <span class="k">cdef</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">Point</span><span class="p">:</span>
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>        <span class="nb">int</span> <span class="n">x</span>
 <a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>        <span class="nb">int</span> <span class="n">y</span>
 <a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>
@@ -1393,17 +1393,17 @@ It lacks C++ support, macro extraction, and circular dependency handling.</p>
 <a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="cp">#define FACTOR 2.5f</span>
 </code></pre></div>
 <p>Generates <code>double</code> declarations:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>    <span class="n">double</span> <span class="n">PI</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>    <span class="n">double</span> <span class="n">EPSILON</span>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>    <span class="n">double</span> <span class="n">FACTOR</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>    <span class="nb">double</span> <span class="n">PI</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>    <span class="nb">double</span> <span class="n">EPSILON</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>    <span class="nb">double</span> <span class="n">FACTOR</span>
 </code></pre></div>
 <h3 id="string-macros">String Macros<a class="headerlink" href="#string-macros" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="cp">#define VERSION &quot;1.0.0&quot;</span>
 <a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="cp">#define APP_NAME &quot;myapp&quot;</span>
 </code></pre></div>
 <p>Generates <code>const char*</code> declarations:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>    <span class="n">const</span> <span class="n">char</span><span class="o">*</span> <span class="n">VERSION</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>    <span class="n">const</span> <span class="n">char</span><span class="o">*</span> <span class="n">APP_NAME</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>    <span class="n">const</span> <span class="nb">char</span><span class="o">*</span> <span class="n">VERSION</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>    <span class="n">const</span> <span class="nb">char</span><span class="o">*</span> <span class="n">APP_NAME</span>
 </code></pre></div>
 <h3 id="expression-macros">Expression Macros<a class="headerlink" href="#expression-macros" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="cp">#define A 10</span>
@@ -1439,7 +1439,7 @@ It lacks C++ support, macro extraction, and circular dependency handling.</p>
 <a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="p">};</span>
 </code></pre></div>
 <p>Generates:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="k">cdef</span><span class="w"> </span><span class="kt">cppclass</span> <span class="kt">Container</span>[<span class="kt">T</span>]<span class="p">:</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="k">cdef</span><span class="w"> </span><span class="k">cppclass</span><span class="w"> </span><span class="nc">Container</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
 <a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>    <span class="n">T</span> <span class="n">value</span>
 <a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>    <span class="n">T</span> <span class="n">get</span><span class="p">()</span>
 <a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>    <span class="n">void</span> <span class="nb">set</span><span class="p">(</span><span class="n">T</span> <span class="n">v</span><span class="p">)</span>
@@ -1453,7 +1453,7 @@ It lacks C++ support, macro extraction, and circular dependency handling.</p>
 <a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a><span class="p">};</span>
 </code></pre></div>
 <p>Generates:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="k">cdef</span><span class="w"> </span><span class="kt">cppclass</span> <span class="kt">Map</span>[<span class="nf">K</span><span class="p">,</span> <span class="kt">V</span>]<span class="p">:</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="k">cdef</span><span class="w"> </span><span class="k">cppclass</span><span class="w"> </span><span class="nc">Map</span><span class="p">[</span><span class="n">K</span><span class="p">,</span> <span class="n">V</span><span class="p">]:</span>
 <a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>    <span class="n">V</span> <span class="n">lookup</span><span class="p">(</span><span class="n">K</span> <span class="n">key</span><span class="p">)</span>
 <a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>    <span class="n">void</span> <span class="n">insert</span><span class="p">(</span><span class="n">K</span> <span class="n">key</span><span class="p">,</span> <span class="n">V</span> <span class="n">value</span><span class="p">)</span>
 </code></pre></div>
@@ -1467,7 +1467,7 @@ It lacks C++ support, macro extraction, and circular dependency handling.</p>
 <a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a><span class="p">};</span>
 </code></pre></div>
 <p>Generates:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="k">cdef</span><span class="w"> </span><span class="kt">cppclass</span> <span class="kt">Container_int</span> <span class="s">&quot;Container&lt;int&gt;&quot;</span><span class="p">:</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="k">cdef</span><span class="w"> </span><span class="k">cppclass</span><span class="w"> </span><span class="nc">Container_int</span> <span class="s">&quot;Container&lt;int&gt;&quot;</span><span class="p">:</span>
 <a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>    <span class="nb">int</span> <span class="n">special_value</span>
 <a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>    <span class="nb">int</span> <span class="n">get_special</span><span class="p">()</span>
 </code></pre></div>

@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
@@ -806,6 +806,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label=" get_backend">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#autopxd.backends.get_backend--example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
           <li class="md-nav__item">
@@ -816,6 +833,23 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label=" list_backends">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#autopxd.backends.list_backends--example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -1044,6 +1078,23 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label=" parse">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#autopxd.backends.libclang_backend.LibclangBackend.parse--example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -1180,6 +1231,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label=" get_backend">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#autopxd.backends.get_backend--example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
           <li class="md-nav__item">
@@ -1190,6 +1258,23 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label=" list_backends">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#autopxd.backends.list_backends--example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -1418,6 +1503,23 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label=" parse">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#autopxd.backends.libclang_backend.LibclangBackend.parse--example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -1561,7 +1663,8 @@ header = backend.parse(code, &quot;myheader.h&quot;)
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Backend name (e.g., <code>"pycparser"</code>, <code>"libclang"</code>), or None for the default backend.</p>
+                <p>Backend name (e.g., <code>"pycparser"</code>, <code>"libclang"</code>),
+or None for the default backend.</p>
               </div>
             </td>
             <td>
@@ -1610,7 +1713,8 @@ header = backend.parse(code, &quot;myheader.h&quot;)
             </td>
             <td>
               <div class="doc-md-description">
-                <p>If the requested backend is not available.  Example -------</p>
+                <p>If the requested backend is not available.</p>
+<h5 id="autopxd.backends.get_backend--example">Example<a class="headerlink" href="#autopxd.backends.get_backend--example" title="Permanent link">&para;</a></h5>
               </div>
             </td>
           </tr>
@@ -1657,7 +1761,8 @@ for name in list_backends():
             </td>
             <td>
               <div class="doc-md-description">
-                <p>List of backend names that can be passed to :func:<code>get_backend</code>.  Example -------</p>
+                <p>List of backend names that can be passed to :func:<code>get_backend</code>.</p>
+<h5 id="autopxd.backends.list_backends--example">Example<a class="headerlink" href="#autopxd.backends.list_backends--example" title="Permanent link">&para;</a></h5>
               </div>
             </td>
           </tr>
@@ -3364,7 +3469,9 @@ header = backend.parse(
             </td>
             <td>
               <div class="doc-md-description">
-                <p>If True (default), automatically detect and add system include directories by querying the system clang compiler. Set to False to disable this behavior.</p>
+                <p>If True (default), automatically detect and add
+system include directories by querying the system clang compiler.
+Set to False to disable this behavior.</p>
               </div>
             </td>
             <td>
@@ -3380,7 +3487,9 @@ header = backend.parse(
             </td>
             <td>
               <div class="doc-md-description">
-                <p>If True (default), detect umbrella headers and recursively parse included project headers. System headers are always skipped. Set to False to only parse the main file.</p>
+                <p>If True (default), detect umbrella headers and
+recursively parse included project headers. System headers are always
+skipped. Set to False to only parse the main file.</p>
               </div>
             </td>
             <td>
@@ -3396,7 +3505,8 @@ header = backend.parse(
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Maximum recursion depth for include processing (default 10). Prevents infinite recursion from circular includes.</p>
+                <p>Maximum recursion depth for include processing (default 10).
+Prevents infinite recursion from circular includes.</p>
               </div>
             </td>
             <td>
@@ -3412,7 +3522,9 @@ header = backend.parse(
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Optional tuple of path prefixes to treat as project headers (not system). Use this for umbrella headers of libraries installed in system locations (e.g., <code>("/opt/homebrew/include/sodium",)</code>).</p>
+                <p>Optional tuple of path prefixes to treat as project
+headers (not system). Use this for umbrella headers of libraries installed
+in system locations (e.g., <code>("/opt/homebrew/include/sodium",)</code>).</p>
               </div>
             </td>
             <td>
@@ -3466,7 +3578,8 @@ header = backend.parse(
             </td>
             <td>
               <div class="doc-md-description">
-                <p>If parsing fails with errors.  Example -------</p>
+                <p>If parsing fails with errors.</p>
+<h6 id="autopxd.backends.libclang_backend.LibclangBackend.parse--example">Example<a class="headerlink" href="#autopxd.backends.libclang_backend.LibclangBackend.parse--example" title="Permanent link">&para;</a></h6>
               </div>
             </td>
           </tr>
