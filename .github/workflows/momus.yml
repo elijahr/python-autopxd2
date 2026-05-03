@@ -1,0 +1,30 @@
+name: Momus
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review, synchronize]
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: PR number to review
+        required: true
+        type: string
+
+jobs:
+  call:
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    uses: elijahr/.github/.github/workflows/momus.yml@devel
+    with:
+      pr_number: ${{ github.event.pull_request.number || github.event.issue.number || github.event.inputs.pr_number }}
+      event_name: ${{ github.event_name }}
+      trigger_command: /ai-review
+      trigger_mention: "@axiomantic-momus[bot]"
+    secrets:
+      LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+      MOMUS_APP_ID: ${{ secrets.MOMUS_APP_ID }}
+      MOMUS_APP_PRIVATE_KEY: ${{ secrets.MOMUS_APP_PRIVATE_KEY }}
