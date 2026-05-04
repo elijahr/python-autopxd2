@@ -18,7 +18,7 @@ jobs:
       contents: read
       pull-requests: write
       issues: write
-    uses: elijahr/.github/.github/workflows/momus.yml@devel
+    uses: axiomantic/.github/.github/workflows/momus.yml@devel
     with:
       pr_number: ${{ github.event.pull_request.number || github.event.issue.number || github.event.inputs.pr_number }}
       event_name: ${{ github.event_name }}
