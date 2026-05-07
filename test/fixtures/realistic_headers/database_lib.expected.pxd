@@ -1,5 +1,31 @@
 cdef extern from "database_lib.h":
 
+    int DB_OK
+
+    int DB_ERROR
+
+    int DB_BUSY
+
+    int DB_LOCKED
+
+    int DB_NOMEM
+
+    int DB_READONLY
+
+    int DB_DONE
+
+    int DB_ROW
+
+    int DB_INTEGER
+
+    int DB_FLOAT
+
+    int DB_TEXT
+
+    int DB_BLOB
+
+    int DB_NULL
+
     cdef struct db_connection
 
     ctypedef db_connection db
@@ -8,7 +34,7 @@ cdef extern from "database_lib.h":
 
     ctypedef db_statement db_stmt
 
-    ctypedef int (*db_callback)(void* user_data, int ncols, char** values, char** names)
+    ctypedef int (*db_callback)(void*, int, char**, char**)
 
     int db_open(const char* filename, db** ppDb)
 
@@ -32,13 +58,9 @@ cdef extern from "database_lib.h":
 
     int db_bind_double(db_stmt* pStmt, int idx, double value)
 
-    ctypedef void (*_db_bind_text_destructor_ft)(void*)
+    int db_bind_text(db_stmt* pStmt, int idx, const char* value, int nbytes, void (*destructor)(void*))
 
-    int db_bind_text(db_stmt* pStmt, int idx, const char* value, int nbytes, _db_bind_text_destructor_ft destructor)
-
-    ctypedef void (*_db_bind_blob_destructor_ft)(void*)
-
-    int db_bind_blob(db_stmt* pStmt, int idx, const void* value, int nbytes, _db_bind_blob_destructor_ft destructor)
+    int db_bind_blob(db_stmt* pStmt, int idx, const void* value, int nbytes, void (*destructor)(void*))
 
     int db_bind_null(db_stmt* pStmt, int idx)
 

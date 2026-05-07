@@ -37,13 +37,10 @@ struct xnvme_opts {
 };
 
 ---
+
 from libc.stdint cimport uint32_t, uint8_t
 
 cdef extern from "xnvme_opts.test":
-
-    cdef struct _xnvme_opts_css_s:
-        uint32_t value
-        uint32_t given
 
     cdef struct xnvme_opts:
         const char* be
@@ -53,20 +50,11 @@ cdef extern from "xnvme_opts.test":
         const char* async_ "async"
         const char* admin
         uint32_t nsid
-        uint32_t rdonly
-        uint32_t wronly
-        uint32_t rdwr
-        uint32_t create
-        uint32_t truncate
-        uint32_t direct
-        uint32_t _rsvd
-        uint32_t oflags
         uint32_t create_mode
         uint8_t poll_io
         uint8_t poll_sq
         uint8_t register_files
         uint8_t register_buffers
-        _xnvme_opts_css_s css
         uint32_t use_cmb_sqs
         uint32_t shm_id
         uint32_t main_core

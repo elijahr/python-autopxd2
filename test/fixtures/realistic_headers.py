@@ -413,7 +413,7 @@ ALL_FIXTURES = {
     "cpp_container": CPP_CONTAINER,
 }
 
-# C-only fixtures (compatible with pycparser after preprocessing)
+# C-only fixtures
 C_FIXTURES = {
     "compression_lib": COMPRESSION_LIB,
     "database_lib": DATABASE_LIB,

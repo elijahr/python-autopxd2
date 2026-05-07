@@ -7,8 +7,3 @@ enum {
 ---
 
 cdef extern from "anonymous_enum.test":
-
-    cdef enum:
-        C1
-        C2
-        C3

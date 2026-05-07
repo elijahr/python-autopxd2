@@ -267,10 +267,8 @@ class TestIntegrationKeywords:
 class TestIntegrationStdint:
     """Test stdint type handling through the pipeline.
 
-    Note: pycparser doesn't know about stdint types without preprocessing.
-    In the full autopxd pipeline, preprocessing defines these types.
-    Here we test that the IR writer correctly identifies and imports them
-    when they appear in the IR.
+    Here we test that the IR writer correctly identifies and imports stdint
+    types when they appear in the IR.
     """
 
     def test_stdint_import_from_ir(self, tmp_path):
@@ -498,10 +496,10 @@ class TestLibclangIntegrationCpp:
 
 
 @pytest.mark.libclang
-class TestBackendComparison:
-    """Test that both backends produce similar output for the same input."""
+class TestLibclangOutput:
+    """Test that libclang produces correct output for common C constructs."""
 
-    def test_simple_struct_both_backends(self, tmp_path):
+    def test_simple_struct(self, tmp_path):
         code = """
         struct Point {
             int x;
@@ -514,23 +512,17 @@ class TestBackendComparison:
         int x
         int y
 """
-        # Test pycparser
-        assert_pxd_equals(code, expected, tmp_path, backend="pycparser")
-        # Test libclang
         assert_pxd_equals(code, expected, tmp_path, backend="libclang")
 
-    def test_simple_function_both_backends(self, tmp_path):
+    def test_simple_function(self, tmp_path):
         code = "int add(int a, int b);"
         expected = """cdef extern from "test.h":
 
     int add(int a, int b)
 """
-        # Test pycparser
-        assert_pxd_equals(code, expected, tmp_path, backend="pycparser")
-        # Test libclang
         assert_pxd_equals(code, expected, tmp_path, backend="libclang")
 
-    def test_enum_both_backends(self, tmp_path):
+    def test_enum(self, tmp_path):
         code = """
         enum Color { RED, GREEN, BLUE };
         """
@@ -541,7 +533,4 @@ class TestBackendComparison:
         GREEN
         BLUE
 """
-        # Test pycparser
-        assert_pxd_equals(code, expected, tmp_path, backend="pycparser")
-        # Test libclang
         assert_pxd_equals(code, expected, tmp_path, backend="libclang")

@@ -24,20 +24,20 @@ autopxd2 parses C header files and generates Cython `.pxd` files, enabling you t
 
 ### C Features
 
-| Feature | libclang | pycparser (legacy) |
-|---------|:--------:|:------------------:|
-| Structs and unions | ✓ | ✓ |
-| Enums (with expressions) | ✓ | ✓ |
-| Typedefs | ✓ | ✓ |
-| Function declarations | ✓ | ✓ |
-| Function pointers | ✓ | ✓ |
-| Arrays (fixed and flexible) | ✓ | ✓ |
-| Pointers and const qualifiers | ✓ | ✓ |
-| Forward declarations | ✓ | ✓ |
-| Anonymous structs/unions | ✓ | ✓ |
-| Bit fields | ✓ | ✓ |
-| `#define` macros (int, float, string) | ✓ | |
-| Circular type dependencies | ✓ | |
+| Feature | Supported |
+|---------|:---------:|
+| Structs and unions | ✓ |
+| Enums (with expressions) | ✓ |
+| Typedefs | ✓ |
+| Function declarations | ✓ |
+| Function pointers | ✓ |
+| Arrays (fixed and flexible) | ✓ |
+| Pointers and const qualifiers | ✓ |
+| Forward declarations | ✓ |
+| Anonymous structs/unions | ✓ |
+| Bit fields | ✓ |
+| `#define` macros (int, float, string) | ✓ |
+| Circular type dependencies | ✓ |
 
 ### C++ Features (libclang only)
 
@@ -69,7 +69,7 @@ llvm-config --version  # e.g., 18.1.3 means you need clang2==18.*
 pip install "clang2==18.*"
 ```
 
-Without `clang2`, autopxd2 falls back to the legacy pycparser backend (C99 only, no macros, no circular dependency handling). If clang2 is missing, autopxd2 will detect your LLVM version and show the exact install command.
+Without `clang2`, autopxd2 cannot parse headers. You can also install libclang with headerkit: `python -m headerkit.install_libclang`. If clang2 is missing, autopxd2 will detect your LLVM version and show the exact install command.
 
 See the [installation docs](https://elijahr.github.io/python-autopxd2/dev/getting-started/installation/) for platform-specific LLVM setup (macOS with Homebrew, Ubuntu/Debian, Windows).
 
@@ -177,7 +177,7 @@ cdef extern from "input.hpp":
     vector[string] get_items()
 ```
 
-**Note:** Auto-import requires the libclang backend for header detection. The pycparser backend does not track included headers.
+**Note:** Auto-import uses the libclang backend for header detection.
 
 ## Documentation
 

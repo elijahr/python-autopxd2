@@ -8,7 +8,7 @@ in test/.header_cache/. Test fixture headers (simple_c.h, templates.hpp)
 are kept in test/real_headers/.
 
 They require the libclang backend since real-world headers often contain
-features that pycparser cannot handle without preprocessing.
+features that require a full C/C++ parser.
 """
 
 import os
@@ -379,8 +379,8 @@ class TestZlibHeader:
         actual = write_pxd(zlib_header)
 
         assert actual == expected, (
-            f"\n{'='*60}\nEXPECTED ({os.path.basename(expected_path)}):\n{'='*60}\n{repr(expected)}\n"
-            f"{'='*60}\nACTUAL:\n{'='*60}\n{repr(actual)}\n{'='*60}"
+            f"\n{'=' * 60}\nEXPECTED ({os.path.basename(expected_path)}):\n{'=' * 60}\n{repr(expected)}\n"
+            f"{'=' * 60}\nACTUAL:\n{'=' * 60}\n{repr(actual)}\n{'=' * 60}"
         )
         # NO Cython validation - see docstring for why
 
@@ -457,18 +457,18 @@ class TestJanssonHeader:
         actual = write_pxd(jansson_header)
 
         assert actual == expected, (
-            f"\n{'='*60}\nEXPECTED ({os.path.basename(expected_path)}):\n{'='*60}\n{repr(expected)}\n"
-            f"{'='*60}\nACTUAL:\n{'='*60}\n{repr(actual)}\n{'='*60}"
+            f"\n{'=' * 60}\nEXPECTED ({os.path.basename(expected_path)}):\n{'=' * 60}\n{repr(expected)}\n"
+            f"{'=' * 60}\nACTUAL:\n{'=' * 60}\n{repr(actual)}\n{'=' * 60}"
         )
         # NO Cython validation - see docstring for why
 
 
 class TestSimpleCHeader:
-    """Test parsing simple_c.h with pycparser backend."""
+    """Test parsing simple_c.h with libclang backend."""
 
     @pytest.fixture
-    def simple_c_header(self):
-        """Parse simple_c.h with pycparser and return the IR."""
+    def simple_c_header(self, libclang_backend):
+        """Parse simple_c.h with libclang and return the IR."""
         c_path = os.path.join(REAL_HEADERS_DIR, "simple_c.h")
         if not os.path.exists(c_path):
             pytest.skip("simple_c.h not found in test/real_headers/")
@@ -476,8 +476,7 @@ class TestSimpleCHeader:
         with open(c_path, encoding="utf-8") as f:
             code = f.read()
 
-        backend = get_backend("pycparser")
-        return backend.parse(code, "simple_c.h")
+        return libclang_backend.parse(code, "simple_c.h")
 
     def test_parses_without_error(self, simple_c_header):
         """Verify simple_c.h parses successfully."""

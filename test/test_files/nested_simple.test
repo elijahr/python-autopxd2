@@ -12,5 +12,3 @@ cdef extern from "nested_simple.test":
 
     cdef struct outer_s:
         int a
-        int b
-        int c

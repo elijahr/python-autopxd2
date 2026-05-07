@@ -53,25 +53,6 @@ To disable automatic system include detection (e.g., for cross-compilation), use
 autopxd --no-default-includes -I /custom/sysroot/include myheader.h
 ```
 
-## Choosing a Backend
-
-autopxd2 supports two parser backends:
-
-| Backend | Best For | Requirements |
-|---------|----------|--------------|
-| pycparser | Simple C headers | None (pure Python) |
-| libclang | C++ headers, complex macros | libclang installed |
-
-Use the `--backend` option:
-
-```bash
-# Use pycparser (default)
-autopxd --backend pycparser myheader.h
-
-# Use libclang for C++ support
-autopxd --backend libclang myheader.hpp
-```
-
 ## Using with Cython
 
 After generating the `.pxd` file, use it in your Cython code:
@@ -100,7 +81,7 @@ from autopxd.backends import get_backend
 from autopxd.ir_writer import write_pxd
 
 # Parse a header file
-backend = get_backend("pycparser")  # or "libclang"
+backend = get_backend("libclang")
 with open("example.h") as f:
     code = f.read()
 

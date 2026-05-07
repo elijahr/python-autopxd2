@@ -20,15 +20,13 @@ autopxd --version
 
 ### `-b, --backend <name>`
 
-Select the parser backend. Options: `auto` (default), `libclang`, `pycparser`.
+Select the parser backend. Options: `auto` (default), `libclang`.
 
-- `auto`: Use libclang if available, fall back to pycparser
+- `auto`: Use libclang (the only backend)
 - `libclang`: Full C/C++ support via LLVM
-- `pycparser`: Legacy C99 parser (no C++ support)
 
 ```bash
 autopxd --backend libclang myheader.hpp
-autopxd -b pycparser myheader.h
 ```
 
 ### `--list-backends`
@@ -148,7 +146,7 @@ autopxd --max-depth 5 -P /opt/homebrew/include/sodium \
 
 ### `-q, --quiet`
 
-Suppress warnings (e.g., backend fallback warnings).
+Suppress warnings.
 
 ```bash
 autopxd -q myheader.h
@@ -222,7 +220,12 @@ autopxd --list-backends
 
 ### libclang not available
 
-If you see "libclang not available, falling back to pycparser", install the system libclang library:
+If you see "libclang backend not available", install libclang:
+
+**Using headerkit:**
+```bash
+python -m headerkit.install_libclang
+```
 
 **Ubuntu/Debian:**
 ```bash

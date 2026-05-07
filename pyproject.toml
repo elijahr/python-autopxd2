@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "autopxd2"
-version = "3.2.2"
+version = "4.0.0"
 description = "Automatically generate Cython pxd files from C headers"
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -29,7 +29,7 @@ classifiers = [
   "Programming Language :: C++",
 ]
 requires-python = ">=3.10"
-dependencies = ["Click", "pycparser"]
+dependencies = ["Click", "headerkit>=0.6.1,<1.0.0"]
 
 [project.optional-dependencies]
 # libclang backend (C++ support)
@@ -63,10 +63,6 @@ include = ["autopxd", "autopxd.*"]
 [tool.setuptools.package-data]
 autopxd = [
   "stubs/*.pxd",
-  "stubs/include/*",
-  "stubs/include/**/*",
-  "stubs/darwin-include/*",
-  "stubs/darwin-include/**/*",
 ]
 
 [tool.ruff]
@@ -116,7 +112,6 @@ exclude = ["build", "dist"]
 [tool.pytest.ini_options]
 testpaths = ["test"]
 markers = [
-    "pycparser: tests/parameterizations using the pycparser backend",
     "libclang: tests/parameterizations using the libclang backend (includes C++ tests)",
     "real_headers: tests against real system libraries (requires library installation)",
 ]

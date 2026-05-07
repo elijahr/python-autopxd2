@@ -5,12 +5,8 @@ source code into the autopxd IR (Intermediate Representation).
 
 Available Backends
 ------------------
-pycparser
-    Pure Python C99 parser. Default backend with no external dependencies.
-    Requires preprocessed input (CPP/clang -E output).
-
 libclang
-    LLVM clang-based parser with full C++ support. Requires system
+    LLVM clang-based parser with full C/C++ support. Requires system
     libclang library and matching ``clang2`` Python package.
 
 Example
@@ -49,7 +45,7 @@ def register_backend(name: str, backend_class: type[ParserBackend], is_default: 
     The first registered backend becomes the default unless ``is_default`` is
     explicitly set on a later registration.
 
-    :param name: Unique name for the backend (e.g., ``"pycparser"``, ``"libclang"``).
+    :param name: Unique name for the backend (e.g., ``"libclang"``).
     :param backend_class: Class implementing the :class:`~autopxd.ir.ParserBackend` protocol.
     :param is_default: If True, this becomes the default backend for :func:`get_backend`.
     """
@@ -96,11 +92,10 @@ def get_backend_info() -> list[dict[str, str | bool]]:
 
     descriptions = {
         "libclang": "Full C/C++ support via LLVM",
-        "pycparser": "Legacy C99 parser",
     }
 
     result: list[dict[str, str | bool]] = []
-    for name in ["libclang", "pycparser"]:  # Fixed order for display
+    for name in ["libclang"]:  # Fixed order for display
         result.append(
             {
                 "name": name,
@@ -116,9 +111,9 @@ def get_backend(name: str | None = None) -> ParserBackend:
     """Get a parser backend instance.
 
     Returns a new instance of the requested backend. If no name is provided,
-    returns the default backend (pycparser).
+    returns the default backend (libclang).
 
-    :param name: Backend name (e.g., ``"pycparser"``, ``"libclang"``),
+    :param name: Backend name (e.g., ``"libclang"``),
         or None for the default backend.
     :returns: New instance of the requested backend.
     :raises ValueError: If the requested backend is not available.
@@ -160,9 +155,9 @@ def get_default_backend() -> str:
     """Get the name of the default backend.
 
     Returns the name of the currently configured default backend.
-    If libclang is available, it is preferred; otherwise pycparser is used.
+    libclang is the only backend.
 
-    :returns: Backend name (e.g., "pycparser" or "libclang").
+    :returns: Backend name ("libclang").
     :raises ValueError: If no backends are available.
 
     Example
@@ -242,14 +237,6 @@ def _ensure_backends_loaded() -> None:
 
     # pylint: disable=import-outside-toplevel
     # Lazy imports are intentional to avoid import errors if dependencies are missing
-
-    # Try to import pycparser backend (should always work)
-    try:
-        from autopxd.backends import (  # noqa: F401
-            pycparser_backend,
-        )
-    except ImportError:
-        pass
 
     # Try to import libclang backend (may fail if clang2 not installed)
     try:
