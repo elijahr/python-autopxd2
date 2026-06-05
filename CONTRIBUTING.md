@@ -158,6 +158,24 @@ This section is for project maintainers who can publish releases.
    git push origin master
    ```
 
+> **Important:** The git ref you release from (the tag, or the SHA passed to
+> the manual `workflow_dispatch`) MUST contain the `pyproject.toml` version
+> bump. `workflow_dispatch` accepts an arbitrary ref and will happily build
+> and publish from a ref that lacks the bump.
+
+### Sdist completeness guard
+
+The publish workflow builds the sdist and wheel, then runs `check-manifest`
+and `twine check --strict` **before** uploading the distribution artifacts. If
+the sdist is missing any version-controlled file that belongs in it (for
+example, a new test helper or fixture), `check-manifest` fails, the `build`
+job fails, and because `publish-pypi` depends on `build`, nothing is published.
+
+`check-manifest` also runs locally via pre-commit, so drift is usually caught
+before you push. If it flags a new file, update `MANIFEST.in` (to ship it) or
+the `[tool.check-manifest]` `ignore` list in `pyproject.toml` (to keep it out
+of the sdist) — never weaken the gate to make it pass.
+
 ### 2. Create a GitHub Release
 
 1. Go to [Releases](https://github.com/elijahr/python-autopxd2/releases)

@@ -24,3 +24,12 @@ repos:
         additional_dependencies:
           - pycparser
           - click
+
+  - repo: https://github.com/mgedmin/check-manifest
+    rev: "0.51"
+    hooks:
+      - id: check-manifest
+        args: [--no-build-isolation]
+        additional_dependencies:
+          - setuptools
+          - wheel
