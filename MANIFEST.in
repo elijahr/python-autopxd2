@@ -4,10 +4,8 @@
 # suite from the sdist. See NixOS/nixpkgs#524341.
 
 # --- Test suite: helpers, fixtures, and data (the fix) ---
-recursive-include test *.py
-recursive-include test *.test *.cpptest
-recursive-include test *.h *.hpp *.pxd
-recursive-include test *.gitkeep
+# Ship the entire tracked test tree; byte-compiled cruft is excluded below.
+graft test
 
 # --- Runtime stub dotfile dropped by setuptools globbing ---
 # The "stubs/darwin-include/**/*" package-data glob does not match leading-dot
@@ -21,7 +19,7 @@ include CONTRIBUTING.md
 include regenerate_stubs.py
 
 # --- Test-library install helpers referenced by test/test_real_headers.py ---
-recursive-include scripts *.sh
+graft scripts
 
 # --- Repo-only infrastructure: never ship ---
 exclude .gitignore
@@ -31,3 +29,7 @@ exclude Dockerfile
 exclude mkdocs.yml
 prune .github
 prune docs
+
+# --- Hygiene: keep graft from sweeping byte-compiled cruft ---
+global-exclude *.py[cod]
+global-exclude __pycache__

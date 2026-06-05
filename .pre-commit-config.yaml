@@ -31,5 +31,5 @@ repos:
       - id: check-manifest
         args: [--no-build-isolation]
         additional_dependencies:
-          - setuptools
+          - setuptools>=61
           - wheel
