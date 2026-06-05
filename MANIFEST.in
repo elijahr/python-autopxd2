@@ -1,0 +1,34 @@
+# Sdist content spec. The wheel is unaffected (include_package_data is not set;
+# packages are controlled by [tool.setuptools.packages.find]).
+# Ship the complete test tree so downstream packagers (e.g. nixpkgs) can run the
+# suite from the sdist. See NixOS/nixpkgs#524341.
+
+# --- Test suite: helpers, fixtures, and data (the fix) ---
+# Ship the entire tracked test tree; byte-compiled cruft is excluded below.
+graft test
+
+# --- Runtime stub dotfile dropped by setuptools globbing ---
+# The "stubs/darwin-include/**/*" package-data glob does not match leading-dot
+# files, so the sdist's default include misses this tracked stub. It is read at
+# runtime (clang -I include path), so ship it explicitly.
+include autopxd/stubs/darwin-include/.supports-builtin-modules
+
+# --- Top-level docs/metadata worth shipping in source form ---
+include CHANGELOG.md
+include CONTRIBUTING.md
+include regenerate_stubs.py
+
+# --- Test-library install helpers referenced by test/test_real_headers.py ---
+graft scripts
+
+# --- Repo-only infrastructure: never ship ---
+exclude .gitignore
+exclude .dockerignore
+exclude .pre-commit-config.yaml
+exclude Dockerfile
+exclude mkdocs.yml
+prune .github
+prune docs
+
+# --- Hygiene: keep graft from sweeping byte-compiled files ---
+global-exclude *.py[cod]

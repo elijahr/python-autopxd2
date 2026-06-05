@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.2.3] - 2026-06-05
+
+### Fixed
+- **Incomplete source distribution** - The PyPI sdist now ships the full test
+  suite, including helper modules (`test/assertions.py`, `test/cython_utils.py`,
+  `test/conftest.py`, `test/header_cache.py`, `test/library_detection.py`),
+  fixtures, and data directories. Previously these were omitted, causing
+  `ModuleNotFoundError: No module named 'test.assertions'` when downstream
+  packagers ran the tests from the sdist (NixOS/nixpkgs#524341). The release
+  workflow now runs `check-manifest` and `twine check --strict` before publishing
+  so an incomplete sdist cannot ship again.
+
+  Note for downstream packagers without network access: the `real_headers` tests
+  download library headers at runtime and must be deselected with
+  `pytest -m "not real_headers"`.
+- **Missing runtime stub in wheel and sdist** - Ship
+  `autopxd/stubs/darwin-include/.supports-builtin-modules` in both the wheel and
+  the sdist. The `stubs/darwin-include/**/*` package-data glob silently skipped
+  leading-dot files, so this runtime include-tree stub was missing from every
+  previous wheel.
+
 ## [3.2.2] - 2025-12-19
 
 ### Fixed
@@ -179,7 +200,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - macOS support
 
-[Unreleased]: https://github.com/elijahr/python-autopxd2/compare/v3.2.0...HEAD
+[Unreleased]: https://github.com/elijahr/python-autopxd2/compare/v3.2.3...HEAD
+[3.2.3]: https://github.com/elijahr/python-autopxd2/compare/v3.2.2...v3.2.3
+[3.2.2]: https://github.com/elijahr/python-autopxd2/compare/v3.2.1...v3.2.2
+[3.2.1]: https://github.com/elijahr/python-autopxd2/compare/v3.2.0...v3.2.1
 [3.2.0]: https://github.com/elijahr/python-autopxd2/compare/v3.1.1...v3.2.0
 [3.1.1]: https://github.com/elijahr/python-autopxd2/compare/v3.1.0...v3.1.1
 [3.1.0]: https://github.com/elijahr/python-autopxd2/compare/v3.0.0...v3.1.0
