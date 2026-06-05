@@ -30,6 +30,5 @@ exclude mkdocs.yml
 prune .github
 prune docs
 
-# --- Hygiene: keep graft from sweeping byte-compiled cruft ---
+# --- Hygiene: keep graft from sweeping byte-compiled files ---
 global-exclude *.py[cod]
-global-exclude __pycache__
