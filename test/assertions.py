@@ -7,9 +7,10 @@ All tests that generate pxd output MUST use these helpers to ensure:
 
 import os
 
+from headerkit import Header
+from headerkit.writers.cython import write_pxd
+
 import autopxd
-from autopxd.ir import Header
-from autopxd.ir_writer import write_pxd
 from test.cython_utils import validate_cython_compiles
 
 

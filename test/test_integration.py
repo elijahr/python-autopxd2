@@ -273,7 +273,7 @@ class TestIntegrationStdint:
 
     def test_stdint_import_from_ir(self, tmp_path):
         """Test that stdint types in IR are properly imported."""
-        from autopxd.ir import (
+        from headerkit.ir import (
             CType,
             Field,
             Header,

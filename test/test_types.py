@@ -1,6 +1,6 @@
 """Type conversion tests that run on both backends."""
 
-from autopxd.ir import (
+from headerkit.ir import (
     Array,
     CType,
     Pointer,

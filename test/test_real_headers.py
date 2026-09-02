@@ -16,10 +16,10 @@ import subprocess
 import sys
 
 import pytest
+from headerkit.backends import get_backend
+from headerkit.ir import Enum, Function, Struct
+from headerkit.writers.cython import write_pxd
 
-from autopxd.backends import get_backend
-from autopxd.ir import Enum, Function, Struct
-from autopxd.ir_writer import write_pxd
 from test.assertions import assert_header_pxd_equals
 from test.cython_utils import validate_cython_compiles
 from test.header_cache import get_header_path, get_library_headers
@@ -284,7 +284,7 @@ def _get_system_include_args(cplus: bool = False) -> list[str]:
 
     :param cplus: If True, include C++ stdlib paths.
     """
-    from autopxd.backends.libclang_backend import get_system_include_dirs
+    from headerkit.backends.libclang import get_system_include_dirs
 
     args = get_system_include_dirs(cplus=cplus)
 
@@ -376,7 +376,7 @@ class TestZlibHeader:
         with open(expected_path, encoding="utf-8") as f:
             expected = f.read()
 
-        actual = write_pxd(zlib_header)
+        actual = write_pxd(zlib_header, stub_cimport_prefix="autopxd.stubs")
 
         assert actual == expected, (
             f"\n{'=' * 60}\nEXPECTED ({os.path.basename(expected_path)}):\n{'=' * 60}\n{repr(expected)}\n"
@@ -454,7 +454,7 @@ class TestJanssonHeader:
         with open(expected_path, encoding="utf-8") as f:
             expected = f.read()
 
-        actual = write_pxd(jansson_header)
+        actual = write_pxd(jansson_header, stub_cimport_prefix="autopxd.stubs")
 
         assert actual == expected, (
             f"\n{'=' * 60}\nEXPECTED ({os.path.basename(expected_path)}):\n{'=' * 60}\n{repr(expected)}\n"

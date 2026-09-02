@@ -13,7 +13,7 @@ pytestmark = pytest.mark.libclang
 
 # Guard import for when clang2 is not installed
 clang = pytest.importorskip("clang")
-from autopxd.backends.libclang_backend import LibclangBackend  # noqa: E402
+from headerkit.backends.libclang import LibclangBackend  # noqa: E402
 
 
 def _get_system_include_args() -> list[str]:

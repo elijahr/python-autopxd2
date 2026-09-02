@@ -1,12 +1,12 @@
 """C++ specific tests that only run with libclang backend."""
 
 import pytest
-
-from autopxd.backends import get_backend
-from autopxd.ir import (
+from headerkit.backends import get_backend
+from headerkit.ir import (
     Function,
     Struct,
 )
+
 from test.assertions import assert_pxd_equals
 
 # These tests require libclang - exclude with: pytest -m "not libclang"

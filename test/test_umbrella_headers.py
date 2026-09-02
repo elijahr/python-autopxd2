@@ -12,10 +12,9 @@ This module tests:
 """
 
 import pytest
-
-from autopxd.backends import get_backend
-from autopxd.ir import Function, Struct
-from autopxd.ir_writer import write_pxd
+from headerkit.backends import get_backend
+from headerkit.ir import Function, Struct
+from headerkit.writers.cython import write_pxd
 
 # Skip tests if libclang is not available
 pytestmark = pytest.mark.libclang
@@ -91,7 +90,7 @@ class TestUmbrellaHeaderDetection:
         )
 
         # Should detect as umbrella header
-        from autopxd.backends.libclang_backend import _is_umbrella_header
+        from headerkit.backends.libclang import _is_umbrella_header
 
         assert _is_umbrella_header(header)
 
@@ -107,7 +106,7 @@ class TestUmbrellaHeaderDetection:
             recursive_includes=False,
         )
 
-        from autopxd.backends.libclang_backend import _is_umbrella_header
+        from headerkit.backends.libclang import _is_umbrella_header
 
         assert not _is_umbrella_header(header)
 

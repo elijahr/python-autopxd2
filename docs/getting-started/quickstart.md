@@ -77,8 +77,8 @@ def calc_distance(p1: tuple, p2: tuple) -> float:
 You can also use autopxd2 programmatically:
 
 ```python
-from autopxd.backends import get_backend
-from autopxd.ir_writer import write_pxd
+from headerkit.backends import get_backend
+from headerkit.writers.cython import write_pxd
 
 # Parse a header file
 backend = get_backend("libclang")

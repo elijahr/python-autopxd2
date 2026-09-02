@@ -54,7 +54,7 @@ class TestRealisticCppHeaders:
     @pytest.fixture
     def libclang_backend(self):
         """Provide libclang backend for C++ tests."""
-        from autopxd.backends import get_backend
+        from headerkit.backends import get_backend
 
         return get_backend("libclang")
 

@@ -21,8 +21,8 @@ Parser backend implementation:
 ## Quick Example
 
 ```python
-from autopxd.backends import get_backend
-from autopxd.ir_writer import write_pxd
+from headerkit.backends import get_backend
+from headerkit.writers.cython import write_pxd
 
 # Parse a header
 backend = get_backend()  # Uses default (libclang)
@@ -41,7 +41,7 @@ print(pxd)
 ### Inspecting Parsed Declarations
 
 ```python
-from autopxd.ir import Struct, Function
+from headerkit.ir import Struct, Function
 
 header = backend.parse(code, "header.h")
 
@@ -58,7 +58,7 @@ for decl in header.declarations:
 ### Choosing a Backend
 
 ```python
-from autopxd.backends import get_backend, list_backends
+from headerkit.backends import get_backend, list_backends
 
 # List available backends
 print(list_backends())  # ['libclang']

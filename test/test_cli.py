@@ -6,9 +6,9 @@ import tempfile
 
 import pytest
 from click.testing import CliRunner
+from headerkit.backends import get_backend_info, is_backend_available
 
 from autopxd import cli
-from autopxd.backends import get_backend_info, is_backend_available
 
 
 @pytest.fixture

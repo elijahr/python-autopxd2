@@ -1,6 +1,6 @@
 """Tests for the IR writer."""
 
-from autopxd.ir import (
+from headerkit.ir import (
     Array,
     CType,
     Enum,
@@ -15,6 +15,7 @@ from autopxd.ir import (
     Typedef,
     Variable,
 )
+
 from test.assertions import assert_ir_to_pxd_equals
 
 

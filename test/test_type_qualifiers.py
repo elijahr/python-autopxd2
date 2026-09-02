@@ -36,7 +36,7 @@ implemented. The qualifiers are only "stripped" from Cython's view of the
 types; the actual C code still has full qualifier information.
 """
 
-from autopxd.backends import get_backend
+from headerkit.backends import get_backend
 
 
 class TestAtomicQualifier:
@@ -48,7 +48,7 @@ class TestAtomicQualifier:
         backend = get_backend()
         header = backend.parse(code, "test.h")
 
-        from autopxd.ir_writer import write_pxd
+        from headerkit.writers.cython import write_pxd
 
         pxd = write_pxd(header)
         # _Atomic should be stripped, leaving just 'int'
@@ -61,7 +61,7 @@ class TestAtomicQualifier:
         backend = get_backend()
         header = backend.parse(code, "test.h")
 
-        from autopxd.ir_writer import write_pxd
+        from headerkit.writers.cython import write_pxd
 
         pxd = write_pxd(header)
         # _Atomic should be stripped, extracting inner type
@@ -79,7 +79,7 @@ class TestAtomicQualifier:
         backend = get_backend()
         header = backend.parse(code, "test.h")
 
-        from autopxd.ir_writer import write_pxd
+        from headerkit.writers.cython import write_pxd
 
         pxd = write_pxd(header)
         # Typedef should have _Atomic stripped
@@ -94,7 +94,7 @@ class TestAtomicQualifier:
         backend = get_backend()
         header = backend.parse(code, "test.h")
 
-        from autopxd.ir_writer import write_pxd
+        from headerkit.writers.cython import write_pxd
 
         pxd = write_pxd(header)
         # _Atomic should be stripped from parameter
@@ -114,7 +114,7 @@ class TestRestrictQualifier:
         backend = get_backend("libclang")
         header = backend.parse(code, "test.h")
 
-        from autopxd.ir_writer import write_pxd
+        from headerkit.writers.cython import write_pxd
 
         pxd = write_pxd(header)
         # __restrict should be stripped, const preserved
@@ -128,7 +128,7 @@ class TestRestrictQualifier:
         backend = get_backend("libclang")
         header = backend.parse(code, "test.h")
 
-        from autopxd.ir_writer import write_pxd
+        from headerkit.writers.cython import write_pxd
 
         pxd = write_pxd(header)
         # __restrict__ should be stripped
@@ -145,7 +145,7 @@ class TestNoreturnQualifier:
         backend = get_backend("libclang")
         header = backend.parse(code, "test.h")
 
-        from autopxd.ir_writer import write_pxd
+        from headerkit.writers.cython import write_pxd
 
         pxd = write_pxd(header)
         # _Noreturn should be stripped
@@ -164,7 +164,7 @@ class TestMixedQualifiers:
         backend = get_backend("libclang")
         header = backend.parse(code, "test.h")
 
-        from autopxd.ir_writer import write_pxd
+        from headerkit.writers.cython import write_pxd
 
         pxd = write_pxd(header)
         # const and volatile should be preserved, _Atomic and __restrict stripped
@@ -189,7 +189,7 @@ class TestSemanticsPreservation:
         backend = get_backend()
         header = backend.parse(code, "test.h")
 
-        from autopxd.ir_writer import write_pxd
+        from headerkit.writers.cython import write_pxd
 
         pxd = write_pxd(header)
 
@@ -210,7 +210,7 @@ class TestSemanticsPreservation:
         backend = get_backend()
         header = backend.parse(code, "test.h")
 
-        from autopxd.ir_writer import write_pxd
+        from headerkit.writers.cython import write_pxd
 
         pxd = write_pxd(header)
 

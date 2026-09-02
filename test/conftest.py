@@ -1,8 +1,7 @@
 """Shared pytest fixtures for autopxd tests."""
 
 import pytest
-
-from autopxd.backends import get_backend, is_backend_available
+from headerkit.backends import get_backend, is_backend_available
 
 
 @pytest.fixture(

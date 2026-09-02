@@ -1,6 +1,6 @@
 """Tests for PxdWriter cimport generation."""
 
-from autopxd.ir import CType, Function, Header, Parameter, Pointer
+from headerkit.ir import CType, Function, Header, Parameter, Pointer
 
 
 class TestCimportGeneration:
@@ -18,7 +18,7 @@ class TestCimportGeneration:
                 )
             ],
         )
-        from autopxd.ir_writer import PxdWriter
+        from headerkit.writers.cython import PxdWriter
 
         writer = PxdWriter(header)
         output = writer.write()
@@ -39,7 +39,7 @@ class TestCimportGeneration:
                 )
             ],
         )
-        from autopxd.ir_writer import PxdWriter
+        from headerkit.writers.cython import PxdWriter
 
         writer = PxdWriter(header)
         output = writer.write()
@@ -58,7 +58,7 @@ class TestCimportGeneration:
                 )
             ],
         )
-        from autopxd.ir_writer import PxdWriter
+        from headerkit.writers.cython import PxdWriter
 
         writer = PxdWriter(header)
         output = writer.write()
@@ -79,9 +79,9 @@ class TestCimportGeneration:
                 )
             ],
         )
-        from autopxd.ir_writer import PxdWriter
+        from headerkit.writers.cython import PxdWriter
 
-        writer = PxdWriter(header)
+        writer = PxdWriter(header, stub_cimport_prefix="autopxd.stubs")
         output = writer.write()
 
         assert "from autopxd.stubs.stdarg cimport va_list" in output
@@ -100,7 +100,7 @@ class TestCimportGeneration:
                 )
             ],
         )
-        from autopxd.ir_writer import PxdWriter
+        from headerkit.writers.cython import PxdWriter
 
         writer = PxdWriter(header)
         output = writer.write()
@@ -127,7 +127,7 @@ class TestCimportGeneration:
                 ),
             ],
         )
-        from autopxd.ir_writer import PxdWriter
+        from headerkit.writers.cython import PxdWriter
 
         writer = PxdWriter(header)
         output = writer.write()

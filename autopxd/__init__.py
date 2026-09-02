@@ -10,17 +10,16 @@ from typing import (
 )
 
 import click
-
-from .backends import (
+from headerkit import (
+    Declaration,
+)
+from headerkit.backends import (
     get_backend,
     get_backend_info,
     get_default_backend,
     is_backend_available,
 )
-from .ir import (
-    Declaration,
-)
-from .ir_writer import (
+from headerkit.writers.cython import (
     write_pxd,
 )
 
@@ -169,7 +168,7 @@ def translate(
             _debug_print(f"  {type(decl).__name__}: {name}")
 
     # Generate pxd
-    return write_pxd(header)
+    return write_pxd(header, stub_cimport_prefix="autopxd.stubs")
 
 
 CONTEXT_SETTINGS: dict[str, list[str]] = dict(help_option_names=["-h", "--help"])

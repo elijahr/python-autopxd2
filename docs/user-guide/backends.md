@@ -224,7 +224,7 @@ See [Docker Usage](../getting-started/docker.md) for details.
 ## Programmatic Backend Selection
 
 ```python
-from autopxd.backends import get_backend, list_backends
+from headerkit.backends import get_backend, list_backends
 
 # List available backends
 print(list_backends())  # ['libclang']
