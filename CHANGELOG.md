@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- C++ class multiple inheritance rendering in Cython (`cdef cppclass Derived(Base1, Base2):`)
+- C++ constructor and destructor rendering in `cppclass` definitions
+- C++ `@staticmethod` and `const` method qualifier support
+- C++ generic function and method template support (`T max[T](T a, T b)`)
+- Macro constant expression evaluation support via HeaderKit
+- Comprehensive tests for new C++ class and template features
+
+### Changed
+- Removed runtime dependency on `clang2` in favor of HeaderKit's vendored LLVM 18–21 bindings
+- Re-exported `LibclangBackend` directly from `headerkit.backends.libclang`
+
 ## [4.0.0] - 2026-02-28
 
 ### Added
