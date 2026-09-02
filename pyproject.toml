@@ -31,11 +31,12 @@ classifiers = [
 requires-python = ">=3.10"
 dependencies = ["Click", "headerkit>=0.6.1,<1.0.0"]
 
+[tool.uv.sources]
+headerkit = { path = "../headerkit", editable = true }
+
 [project.optional-dependencies]
-# libclang backend (C++ support)
-# Note: clang2 version must match system libclang version
-# e.g., for LLVM 18: pip install 'autopxd2[libclang]' clang2==18.*
-libclang = ["clang2"]
+# libclang backend (C++ support) - headerkit vendors clang bindings, kept for backwards compatibility
+libclang = []
 
 # Testing
 test = ["pytest", "pytest-timeout", "cython"]

@@ -117,8 +117,7 @@ def validate_cython_compiles(
         import warnings
 
         warnings.warn(
-            "pkg_config not provided, continuing with header_only compilation "
-            "(C code will be compiled but not linked)",
+            "pkg_config not provided, continuing with header_only compilation (C code will be compiled but not linked)",
             stacklevel=2,
         )
         header_only = True

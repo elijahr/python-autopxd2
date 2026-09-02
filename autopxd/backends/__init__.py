@@ -235,28 +235,9 @@ def _ensure_backends_loaded() -> None:
 
     _BACKENDS_LOADED = True
 
-    # pylint: disable=import-outside-toplevel
-    # Lazy imports are intentional to avoid import errors if dependencies are missing
-
-    # Try to import libclang backend (may fail if clang2 not installed)
     try:
         from autopxd.backends import (  # noqa: F401
             libclang_backend,
         )
     except ImportError as e:
-        # Store error details for helpful message later
-        if "clang" in str(e).lower() or "No module named 'clang'" in str(e):
-            version = _detect_system_clang_version()
-            if version:
-                _LIBCLANG_IMPORT_ERROR = (
-                    f"libclang backend requires the clang2 package.\n"
-                    f"Detected LLVM version {version} on your system.\n"
-                    f"Install with: pip install 'clang2=={version}.*'"
-                )
-            else:
-                _LIBCLANG_IMPORT_ERROR = (
-                    "libclang backend requires the clang2 package.\n"
-                    "Install with: pip install clang2\n"
-                    "Note: clang2 version must match your system's LLVM version.\n"
-                    "Example: pip install 'clang2==18.*' for LLVM 18"
-                )
+        _LIBCLANG_IMPORT_ERROR = str(e)

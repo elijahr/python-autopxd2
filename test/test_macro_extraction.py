@@ -284,8 +284,8 @@ class TestExpressionMacros:
         assert len(constants) == 1
         assert constants[0].name == "TOTAL"
         assert constants[0].type == CType("int")
-        # Value is None for expressions (we don't evaluate)
-        assert constants[0].value is None
+        assert constants[0].value == 30
+        assert constants[0].evaluated_value == 30
 
     def test_bitwise_expression(self, libclang_backend):
         """Bitwise expressions should be extracted as int."""

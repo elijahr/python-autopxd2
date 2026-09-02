@@ -6,6 +6,7 @@ This module provides backward-compatible imports.
 
 from headerkit.ir import (
     Array,
+    BaseSpecifier,
     Constant,
     CType,
     Declaration,
@@ -18,6 +19,7 @@ from headerkit.ir import (
     Parameter,
     ParserBackend,
     Pointer,
+    Reference,
     SourceLocation,
     Struct,
     Typedef,
@@ -27,6 +29,7 @@ from headerkit.ir import (
 
 __all__ = [
     "Array",
+    "BaseSpecifier",
     "Constant",
     "CType",
     "Declaration",
@@ -39,6 +42,7 @@ __all__ = [
     "Parameter",
     "ParserBackend",
     "Pointer",
+    "Reference",
     "SourceLocation",
     "Struct",
     "Typedef",
