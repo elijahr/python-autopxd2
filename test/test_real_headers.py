@@ -61,6 +61,7 @@ LIBRARY_CONFIGS = {
         "system_header": "uv.h",
         "smoke_test": "uv_version_string()",
         "cplus": False,
+        "pxd_only": True,  # Internal POSIX types not bundled in Cython
     },
     # === Additional C Libraries ===
     "cjson": {
@@ -135,6 +136,7 @@ LIBRARY_CONFIGS = {
         # fmt uses malloc without including cstdlib
         "preamble": "#include <cstdlib>",
         "pxd_only": True,  # Complex templates with forward refs
+        "skip_reason": "fmt header parsing takes >5 minutes",
     },
     "spdlog": {
         "detection": [
@@ -170,6 +172,7 @@ LIBRARY_CONFIGS = {
         "std": "c++17",
         # doctest uses operator+= which Cython doesn't support
         "pxd_only": True,
+        "skip_reason": "doctest header parsing takes >5 minutes",
     },
     "boost_lockfree": {
         "detection": [
