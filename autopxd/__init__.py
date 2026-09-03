@@ -336,7 +336,7 @@ def resolve_backend(
 @click.argument(
     "outfile",
     type=click.File("w"),
-    default=sys.stdout,
+    default="-",
 )
 def cli(
     version: bool,
@@ -410,10 +410,14 @@ def cli(
     # Convert project_prefixes tuple to tuple or None
     project_prefixes_arg = project_prefixes if project_prefixes else None
 
+    hdrname = "input.h" if infile.name == "<stdin>" else infile.name
+    if cpp and hdrname == "input.h":
+        hdrname = "input.hpp"
+
     outfile.write(
         translate(
             code=infile.read(),
-            hdrname=infile.name,
+            hdrname=hdrname,
             backend=resolved_backend,
             extra_args=extra_args if extra_args else None,
             whitelist=whitelist_list,

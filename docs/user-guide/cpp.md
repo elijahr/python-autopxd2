@@ -26,6 +26,11 @@ C++ classes and structs are converted to Cython `cppclass` definitions with supp
 
 ```cpp
 // widget.hpp
+class BaseWidget {
+public:
+    virtual void show();
+};
+
 class Widget : public BaseWidget {
 public:
     int width;
@@ -42,6 +47,9 @@ Generates:
 
 ```cython
 cdef extern from "widget.hpp":
+
+    cdef cppclass BaseWidget:
+        void show()
 
     cdef cppclass Widget(BaseWidget):
         int width

@@ -403,3 +403,19 @@ class TestLibclangEndToEnd:
                 f.write("int bar;")
             result = runner.invoke(cli, ["--backend", "auto", "test.h", "out.pxd"])
             assert result.exit_code == 0
+
+    def test_stdin_c_support(self) -> None:
+        """Reading C code from stdin via '-' should generate valid pxd."""
+        runner = CliRunner()
+        result = runner.invoke(cli, ["-"], input="typedef struct { int x; } Point;\n")
+        assert result.exit_code == 0
+        assert "Point:" in result.output
+        assert "int x" in result.output
+
+    def test_stdin_cpp_support(self) -> None:
+        """Reading C++ code from stdin via '-' with --cpp should generate valid pxd."""
+        runner = CliRunner()
+        result = runner.invoke(cli, ["--cpp", "-"], input="class Widget { public: int w; };\n")
+        assert result.exit_code == 0
+        assert "Widget:" in result.output
+        assert "int w" in result.output
