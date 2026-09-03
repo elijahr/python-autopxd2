@@ -23,4 +23,13 @@ repos:
         files: ^autopxd/
         additional_dependencies:
           - click
-          - headerkit @ git+https://github.com/axiomantic/headerkit.git@v0.6.1
+          - headerkit @ git+https://github.com/axiomantic/headerkit.git@main
+
+  - repo: https://github.com/mgedmin/check-manifest
+    rev: "0.51"
+    hooks:
+      - id: check-manifest
+        args: [--no-build-isolation]
+        additional_dependencies:
+          - setuptools>=61
+          - wheel

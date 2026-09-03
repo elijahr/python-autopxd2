@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -116,4 +116,15 @@ testpaths = ["test"]
 markers = [
     "libclang: tests/parameterizations using the libclang backend (includes C++ tests)",
     "real_headers: tests against real system libraries (requires library installation)",
+]
+
+[tool.check-manifest]
+ignore = [
+    ".gitignore",
+    ".dockerignore",
+    ".pre-commit-config.yaml",
+    "Dockerfile",
+    "mkdocs.yml",
+    ".github/**",
+    "docs/**",
 ]
