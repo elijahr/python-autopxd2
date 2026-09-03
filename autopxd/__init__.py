@@ -162,7 +162,7 @@ def translate(
             _debug_print(f"  {type(decl).__name__}: {name}")
 
     # Generate pxd
-    return write_pxd(header, stub_cimport_prefix="autopxd.stubs")
+    return write_pxd(header)
 
 
 CONTEXT_SETTINGS: dict[str, list[str]] = dict(help_option_names=["-h", "--help"])

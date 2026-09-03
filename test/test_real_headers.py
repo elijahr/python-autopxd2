@@ -376,7 +376,7 @@ class TestZlibHeader:
         with open(expected_path, encoding="utf-8") as f:
             expected = f.read()
 
-        actual = write_pxd(zlib_header, stub_cimport_prefix="autopxd.stubs")
+        actual = write_pxd(zlib_header)
 
         assert actual == expected, (
             f"\n{'=' * 60}\nEXPECTED ({os.path.basename(expected_path)}):\n{'=' * 60}\n{repr(expected)}\n"
@@ -454,7 +454,7 @@ class TestJanssonHeader:
         with open(expected_path, encoding="utf-8") as f:
             expected = f.read()
 
-        actual = write_pxd(jansson_header, stub_cimport_prefix="autopxd.stubs")
+        actual = write_pxd(jansson_header)
 
         assert actual == expected, (
             f"\n{'=' * 60}\nEXPECTED ({os.path.basename(expected_path)}):\n{'=' * 60}\n{repr(expected)}\n"

@@ -150,7 +150,7 @@ void log_message(const char *fmt, va_list args);
 
 ```cython
 # Generated output
-from autopxd.stubs.stdarg cimport va_list
+from headerkit.stubs.stdarg cimport va_list
 
 cdef extern from "input.h":
     void log_message(const char* fmt, va_list args)

@@ -68,7 +68,7 @@ class TestCimportGeneration:
         assert "from libc.stdio cimport" in output
 
     def test_va_list_generates_stub_cimport(self):
-        """Using va_list generates autopxd.stubs.stdarg cimport."""
+        """Using va_list generates headerkit.stubs.stdarg cimport."""
         header = Header(
             path="test.h",
             declarations=[
@@ -81,10 +81,10 @@ class TestCimportGeneration:
         )
         from headerkit.writers.cython import PxdWriter
 
-        writer = PxdWriter(header, stub_cimport_prefix="autopxd.stubs")
+        writer = PxdWriter(header)
         output = writer.write()
 
-        assert "from autopxd.stubs.stdarg cimport va_list" in output
+        assert "from headerkit.stubs.stdarg cimport va_list" in output
         # Should NOT have the old inline declaration
         assert "ctypedef struct va_list:" not in output
 

@@ -1,5 +1,5 @@
 from libc.stdio cimport FILE
-from autopxd.stubs.stdarg cimport va_list
+from headerkit.stubs.stdarg cimport va_list
 
 cdef extern from "jansson.h":
 

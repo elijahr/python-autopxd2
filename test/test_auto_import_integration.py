@@ -114,7 +114,7 @@ void log_message(const char *fmt, va_list args);
 """
         result = translate(code, "test.h", backend=backend, extra_args=system_args)
 
-        assert "from autopxd.stubs.stdarg cimport va_list" in result
+        assert "from headerkit.stubs.stdarg cimport va_list" in result
         # Old inline declaration should NOT be present
         assert "ctypedef struct va_list:" not in result
 
@@ -134,7 +134,7 @@ int process(FILE *f, uint32_t flags, va_list args);
         # Find positions of different cimport types
         stdio_line = next(i for i, line in enumerate(lines) if "libc.stdio" in line)
         stdint_line = next(i for i, line in enumerate(lines) if "libc.stdint" in line)
-        stub_line = next(i for i, line in enumerate(lines) if "autopxd.stubs" in line)
+        stub_line = next(i for i, line in enumerate(lines) if "headerkit.stubs" in line)
         extern_line = next(i for i, line in enumerate(lines) if "cdef extern from" in line)
 
         # All cimports before extern
