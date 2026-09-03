@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Comprehensive tests for new C++ class and template features
 
 ### Changed
+- Updated `headerkit` dependency requirement to `>=0.28.0`
 - Removed runtime dependency on `clang2` in favor of HeaderKit's vendored LLVM 18–21 bindings
 - Re-exported `LibclangBackend` directly from `headerkit.backends.libclang`
 

@@ -32,11 +32,8 @@ classifiers = [
 requires-python = ">=3.10"
 dependencies = [
   "Click",
-  "headerkit @ git+https://github.com/axiomantic/headerkit.git@main",
+  "headerkit>=0.28.0",
 ]
-
-[tool.uv.sources]
-headerkit = { git = "https://github.com/axiomantic/headerkit.git", branch = "main" }
 
 [project.optional-dependencies]
 # libclang backend (C++ support) - headerkit vendors clang bindings, kept for backwards compatibility
