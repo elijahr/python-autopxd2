@@ -32,7 +32,7 @@ classifiers = [
 requires-python = ">=3.10"
 dependencies = [
   "Click",
-  "headerkit>=0.28.0",
+  "headerkit>=0.29.0",
 ]
 
 [project.optional-dependencies]

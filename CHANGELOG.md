@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [4.0.0] - 2026-09-03
 
 ### Added
-- Complete migration of AST, IR, and PxdWriter to `headerkit>=0.28.0`
+- Complete migration of AST, IR, and PxdWriter to `headerkit>=0.29.0`
 - C++ class multiple inheritance rendering in Cython (`cdef cppclass Derived(Base1, Base2):`)
 - C++ constructor and destructor rendering in `cppclass` definitions
 - C++ `@staticmethod` and `const` method qualifier support
@@ -22,9 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - `libclang` is now the sole parser backend
 - `--backend auto` now uses libclang (no pycparser fallback)
-- Removed runtime dependency on `clang2` in favor of HeaderKit's vendored LLVM 18–21 bindings
+- Removed runtime dependency on `clang2` in favor of HeaderKit's vendored LLVM 18–23 bindings
 - Re-exported `LibclangBackend` directly from `headerkit.backends.libclang`
-- Updated `headerkit` dependency requirement to `>=0.28.0`
+- Updated `headerkit` dependency requirement to `>=0.29.0`
 
 ### Removed
 - `pycparser` backend and all pycparser-specific code

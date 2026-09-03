@@ -8,7 +8,7 @@ Install autopxd2:
 pip install autopxd2
 ```
 
-autopxd2 uses `headerkit`, which vendors LLVM clang Python bindings for LLVM 18–21 directly. There is no need to install a separate `clang2` or `clang` Python package.
+autopxd2 uses `headerkit`, which vendors LLVM clang Python bindings for LLVM 18–23 directly. There is no need to install a separate `clang2` or `clang` Python package.
 
 You only need the system `libclang` shared library (`libclang.so`, `libclang.dylib`, or `libclang.dll`).
 
