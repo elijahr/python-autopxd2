@@ -7,42 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.0.0] - 2026-09-03
+
 ### Added
+- Complete migration of AST, IR, and PxdWriter to `headerkit>=0.28.0`
 - C++ class multiple inheritance rendering in Cython (`cdef cppclass Derived(Base1, Base2):`)
 - C++ constructor and destructor rendering in `cppclass` definitions
 - C++ `@staticmethod` and `const` method qualifier support
 - C++ generic function and method template support (`T max[T](T a, T b)`)
 - Macro constant expression evaluation support via HeaderKit
-- Comprehensive tests for new C++ class and template features
+- Comprehensive tests for C++ class, template, and macro features
+- Bundled Cython `.pxd` stubs delegated directly to `headerkit.stubs`
 
 ### Changed
-- Updated `headerkit` dependency requirement to `>=0.28.0`
+- `libclang` is now the sole parser backend
+- `--backend auto` now uses libclang (no pycparser fallback)
 - Removed runtime dependency on `clang2` in favor of HeaderKit's vendored LLVM 18–21 bindings
 - Re-exported `LibclangBackend` directly from `headerkit.backends.libclang`
-
-## [4.0.0] - 2026-02-28
-
-### Added
-- `headerkit` as a runtime dependency
-
-### Changed
-- IR classes, PxdWriter, and type registries now provided by headerkit (re-exported via shim modules for backward compatibility)
-- libclang is now the only backend
-- `--backend auto` now requires libclang (no pycparser fallback)
+- Updated `headerkit` dependency requirement to `>=0.28.0`
 
 ### Removed
 - `pycparser` backend and all pycparser-specific code
-- `autopxd.declarations` module
-- `regenerate_stubs.py` script
-- `stubs/include/` and `stubs/darwin-include/` directories (pycparser fake headers)
 - `pycparser` runtime dependency
 - `--backend pycparser` CLI option
+- `regenerate_stubs.py` script
+- `stubs/include/` and `stubs/darwin-include/` directories (120+ pycparser fake headers)
+- `autopxd.declarations`, `autopxd.ir`, `autopxd.ir_writer`, `autopxd.cython_types`, and `autopxd.keywords` internal modules
 - Fallback from libclang to pycparser behavior
-- `autopxd.cython_types` module (use `headerkit.writers._cython_types` directly)
-- `autopxd.keywords` module (use `headerkit.writers._cython_keywords` directly)
-- `IGNORE_DECLARATIONS` and `STDINT_DECLARATIONS` from `autopxd.declarations` (unused)
-- Dead code branches in `translate()` for backends not supporting full ParserBackend protocol
-- `test/test_ir.py` and `test/test_cython_types.py` (tests moved to headerkit)
+- `test/test_ir.py` and `test/test_cython_types.py` (upstreamed to headerkit)
 
 ## [3.2.3] - 2026-06-05
 
@@ -237,15 +229,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - macOS support
 
-<<<<<<< HEAD
 [Unreleased]: https://github.com/elijahr/python-autopxd2/compare/v4.0.0...HEAD
-[4.0.0]: https://github.com/elijahr/python-autopxd2/compare/v3.2.2...v4.0.0
-||||||| 7f4c92b
-[Unreleased]: https://github.com/elijahr/python-autopxd2/compare/v3.2.0...HEAD
-=======
-[Unreleased]: https://github.com/elijahr/python-autopxd2/compare/v3.2.3...HEAD
+[4.0.0]: https://github.com/elijahr/python-autopxd2/compare/v3.2.3...v4.0.0
 [3.2.3]: https://github.com/elijahr/python-autopxd2/compare/v3.2.2...v3.2.3
->>>>>>> origin/master
 [3.2.2]: https://github.com/elijahr/python-autopxd2/compare/v3.2.1...v3.2.2
 [3.2.1]: https://github.com/elijahr/python-autopxd2/compare/v3.2.0...v3.2.1
 [3.2.0]: https://github.com/elijahr/python-autopxd2/compare/v3.1.1...v3.2.0

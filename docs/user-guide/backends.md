@@ -17,8 +17,7 @@ Uses LLVM's clang library for parsing. Provides the same parser used by producti
 
 **Limitations:**
 
-- Requires libclang to be installed (use `python -m headerkit.install_libclang` or install LLVM manually)
-- Python `clang2` package version must match system libclang (these are official LLVM bindings)
+- Requires libclang shared library to be available on your system (use `python -m headerkit.install_libclang` or install LLVM manually)
 - Function-like macros are not extracted
 
 **Usage:**

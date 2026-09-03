@@ -25,9 +25,12 @@ docker run --rm -v $(pwd):/work -w /work ghcr.io/elijahr/python-autopxd2 autopxd
 
 ```bash
 pip install autopxd2
+```
 
-# Install clang2 matching your LLVM version (recommended)
-pip install "clang2==$(llvm-config --version | cut -d. -f1).*"
+autopxd2 uses `headerkit`, which vendors LLVM clang bindings directly, requiring only the system `libclang` shared library. You can install system `libclang` via your system package manager or with:
+
+```bash
+python -m headerkit.install_libclang
 ```
 
 See [Installation Guide](getting-started/installation.md) for platform-specific LLVM setup.

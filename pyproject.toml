@@ -127,4 +127,5 @@ ignore = [
     "mkdocs.yml",
     ".github/**",
     "docs/**",
+    "test/.header_cache/**",
 ]

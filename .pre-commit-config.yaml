@@ -23,7 +23,7 @@ repos:
         files: ^autopxd/
         additional_dependencies:
           - click
-          - headerkit @ git+https://github.com/axiomantic/headerkit.git@main
+          - headerkit>=0.28.0
 
   - repo: https://github.com/mgedmin/check-manifest
     rev: "0.51"
