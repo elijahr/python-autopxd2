@@ -29,6 +29,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libclang-dev \
     llvm-dev \
     cpp \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
 # Optional: Install test libraries (only when building with --build-arg TEST_MODE=1)
