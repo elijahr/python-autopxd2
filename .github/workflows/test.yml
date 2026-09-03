@@ -63,10 +63,10 @@ jobs:
         if: runner.os == 'Linux'
         run: uv pip install --system numpy
 
-      - name: Test all backends (Linux)
+      - name: Test (Linux, require all libraries)
         if: runner.os == 'Linux'
-        run: pytest ./test
+        run: pytest ./test --require-all-libraries
 
-      - name: Test (macOS, skip real headers)
+      - name: Test (macOS)
         if: runner.os == 'macOS'
-        run: pytest ./test -m "not real_headers"
+        run: pytest ./test

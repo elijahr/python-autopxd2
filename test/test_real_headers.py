@@ -628,20 +628,22 @@ class TestFullCompilation:
         # Use multi-method detection
         detection = detect_library(config)
         if not detection or not detection.found:
-            # NOTE: Use pytest.fail here, NOT pytest.skip - missing libraries should fail loudly
-            # Build helpful error message listing tried methods
             tried_methods = []
             if "detection" in config:
                 tried_methods = [m.get("type", "unknown") for m in config["detection"]]
             if "pkg_config" in config:
                 tried_methods.append(f"pkg_config:{config['pkg_config']}")
             platform_script = "macos" if sys.platform == "darwin" else "linux"
-            pytest.fail(
+            msg = (
                 f"Library '{library}' not found (tried: {', '.join(tried_methods) or 'pkg_config'}).\n"
                 f"To install test libraries: ./scripts/install-test-libs-{platform_script}.sh\n"
                 f"Or run in Docker: docker build --build-arg TEST_MODE=1 -t autopxd2-test . && "
                 f"docker run --rm -v $(pwd):/app -w /app autopxd2-test pytest test/test_real_headers.py"
             )
+            if request.config.getoption("--require-all-libraries"):
+                pytest.fail(msg)
+            else:
+                pytest.skip(msg)
 
         # Find header (detection should have found it)
         header_path = detection.header_path
