@@ -10,14 +10,15 @@ Automatically generate Cython `.pxd` declaration files from C/C++ header files.
 
 ## Overview
 
-autopxd2 parses C header files and generates Cython `.pxd` files, enabling you to call C libraries from Cython without manually writing declarations.
+autopxd2 parses C and C++ header files and generates Cython `.pxd` declaration files, enabling you to call native C/C++ libraries from Cython without manually writing boilerplate declarations.
 
 **Key features:**
 
-- Generates complete `.pxd` files from C/C++ headers
-- Full C++ support with libclang backend
+- Generates complete `.pxd` declaration files from C/C++ headers
+- Powered by `headerkit` and LLVM `libclang` (supporting LLVM 18–23)
+- Full C++ support: classes, methods, constructors, destructors, multiple inheritance, templates, and namespaces
 - Automatic system include path detection
-- Auto-generates `cimport` statements for standard library types
+- Auto-generates `cimport` statements for standard library types and bundled stubs
 - Cross-platform support (Linux, macOS, Windows)
 
 ## Supported Features
@@ -39,18 +40,20 @@ autopxd2 parses C header files and generates Cython `.pxd` files, enabling you t
 | `#define` macros (int, float, string) | ✓ |
 | Circular type dependencies | ✓ |
 
-### C++ Features (libclang only)
+### C++ Features
 
 | Feature | Supported |
 |---------|:---------:|
-| Classes with fields and methods | ✓ |
+| Classes and structs (`cppclass`) | ✓ |
+| Constructors and destructors | ✓ |
+| Methods (`const`, `@staticmethod`) | ✓ |
+| Multiple inheritance | ✓ |
 | Namespaces (including nested) | ✓ |
-| Templates with type parameters | ✓ |
+| Generic function and method templates (`T max[T](T a, T b)`) | ✓ |
+| Class templates with type parameters | ✓ |
 | Template specializations | ✓ |
 | Operator overloading (renamed for Cython) | ✓ |
 | References and const references | ✓ |
-| Inheritance declarations | ✓ |
-| Static methods and fields | ✓ |
 
 ## Installation
 
@@ -58,20 +61,22 @@ autopxd2 parses C header files and generates Cython `.pxd` files, enabling you t
 pip install autopxd2
 ```
 
-**Recommended:** Install the libclang backend for full C/C++ support. The `clang2` package version must match your system's LLVM version:
+autopxd2 uses `headerkit`, which vendors official LLVM clang Python bindings for LLVM 18–23 directly. No separate `clang` or `clang2` Python package is needed.
 
+You only need the system `libclang` shared library (`libclang.so`, `libclang.dylib`, or `libclang.dll`).
+
+If `libclang` is not already installed on your system, install it via your system package manager:
+- **macOS**: `brew install llvm`
+- **Ubuntu/Debian**: `sudo apt-get install libclang-dev`
+- **Fedora/RHEL**: `sudo dnf install clang-devel`
+- **Windows**: `winget install LLVM.LLVM`
+
+Or use HeaderKit's built-in installer:
 ```shell
-# One-liner: detect LLVM version and install matching clang2
-pip install "clang2==$(llvm-config --version | cut -d. -f1).*"
-
-# Or check version manually first
-llvm-config --version  # e.g., 18.1.3 means you need clang2==18.*
-pip install "clang2==18.*"
+python -m headerkit.install_libclang
 ```
 
-Without `clang2`, autopxd2 cannot parse headers. You can also install libclang with headerkit: `python -m headerkit.install_libclang`. If clang2 is missing, autopxd2 will detect your LLVM version and show the exact install command.
-
-See the [installation docs](https://elijahr.github.io/python-autopxd2/dev/getting-started/installation/) for platform-specific LLVM setup (macOS with Homebrew, Ubuntu/Debian, Windows).
+See the [installation docs](https://elijahr.github.io/python-autopxd2/getting-started/installation/) for more details.
 
 ## Quick Start
 
@@ -79,37 +84,42 @@ See the [installation docs](https://elijahr.github.io/python-autopxd2/dev/gettin
 # Generate a .pxd file from a C header
 autopxd myheader.h myheader.pxd
 
+# Parse a C++ header
+autopxd --cpp myclass.hpp myclass.pxd
+
 # Add project-specific include directories (system includes are auto-detected)
 autopxd -I ./include myheader.h myheader.pxd
 
-# Write to stdout (omit output file)
+# Write to stdout (omit output file or use '-')
 autopxd myheader.h > myheader.pxd
+
+# Read from stdin
+cat myheader.h | autopxd -
 ```
 
 ## Usage
 
 ```
-autopxd [OPTIONS] INFILE [OUTFILE]
-
-Options marked [libclang] require the libclang backend.
+autopxd [OPTIONS] [INFILE] [OUTFILE]
 
 Options:
-  -v, --version              Print version and exit.
-  -b, --backend <name>       Parser backend (default: auto, prefers libclang).
-  --list-backends            List available backends and exit.
-  -q, --quiet                Suppress warnings.
-  --debug / --no-debug       Print debug info to stderr.
-  -I, --include-dir <dir>    Add include search path.
-  -D, --define <macro>       Define preprocessor macro.
-  -w, --whitelist <pattern>  Only emit from files matching pattern.
-  -x, --cpp                  [libclang] Parse as C++.
-  --std <std>                [libclang] Language standard (e.g., c11, c++17).
-  --clang-arg <arg>          [libclang] Pass argument to clang.
-  --no-default-includes      [libclang] Disable system include auto-detection.
-  -p, --project-prefix       [libclang] Whitelist paths for umbrella headers.
-  --no-recursive             [libclang] Disable recursive include parsing.
-  --max-depth <n>            [libclang] Max depth for recursive includes.
-  -h, --help                 Show this message and exit.
+  -v, --version                  Print version and exit.
+  -b, --backend [auto|libclang]  Parser backend (default: auto).
+  --list-backends                List available backends and exit.
+  --json                         JSON output (with --list-backends).
+  -q, --quiet                    Suppress warnings.
+  --debug / --no-debug           Print debug info to stderr.
+  -I, --include-dir <dir>        Add include search path.
+  -D, --define <macro>           Define preprocessor macro.
+  -w, --whitelist <pattern>      Only emit from files matching pattern.
+  -x, --cpp                      Parse as C++.
+  --std <std>                    Language standard (e.g., c11, c++17).
+  --clang-arg <arg>              Pass argument to clang.
+  --no-default-includes          Disable system include auto-detection.
+  -P, --project-prefix <path>    Treat path as project (not system) for umbrella headers.
+  --no-recursive                 Disable recursive parsing of umbrella headers.
+  --max-depth <n>                Max recursion depth for umbrella headers (default: 10).
+  -h, --help                     Show this message and exit.
 ```
 
 ## Automatic Imports
@@ -176,8 +186,6 @@ from libcpp.vector cimport vector
 cdef extern from "input.hpp":
     vector[string] get_items()
 ```
-
-**Note:** Auto-import uses the libclang backend for header detection.
 
 ## Documentation
 
