@@ -203,18 +203,22 @@ def resolve_backend(
 ) -> str:
     """Resolve which backend to use based on options.
 
-    :param backend: Backend option value (auto, libclang).
+    :param backend: Backend option value (auto, libclang, or any registered backend).
     :returns: Resolved backend name.
     :raises SystemExit: If required backend is unavailable.
     """
-    if backend in ("auto", "libclang"):
-        if not is_backend_available("libclang"):
-            click.echo(LIBCLANG_REQUIRED_ERROR, err=True)
-            raise SystemExit(1)
-        return "libclang"
+    if backend == "auto":
+        resolved = get_default_backend()
+    else:
+        resolved = backend
 
-    click.echo(f"Error: Unknown backend: {backend!r}", err=True)
-    raise SystemExit(1)
+    if not is_backend_available(resolved):
+        if resolved == "libclang":
+            click.echo(LIBCLANG_REQUIRED_ERROR, err=True)
+        else:
+            click.echo(f"Error: Backend '{resolved}' is not available.", err=True)
+        raise SystemExit(1)
+    return resolved
 
 
 @click.command(
@@ -226,9 +230,8 @@ def resolve_backend(
 @click.option(
     "--backend",
     "-b",
-    type=click.Choice(["auto", "libclang"], case_sensitive=False),
     default="auto",
-    help="Parser backend (default: auto).",
+    help="Parser backend (default: auto, using libclang).",
 )
 @click.option(
     "--list-backends",
@@ -374,10 +377,25 @@ def cli(
             _print_backends_human()
         return
 
-    # Require infile for translation
+    # If infile was not given, check if stdin has piped data
     if infile is None:
-        click.echo("Error: Missing argument 'INFILE'.", err=True)
-        raise SystemExit(2)
+        content = ""
+        if not sys.stdin.isatty():
+            content = sys.stdin.read()
+        if not content:
+            click.echo("Error: Missing argument 'INFILE'.", err=True)
+            raise SystemExit(2)
+        code_input = content
+        raw_hdrname = "input.h"
+    else:
+        code_input = infile.read()
+        raw_hdrname = infile.name
+
+    # Auto-detect C++ mode from file extension if not explicitly specified
+    cpp_mode = cpp
+    cpp_extensions = (".hpp", ".hh", ".hxx", ".H", ".tcc", ".tpp", ".h++")
+    if not cpp_mode and raw_hdrname != "<stdin>" and any(raw_hdrname.endswith(ext) for ext in cpp_extensions):
+        cpp_mode = True
 
     resolved_backend = resolve_backend(backend)
 
@@ -391,7 +409,7 @@ def cli(
 
     # Build extra_args list from CLI options
     extra_args: list[str] = []
-    if cpp:
+    if cpp_mode:
         extra_args.append("-x")
         extra_args.append("c++")
     for define in all_defines:
@@ -410,13 +428,13 @@ def cli(
     # Convert project_prefixes tuple to tuple or None
     project_prefixes_arg = project_prefixes if project_prefixes else None
 
-    hdrname = "input.h" if infile.name == "<stdin>" else infile.name
-    if cpp and hdrname == "input.h":
+    hdrname = "input.h" if raw_hdrname in ("<stdin>", "input.h") else raw_hdrname
+    if cpp_mode and hdrname == "input.h":
         hdrname = "input.hpp"
 
     outfile.write(
         translate(
-            code=infile.read(),
+            code=code_input,
             hdrname=hdrname,
             backend=resolved_backend,
             extra_args=extra_args if extra_args else None,

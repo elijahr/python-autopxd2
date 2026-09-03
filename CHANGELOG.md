@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Macro constant expression evaluation support via HeaderKit
 - Comprehensive tests for C++ class, template, and macro features
 - Bundled Cython `.pxd` stubs delegated directly to `headerkit.stubs`
+- Automatic C++ mode detection for C++ header file extensions (`.hpp`, `.hh`, `.hxx`, `.H`, `.tcc`, etc.) without requiring `--cpp`
+- Automatic `stdin` piping support when running `cat header.h | autopxd` without requiring an explicit `-` argument
 
 ### Changed
 - `libclang` is now the sole parser backend

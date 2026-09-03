@@ -419,3 +419,29 @@ class TestLibclangEndToEnd:
         assert result.exit_code == 0
         assert "Widget:" in result.output
         assert "int w" in result.output
+
+    def test_piped_stdin_without_dash_argument(self) -> None:
+        """Piping to autopxd without arguments should read from stdin automatically."""
+        runner = CliRunner()
+        result = runner.invoke(cli, [], input="typedef struct { int y; } Coord;\n")
+        assert result.exit_code == 0
+        assert "Coord:" in result.output
+        assert "int y" in result.output
+
+    def test_auto_detect_cpp_from_extension(self) -> None:
+        """.hpp / .hh files should automatically parse in C++ mode without needing --cpp."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            with open("mywidget.hpp", "w") as f:
+                f.write("class MyWidget { public: int width; };")
+            result = runner.invoke(cli, ["mywidget.hpp"])
+            assert result.exit_code == 0
+            assert "cppclass MyWidget:" in result.output
+            assert "int width" in result.output
+
+    def test_unknown_backend_errors_cleanly(self) -> None:
+        """Unknown backend name should show clear error."""
+        runner = CliRunner()
+        result = runner.invoke(cli, ["--backend", "nonexistent_backend", "-"], input="int x;\n")
+        assert result.exit_code != 0
+        assert "Error: Backend 'nonexistent_backend' is not available." in result.output
