@@ -118,11 +118,8 @@ def translate(
 
     # Parse with backend
     backend_obj = get_backend(backend_name)
-    # Check if backend supports libclang-specific options
-    parse_code = getattr(backend_obj.parse, "__code__", None)
-    parse_varnames = parse_code.co_varnames if parse_code else ()
 
-    # Extract include_dirs from extra_args for backends that support it
+    # Extract include_dirs from extra_args
     # Handle both "-I/path" and "-I", "/path" formats
     include_dirs: list[str] = []
     other_args: list[str] = []
@@ -139,19 +136,16 @@ def translate(
         else:
             other_args.append(arg)
 
-    if "project_prefixes" in parse_varnames:
-        # libclang backend with full umbrella header support
-        # Using runtime introspection to detect supported kwargs, so ignore type check
-        header = backend_obj.parse(
-            code,
-            hdrname,
-            include_dirs=include_dirs or None,
-            extra_args=other_args or None,
-            use_default_includes=use_default_includes,
-            project_prefixes=project_prefixes,
-            recursive_includes=recursive_includes,
-            max_depth=max_depth,
-        )
+    header = backend_obj.parse(
+        code,
+        hdrname,
+        include_dirs=include_dirs or None,
+        extra_args=other_args or None,
+        use_default_includes=use_default_includes,
+        project_prefixes=project_prefixes,
+        recursive_includes=recursive_includes,
+        max_depth=max_depth,
+    )
 
     if debug:
         _debug_print(f"Found {len(header.declarations)} declarations")
@@ -225,11 +219,7 @@ def resolve_backend(
 
 @click.command(
     context_settings=CONTEXT_SETTINGS,
-    help="""Generate Cython .pxd declarations from C/C++ headers.
-
-\b
-Options marked [libclang] require the libclang backend.
-""",
+    help="""Generate Cython .pxd declarations from C/C++ headers.""",
 )
 # === General options ===
 @click.option("--version", "-v", is_flag=True, help="Print version and exit.")
@@ -238,7 +228,7 @@ Options marked [libclang] require the libclang backend.
     "-b",
     type=click.Choice(["auto", "libclang"], case_sensitive=False),
     default="auto",
-    help="Parser backend (default: auto, prefers libclang).",
+    help="Parser backend (default: auto).",
 )
 @click.option(
     "--list-backends",
@@ -262,7 +252,7 @@ Options marked [libclang] require the libclang backend.
     default=False,
     help="Print debug info to stderr.",
 )
-# === Preprocessing options (both backends) ===
+# === Preprocessing options ===
 @click.option(
     "--include-dir",
     "-I",
@@ -285,28 +275,28 @@ Options marked [libclang] require the libclang backend.
     metavar="<pattern>",
     help="Only emit from files matching pattern.",
 )
-# === libclang-only options ===
+# === Clang / C++ options ===
 @click.option(
     "--cpp",
     "-x",
     is_flag=True,
-    help="[libclang] Parse as C++.",
+    help="Parse as C++.",
 )
 @click.option(
     "--std",
     metavar="<std>",
-    help="[libclang] Language standard (e.g., c11, c++17).",
+    help="Language standard (e.g., c11, c++17).",
 )
 @click.option(
     "--clang-arg",
     multiple=True,
     metavar="<arg>",
-    help="[libclang] Pass argument to clang.",
+    help="Pass argument to clang.",
 )
 @click.option(
     "--no-default-includes",
     is_flag=True,
-    help="[libclang] Disable system include auto-detection.",
+    help="Disable system include auto-detection.",
 )
 # === Umbrella header options ===
 @click.option(
@@ -315,21 +305,21 @@ Options marked [libclang] require the libclang backend.
     "project_prefixes",
     multiple=True,
     metavar="<path>",
-    help="[libclang] Treat path as project (not system) for umbrella headers. "
+    help="Treat path as project (not system) for umbrella headers. "
     "Declarations from headers matching this prefix will be included. "
     "Can be specified multiple times.",
 )
 @click.option(
     "--no-recursive",
     is_flag=True,
-    help="[libclang] Disable recursive parsing of umbrella headers.",
+    help="Disable recursive parsing of umbrella headers.",
 )
 @click.option(
     "--max-depth",
     type=int,
     default=10,
     metavar="<n>",
-    help="[libclang] Max recursion depth for umbrella headers (default: 10).",
+    help="Max recursion depth for umbrella headers (default: 10).",
 )
 # === Deprecated (hidden) ===
 @click.option(
