@@ -57,7 +57,7 @@ jobs:
           echo "Found LLVM version: $LLVM_VERSION, prefix: $LLVM_PREFIX"
 
       - name: Install dependencies
-        run: uv pip install --system -e .[test]
+        run: uv pip install --system -e '.[test,treesitter]'
 
       - name: Install numpy for test headers (Linux)
         if: runner.os == 'Linux'

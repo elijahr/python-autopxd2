@@ -448,6 +448,8 @@ class TestLibclangEndToEnd:
 
     def test_treesitter_backend_cli(self) -> None:
         """--backend tree-sitter should parse simple C declarations."""
+        if not is_backend_available("tree-sitter"):
+            pytest.skip("tree-sitter optional dependency not installed")
         runner = CliRunner()
         result = runner.invoke(cli, ["--backend", "tree-sitter", "-"], input="int add(int a, int b);\n")
         assert result.exit_code == 0
