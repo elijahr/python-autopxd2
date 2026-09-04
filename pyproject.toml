@@ -38,7 +38,7 @@ dependencies = [
 [project.optional-dependencies]
 # libclang backend (C++ support) - headerkit vendors clang bindings, kept for backwards compatibility
 libclang = []
-treesitter = ["tree-sitter>=0.23", "tree-sitter-c>=0.23"]
+treesitter = ["tree-sitter>=0.23", "tree-sitter-c>=0.23", "tree-sitter-cpp>=0.23"]
 
 # Testing
 test = ["pytest", "pytest-timeout", "cython"]

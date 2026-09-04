@@ -78,6 +78,20 @@ python -m headerkit.install_libclang
 
 See the [installation docs](https://elijahr.github.io/python-autopxd2/getting-started/installation/) for more details.
 
+### Alternative: Tree-sitter Backend (No LLVM Dependency)
+
+To parse C and C++ headers without requiring system `libclang`, install the `treesitter` extra:
+
+```shell
+pip install "autopxd2[treesitter]"
+```
+
+Then specify `--backend tree-sitter`:
+
+```shell
+autopxd --backend tree-sitter myheader.h myheader.pxd
+```
+
 ## Quick Start
 
 ```shell
@@ -104,7 +118,7 @@ autopxd [OPTIONS] [INFILE] [OUTFILE]
 
 Options:
   -v, --version                  Print version and exit.
-  -b, --backend [auto|libclang]  Parser backend (default: auto).
+  -b, --backend TEXT             Parser backend (default: auto, using libclang).
   --list-backends                List available backends and exit.
   --json                         JSON output (with --list-backends).
   -q, --quiet                    Suppress warnings.

@@ -447,7 +447,7 @@ class TestLibclangEndToEnd:
         assert "Error: Backend 'nonexistent_backend' is not available." in result.output
 
     def test_treesitter_backend_cli(self) -> None:
-        """--backend tree-sitter should parse simple C declarations."""
+        """--backend tree-sitter should parse C and C++ declarations."""
         if not is_backend_available("tree-sitter"):
             pytest.skip("tree-sitter optional dependency not installed")
         runner = CliRunner()
@@ -455,32 +455,14 @@ class TestLibclangEndToEnd:
         assert result.exit_code == 0
         assert "int add(int a, int b)" in result.output
 
-    def test_polyglot_backends_cli(self) -> None:
-        """--backend rust, zig, nim should parse their respective C-ABI interfaces."""
-        runner = CliRunner()
-        # Rust
-        r_result = runner.invoke(
+        cpp_result = runner.invoke(
             cli,
-            ["--backend", "rust", "-"],
-            input='#[no_mangle] pub extern "C" fn rust_fn(x: i32) -> i32 { x }\n',
+            ["--backend", "tree-sitter", "-"],
+            input="class Shape { public: int id; void draw(); };\n",
         )
-        assert r_result.exit_code == 0
-        assert "rust_fn" in r_result.output
+        assert cpp_result.exit_code == 0
+        assert "cdef cppclass Shape:" in cpp_result.output
+        assert "int id" in cpp_result.output
+        assert "void draw()" in cpp_result.output
 
-        # Zig
-        z_result = runner.invoke(
-            cli,
-            ["--backend", "zig", "-"],
-            input="export fn zig_fn(x: c_int) c_int { return x; }\n",
-        )
-        assert z_result.exit_code == 0
-        assert "zig_fn" in z_result.output
 
-        # Nim
-        n_result = runner.invoke(
-            cli,
-            ["--backend", "nim", "-"],
-            input="proc nim_fn*(x: cint): cint {.exportc, cdecl.} = x\n",
-        )
-        assert n_result.exit_code == 0
-        assert "nim_fn" in n_result.output

@@ -94,11 +94,23 @@ def test_cython_vs_header(file_path, tmp_path):
     cythonize_one(str(src), str(dst), None, False, options=options)
 
 
-@pytest.mark.libclang
+@pytest.mark.parametrize(
+    "backend",
+    [
+        pytest.param("libclang", marks=pytest.mark.libclang),
+        pytest.param(
+            "tree-sitter",
+            marks=pytest.mark.skipif(
+                not autopxd.is_backend_available("tree-sitter"),
+                reason="tree-sitter optional dependency not installed",
+            ),
+        ),
+    ],
+)
 @pytest.mark.parametrize("file_path", glob.glob(os.path.abspath(os.path.join(FILES_DIR, "*.cpptest"))))
-def test_cython_vs_cpp_header(file_path, tmp_path):
-    """Test C++ header files with libclang backend."""
-    actual = do_one_cython_vs_header_test(file_path, backend="libclang", extra_args=["-x", "c++", "-std=c++11"])
+def test_cython_vs_cpp_header(file_path, tmp_path, backend):
+    """Test C++ header files with libclang and tree-sitter backends."""
+    actual = do_one_cython_vs_header_test(file_path, backend=backend, extra_args=["-x", "c++", "-std=c++11"])
 
     # Ensure the translation is valid Cython
     src = tmp_path / "x.pyx"
