@@ -464,5 +464,3 @@ class TestLibclangEndToEnd:
         assert "cdef cppclass Shape:" in cpp_result.output
         assert "int id" in cpp_result.output
         assert "void draw()" in cpp_result.output
-
-

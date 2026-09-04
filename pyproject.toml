@@ -32,6 +32,7 @@ classifiers = [
 requires-python = ">=3.10"
 dependencies = [
   "Click",
+  # headerkit branch: feat/unified-interop-toolkit
   "headerkit @ git+https://github.com/axiomantic/headerkit.git@feat/unified-interop-toolkit",
 ]
 
