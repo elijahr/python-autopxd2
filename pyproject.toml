@@ -32,12 +32,13 @@ classifiers = [
 requires-python = ">=3.10"
 dependencies = [
   "Click",
-  "headerkit>=0.29.0",
+  "headerkit @ git+https://github.com/axiomantic/headerkit.git@feat/unified-interop-toolkit",
 ]
 
 [project.optional-dependencies]
 # libclang backend (C++ support) - headerkit vendors clang bindings, kept for backwards compatibility
 libclang = []
+treesitter = ["tree-sitter>=0.23", "tree-sitter-c>=0.23"]
 
 # Testing
 test = ["pytest", "pytest-timeout", "cython"]

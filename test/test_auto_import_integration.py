@@ -7,14 +7,15 @@ import subprocess
 import sys
 
 import pytest
+from headerkit.backends import is_backend_available
 
 from autopxd import translate
 
 # Mark entire module as requiring libclang
 pytestmark = pytest.mark.libclang
 
-# Only run with libclang for header tracking
-libclang = pytest.importorskip("clang.cindex")
+if not is_backend_available("libclang"):
+    pytest.skip("libclang not available", allow_module_level=True)
 
 
 def _get_system_include_args() -> list[str]:

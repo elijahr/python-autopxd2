@@ -1,15 +1,16 @@
 """Test handling of compile-time expressions in typedefs (decltype, sizeof)."""
 
 import pytest
+from headerkit.backends import is_backend_available
+from headerkit.backends.libclang import LibclangBackend
+from headerkit.ir import Typedef
+from headerkit.writers.cython import write_pxd
 
 # These tests require libclang
 pytestmark = pytest.mark.libclang
 
-# Guard import for when clang2 is not installed
-clang = pytest.importorskip("clang")
-from headerkit.backends.libclang import LibclangBackend  # noqa: E402
-from headerkit.ir import Typedef  # noqa: E402
-from headerkit.writers.cython import write_pxd  # noqa: E402
+if not is_backend_available("libclang"):
+    pytest.skip("libclang not available", allow_module_level=True)
 
 
 @pytest.fixture

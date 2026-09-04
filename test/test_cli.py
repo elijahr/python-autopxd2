@@ -445,3 +445,40 @@ class TestLibclangEndToEnd:
         result = runner.invoke(cli, ["--backend", "nonexistent_backend", "-"], input="int x;\n")
         assert result.exit_code != 0
         assert "Error: Backend 'nonexistent_backend' is not available." in result.output
+
+    def test_treesitter_backend_cli(self) -> None:
+        """--backend tree-sitter should parse simple C declarations."""
+        runner = CliRunner()
+        result = runner.invoke(cli, ["--backend", "tree-sitter", "-"], input="int add(int a, int b);\n")
+        assert result.exit_code == 0
+        assert "int add(int a, int b)" in result.output
+
+    def test_polyglot_backends_cli(self) -> None:
+        """--backend rust, zig, nim should parse their respective C-ABI interfaces."""
+        runner = CliRunner()
+        # Rust
+        r_result = runner.invoke(
+            cli,
+            ["--backend", "rust", "-"],
+            input='#[no_mangle] pub extern "C" fn rust_fn(x: i32) -> i32 { x }\n',
+        )
+        assert r_result.exit_code == 0
+        assert "rust_fn" in r_result.output
+
+        # Zig
+        z_result = runner.invoke(
+            cli,
+            ["--backend", "zig", "-"],
+            input="export fn zig_fn(x: c_int) c_int { return x; }\n",
+        )
+        assert z_result.exit_code == 0
+        assert "zig_fn" in z_result.output
+
+        # Nim
+        n_result = runner.invoke(
+            cli,
+            ["--backend", "nim", "-"],
+            input="proc nim_fn*(x: cint): cint {.exportc, cdecl.} = x\n",
+        )
+        assert n_result.exit_code == 0
+        assert "nim_fn" in n_result.output
