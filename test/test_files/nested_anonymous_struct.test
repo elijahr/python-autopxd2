@@ -10,10 +10,5 @@ struct outer_s {
 
 cdef extern from "nested_anonymous_struct.test":
 
-    cdef struct _outer_s_inner_s_s:
-        int b
-        int c
-
     cdef struct outer_s:
         int a
-        _outer_s_inner_s_s inner_s

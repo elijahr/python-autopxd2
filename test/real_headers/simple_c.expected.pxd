@@ -1,6 +1,14 @@
 cdef extern from "simple_c.h":
 
-    ctypedef enum ErrorCode:
+    cdef struct Point
+
+    ctypedef void (*Callback)(void*)
+
+    ctypedef int (*Comparator)(const void*, const void*)
+
+
+
+    cdef enum ErrorCode:
         ERR_OK
         ERR_INVALID
         ERR_NOMEM
@@ -11,6 +19,9 @@ cdef extern from "simple_c.h":
         LOG_WARN
         LOG_ERROR
 
+    int global_debug_enabled
+
+
     cdef struct Point:
         int x
         int y
@@ -19,14 +30,11 @@ cdef extern from "simple_c.h":
         int width
         int height
 
-    cdef struct Buffer:
+    ctypedef struct Buffer:
         char* data
         unsigned int length
         unsigned int capacity
 
-    ctypedef void (*Callback)(void* user_data)
-
-    ctypedef int (*Comparator)(const void* a, const void* b)
 
     Point point_create(int x, int y)
 
@@ -43,5 +51,3 @@ cdef extern from "simple_c.h":
     void log_message(LogLevel level, const char* message)
 
     void log_printf(LogLevel level, const char* fmt, ...)
-
-    int global_debug_enabled

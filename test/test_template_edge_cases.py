@@ -1,9 +1,8 @@
 """Test edge cases in template syntax conversion."""
 
 import pytest
-
-from autopxd.backends import get_backend
-from autopxd.ir_writer import write_pxd
+from headerkit.backends import get_backend
+from headerkit.writers.cython import write_pxd
 
 # These tests require libclang
 pytestmark = pytest.mark.libclang

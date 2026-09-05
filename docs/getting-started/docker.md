@@ -2,8 +2,8 @@
 
 autopxd2 provides a Docker image with libclang pre-installed, allowing you to generate high-quality `.pxd` files without installing clang on your system.
 
-!!! tip "Recommended for C++ headers"
-    The Docker image is the easiest way to use the libclang backend, which provides better C++ support and handles complex headers that pycparser cannot parse.
+!!! tip "No local LLVM installation needed"
+    The Docker image includes libclang pre-installed, so you don't need to install LLVM on your system.
 
 ## Quick Start
 

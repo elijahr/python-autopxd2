@@ -1,12 +1,12 @@
 """C++ specific tests that only run with libclang backend."""
 
 import pytest
-
-from autopxd.backends import get_backend
-from autopxd.ir import (
+from headerkit.backends import get_backend
+from headerkit.ir import (
     Function,
     Struct,
 )
+
 from test.assertions import assert_pxd_equals
 
 # These tests require libclang - exclude with: pytest -m "not libclang"
@@ -111,3 +111,102 @@ class TestCppClasses:
         func = header.declarations[0]
         assert isinstance(func, Function)
         assert func.name == "global_func"
+
+    def test_cpp_multiple_inheritance(self, libclang_backend, tmp_path):
+        """C++ class inheritance should be represented in pxd."""
+        assert_pxd_equals(
+            """
+            class Base1 {
+            public:
+                void f1();
+            };
+            class Base2 {
+            public:
+                void f2();
+            };
+            class Derived : public Base1, public Base2 {
+            public:
+                void f3();
+            };
+            """,
+            """cdef extern from "test.hpp":
+
+    cdef cppclass Base1:
+        void f1()
+
+    cdef cppclass Base2:
+        void f2()
+
+    cdef cppclass Derived(Base1, Base2):
+        void f3()
+""",
+            tmp_path,
+            backend="libclang",
+            filename="test.hpp",
+            cplus=True,
+            extra_args=["-x", "c++"],
+        )
+
+    def test_cpp_special_members_and_qualifiers(self, libclang_backend, tmp_path):
+        """C++ constructors, destructors, const methods, and static methods."""
+        assert_pxd_equals(
+            """
+            class MyClass {
+            public:
+                MyClass();
+                MyClass(int x);
+                ~MyClass();
+                int get_val() const;
+                static int get_count();
+            };
+            """,
+            """cdef extern from "test.hpp":
+
+    cdef cppclass MyClass:
+        MyClass()
+        MyClass(int x)
+        int get_val() const
+        @staticmethod
+        int get_count()
+""",
+            tmp_path,
+            backend="libclang",
+            filename="test.hpp",
+            cplus=True,
+            extra_args=["-x", "c++"],
+        )
+
+    def test_cpp_template_function(self, libclang_backend, tmp_path):
+        """C++ generic template functions."""
+        assert_pxd_equals(
+            """
+            template<typename T>
+            T maximum(T a, T b);
+            """,
+            """cdef extern from "test.hpp":
+
+    T maximum[T](T a, T b)
+""",
+            tmp_path,
+            backend="libclang",
+            filename="test.hpp",
+            cplus=True,
+            extra_args=["-x", "c++"],
+        )
+
+    def test_cpp_default_parameters_and_references(self, libclang_backend, tmp_path):
+        """C++ default parameter values and references."""
+        assert_pxd_equals(
+            """
+            void process(int& val, int timeout = 10);
+            """,
+            """cdef extern from "test.hpp":
+
+    void process(int& val, int timeout)
+""",
+            tmp_path,
+            backend="libclang",
+            filename="test.hpp",
+            cplus=True,
+            extra_args=["-x", "c++"],
+        )

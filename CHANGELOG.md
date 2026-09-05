@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.0.0] - 2026-09-03
+
+### Added
+- Complete migration of AST, IR, and PxdWriter to `headerkit>=0.37.0`
+- C++ class multiple inheritance rendering in Cython (`cdef cppclass Derived(Base1, Base2):`)
+- C++ constructor and destructor rendering in `cppclass` definitions
+- C++ `@staticmethod` and `const` method qualifier support
+- C++ generic function and method template support (`T max[T](T a, T b)`)
+- Macro constant expression evaluation support via HeaderKit
+- Comprehensive tests for C++ class, template, and macro features
+- Bundled Cython `.pxd` stubs delegated directly to `headerkit.stubs`
+- Automatic C++ mode detection for C++ header file extensions (`.hpp`, `.hh`, `.hxx`, `.H`, `.tcc`, etc.) without requiring `--cpp`
+- Automatic `stdin` piping support when running `cat header.h | autopxd` without requiring an explicit `-` argument
+
+### Changed
+- `libclang` is now the sole parser backend
+- `--backend auto` now uses libclang (no pycparser fallback)
+- Removed runtime dependency on `clang2` in favor of HeaderKit's vendored LLVM 18–23 bindings
+- Re-exported `LibclangBackend` directly from `headerkit.backends.libclang`
+- Updated `headerkit` dependency requirement to `>=0.37.0`
+
+### Removed
+- `pycparser` backend and all pycparser-specific code
+- `pycparser` runtime dependency
+- `--backend pycparser` CLI option
+- `regenerate_stubs.py` script
+- `stubs/include/` and `stubs/darwin-include/` directories (120+ pycparser fake headers)
+- `autopxd.declarations`, `autopxd.ir`, `autopxd.ir_writer`, `autopxd.cython_types`, and `autopxd.keywords` internal modules
+- Fallback from libclang to pycparser behavior
+- `test/test_ir.py` and `test/test_cython_types.py` (upstreamed to headerkit)
+
 ## [3.2.3] - 2026-06-05
 
 ### Fixed
@@ -200,7 +231,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - macOS support
 
-[Unreleased]: https://github.com/elijahr/python-autopxd2/compare/v3.2.3...HEAD
+[Unreleased]: https://github.com/elijahr/python-autopxd2/compare/v4.0.0...HEAD
+[4.0.0]: https://github.com/elijahr/python-autopxd2/compare/v3.2.3...v4.0.0
 [3.2.3]: https://github.com/elijahr/python-autopxd2/compare/v3.2.2...v3.2.3
 [3.2.2]: https://github.com/elijahr/python-autopxd2/compare/v3.2.1...v3.2.2
 [3.2.1]: https://github.com/elijahr/python-autopxd2/compare/v3.2.0...v3.2.1

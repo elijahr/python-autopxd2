@@ -10,17 +10,16 @@ from typing import (
 )
 
 import click
-
-from .backends import (
+from headerkit import (
+    Declaration,
+)
+from headerkit.backends import (
     get_backend,
     get_backend_info,
     get_default_backend,
     is_backend_available,
 )
-from .ir import (
-    Declaration,
-)
-from .ir_writer import (
+from headerkit.writers.cython import (
     write_pxd,
 )
 
@@ -87,7 +86,7 @@ def translate(
     Args:
         code: C/C++ header source code.
         hdrname: Header filename (used in cdef extern from).
-        backend: Backend name ("auto", "pycparser", "libclang").
+        backend: Backend name ("auto", "libclang").
         extra_args: Extra arguments passed to backend (e.g., ["-I/usr/include"]).
         whitelist: Only include declarations from files matching these patterns.
             Supports fnmatch patterns like "*.h", "include/*.h".
@@ -119,11 +118,8 @@ def translate(
 
     # Parse with backend
     backend_obj = get_backend(backend_name)
-    # Check if backend supports libclang-specific options
-    parse_code = getattr(backend_obj.parse, "__code__", None)
-    parse_varnames = parse_code.co_varnames if parse_code else ()
 
-    # Extract include_dirs from extra_args for backends that support it
+    # Extract include_dirs from extra_args
     # Handle both "-I/path" and "-I", "/path" formats
     include_dirs: list[str] = []
     other_args: list[str] = []
@@ -140,30 +136,16 @@ def translate(
         else:
             other_args.append(arg)
 
-    if "project_prefixes" in parse_varnames:
-        # libclang backend with full umbrella header support
-        # Using runtime introspection to detect supported kwargs, so ignore type check
-        header = backend_obj.parse(
-            code,
-            hdrname,
-            include_dirs=include_dirs or None,
-            extra_args=other_args or None,
-            use_default_includes=use_default_includes,  # type: ignore[call-arg]
-            project_prefixes=project_prefixes,
-            recursive_includes=recursive_includes,
-            max_depth=max_depth,
-        )
-    elif "use_default_includes" in parse_varnames:
-        # libclang backend without umbrella header params
-        header = backend_obj.parse(
-            code,
-            hdrname,
-            extra_args=extra_args or [],
-            use_default_includes=use_default_includes,  # type: ignore[call-arg]
-        )
-    else:
-        # pycparser or other backend
-        header = backend_obj.parse(code, hdrname, extra_args=extra_args or [])
+    header = backend_obj.parse(
+        code,
+        hdrname,
+        include_dirs=include_dirs or None,
+        extra_args=other_args or None,
+        use_default_includes=use_default_includes,
+        project_prefixes=project_prefixes,
+        recursive_includes=recursive_includes,
+        max_depth=max_depth,
+    )
 
     if debug:
         _debug_print(f"Found {len(header.declarations)} declarations")
@@ -209,133 +191,47 @@ def _print_backends_json() -> None:
 
 DOCKER_DOCS_URL = "https://elijahr.github.io/python-autopxd2/getting-started/docker/"
 
-FALLBACK_WARNING = f"""Warning: libclang not available, falling back to pycparser (legacy).
-Limitations: No C++ support, limited preprocessor handling, may fail on complex headers.
-To fix: Install LLVM/Clang (e.g., apt install libclang-dev, brew install llvm)
-Or use Docker: {DOCKER_DOCS_URL}
-"""
-
-LIBCLANG_REQUIRED_ERROR = f"""Error: libclang backend required but not available.
-Install LLVM/Clang (e.g., apt install libclang-dev, brew install llvm)
+LIBCLANG_REQUIRED_ERROR = f"""Error: libclang backend not available.
+Install libclang with headerkit: python -m headerkit.install_libclang
+Or install LLVM/Clang manually (e.g., apt install libclang-dev, brew install llvm)
 Or use Docker: {DOCKER_DOCS_URL}
 """
 
 
 def resolve_backend(
     backend: str,
-    cpp: bool,
-    quiet: bool,
 ) -> str:
     """Resolve which backend to use based on options.
 
-    :param backend: Backend option value (auto, libclang, pycparser).
-    :param cpp: Whether --cpp was specified.
-    :param quiet: Whether to suppress warnings.
+    :param backend: Backend option value (auto, libclang, or any registered backend).
     :returns: Resolved backend name.
     :raises SystemExit: If required backend is unavailable.
     """
-    # Check for conflicting options: --backend pycparser --cpp
-    if cpp and backend == "pycparser":
-        click.echo(
-            "Error: --cpp requires libclang backend (pycparser does not support C++).\n"
-            "Remove --backend pycparser or --cpp.",
-            err=True,
-        )
+    if backend == "auto":
+        resolved = get_default_backend()
+    else:
+        resolved = backend
+
+    if not is_backend_available(resolved):
+        if resolved == "libclang":
+            click.echo(LIBCLANG_REQUIRED_ERROR, err=True)
+        else:
+            click.echo(f"Error: Backend '{resolved}' is not available.", err=True)
         raise SystemExit(1)
-
-    # --cpp implies libclang
-    if cpp:
-        if not is_backend_available("libclang"):
-            click.echo(LIBCLANG_REQUIRED_ERROR, err=True)
-            raise SystemExit(1)
-        return "libclang"
-
-    # Explicit backend selection
-    if backend == "libclang":
-        if not is_backend_available("libclang"):
-            click.echo(LIBCLANG_REQUIRED_ERROR, err=True)
-            raise SystemExit(1)
-        return "libclang"
-
-    if backend == "pycparser":
-        return "pycparser"
-
-    # Auto mode
-    if is_backend_available("libclang"):
-        return "libclang"
-
-    # Fallback to pycparser with warning
-    if not quiet:
-        click.echo(FALLBACK_WARNING, err=True)
-    return "pycparser"
-
-
-def validate_libclang_options(
-    resolved_backend: str,
-    std: str | None,
-    clang_arg: tuple[str, ...],
-    project_prefixes: tuple[str, ...] | None = None,
-    no_recursive: bool = False,
-    max_depth: int = 10,
-) -> None:
-    """Validate that libclang-only options aren't used with pycparser.
-
-    :raises SystemExit: If validation fails.
-    """
-    if resolved_backend != "libclang":
-        if std:
-            click.echo(
-                f"Error: --std requires libclang backend (got {resolved_backend}).\n"
-                "Install LLVM/Clang or remove --std option.",
-                err=True,
-            )
-            raise SystemExit(1)
-        if clang_arg:
-            click.echo(
-                f"Error: --clang-arg requires libclang backend (got {resolved_backend}).\n"
-                "Install LLVM/Clang or remove --clang-arg option.",
-                err=True,
-            )
-            raise SystemExit(1)
-        if project_prefixes:
-            click.echo(
-                f"Error: --project-prefix requires libclang backend (got {resolved_backend}).\n"
-                "Install LLVM/Clang or remove --project-prefix option.",
-                err=True,
-            )
-            raise SystemExit(1)
-        if no_recursive:
-            click.echo(
-                f"Error: --no-recursive requires libclang backend (got {resolved_backend}).\n"
-                "Install LLVM/Clang or remove --no-recursive option.",
-                err=True,
-            )
-            raise SystemExit(1)
-        if max_depth != 10:
-            click.echo(
-                f"Error: --max-depth requires libclang backend (got {resolved_backend}).\n"
-                "Install LLVM/Clang or remove --max-depth option.",
-                err=True,
-            )
-            raise SystemExit(1)
+    return resolved
 
 
 @click.command(
     context_settings=CONTEXT_SETTINGS,
-    help="""Generate Cython .pxd declarations from C/C++ headers.
-
-\b
-Options marked [libclang] require the libclang backend.
-""",
+    help="""Generate Cython .pxd declarations from C/C++ headers.""",
 )
 # === General options ===
 @click.option("--version", "-v", is_flag=True, help="Print version and exit.")
 @click.option(
     "--backend",
     "-b",
-    type=click.Choice(["auto", "libclang", "pycparser"], case_sensitive=False),
     default="auto",
-    help="Parser backend (default: auto, prefers libclang).",
+    help="Parser backend (default: auto, using libclang).",
 )
 @click.option(
     "--list-backends",
@@ -359,7 +255,7 @@ Options marked [libclang] require the libclang backend.
     default=False,
     help="Print debug info to stderr.",
 )
-# === Preprocessing options (both backends) ===
+# === Preprocessing options ===
 @click.option(
     "--include-dir",
     "-I",
@@ -382,28 +278,28 @@ Options marked [libclang] require the libclang backend.
     metavar="<pattern>",
     help="Only emit from files matching pattern.",
 )
-# === libclang-only options ===
+# === Clang / C++ options ===
 @click.option(
     "--cpp",
     "-x",
     is_flag=True,
-    help="[libclang] Parse as C++.",
+    help="Parse as C++.",
 )
 @click.option(
     "--std",
     metavar="<std>",
-    help="[libclang] Language standard (e.g., c11, c++17).",
+    help="Language standard (e.g., c11, c++17).",
 )
 @click.option(
     "--clang-arg",
     multiple=True,
     metavar="<arg>",
-    help="[libclang] Pass argument to clang.",
+    help="Pass argument to clang.",
 )
 @click.option(
     "--no-default-includes",
     is_flag=True,
-    help="[libclang] Disable system include auto-detection.",
+    help="Disable system include auto-detection.",
 )
 # === Umbrella header options ===
 @click.option(
@@ -412,21 +308,21 @@ Options marked [libclang] require the libclang backend.
     "project_prefixes",
     multiple=True,
     metavar="<path>",
-    help="[libclang] Treat path as project (not system) for umbrella headers. "
+    help="Treat path as project (not system) for umbrella headers. "
     "Declarations from headers matching this prefix will be included. "
     "Can be specified multiple times.",
 )
 @click.option(
     "--no-recursive",
     is_flag=True,
-    help="[libclang] Disable recursive parsing of umbrella headers.",
+    help="Disable recursive parsing of umbrella headers.",
 )
 @click.option(
     "--max-depth",
     type=int,
     default=10,
     metavar="<n>",
-    help="[libclang] Max recursion depth for umbrella headers (default: 10).",
+    help="Max recursion depth for umbrella headers (default: 10).",
 )
 # === Deprecated (hidden) ===
 @click.option(
@@ -443,7 +339,7 @@ Options marked [libclang] require the libclang backend.
 @click.argument(
     "outfile",
     type=click.File("w"),
-    default=sys.stdout,
+    default="-",
 )
 def cli(
     version: bool,
@@ -481,13 +377,27 @@ def cli(
             _print_backends_human()
         return
 
-    # Require infile for translation
+    # If infile was not given, check if stdin has piped data
     if infile is None:
-        click.echo("Error: Missing argument 'INFILE'.", err=True)
-        raise SystemExit(2)
+        content = ""
+        if not sys.stdin.isatty():
+            content = sys.stdin.read()
+        if not content:
+            click.echo("Error: Missing argument 'INFILE'.", err=True)
+            raise SystemExit(2)
+        code_input = content
+        raw_hdrname = "input.h"
+    else:
+        code_input = infile.read()
+        raw_hdrname = infile.name
 
-    resolved_backend = resolve_backend(backend, cpp, quiet)
-    validate_libclang_options(resolved_backend, std, clang_arg, project_prefixes, no_recursive, max_depth)
+    # Auto-detect C++ mode from file extension if not explicitly specified
+    cpp_mode = cpp
+    cpp_extensions = (".hpp", ".hh", ".hxx", ".H", ".tcc", ".tpp", ".h++")
+    if not cpp_mode and raw_hdrname != "<stdin>" and any(raw_hdrname.endswith(ext) for ext in cpp_extensions):
+        cpp_mode = True
+
+    resolved_backend = resolve_backend(backend)
 
     # Merge deprecated --compiler-directive into --define
     all_defines = defines + defines_deprecated
@@ -499,6 +409,9 @@ def cli(
 
     # Build extra_args list from CLI options
     extra_args: list[str] = []
+    if cpp_mode:
+        extra_args.append("-x")
+        extra_args.append("c++")
     for define in all_defines:
         extra_args.append(f"-D{define}")
     for directory in include_dir:
@@ -515,10 +428,14 @@ def cli(
     # Convert project_prefixes tuple to tuple or None
     project_prefixes_arg = project_prefixes if project_prefixes else None
 
+    hdrname = "input.h" if raw_hdrname in ("<stdin>", "input.h") else raw_hdrname
+    if cpp_mode and hdrname == "input.h":
+        hdrname = "input.hpp"
+
     outfile.write(
         translate(
-            code=infile.read(),
-            hdrname=infile.name,
+            code=code_input,
+            hdrname=hdrname,
             backend=resolved_backend,
             extra_args=extra_args if extra_args else None,
             whitelist=whitelist_list,

@@ -3,4 +3,5 @@
 ---
 
 cdef extern from "no_declarations.test":
-    pass
+
+    double foo

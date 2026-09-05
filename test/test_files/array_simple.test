@@ -8,10 +8,10 @@ int c;
 
 cdef extern from "array_simple.test":
 
-    cdef struct _my_anon_struct_s:
+    cdef struct struct (unnamed at array_simple.test:1:1):
         int a
         int b
 
-    _my_anon_struct_s my_anon_struct[10]
+    struct (unnamed at array_simple.test:1:1) my_anon_struct[10]
 
     int c

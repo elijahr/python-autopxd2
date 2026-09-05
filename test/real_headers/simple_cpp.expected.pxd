@@ -8,6 +8,6 @@ cdef extern from "simple_cpp.hpp":
         int width
         int height
         void resize(int w, int h)
-        bool isValid()
+        bool isValid() const
 
-    int computeDistance(const Point & a, const Point & b)
+    int computeDistance(Point& a, Point& b)

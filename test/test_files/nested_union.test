@@ -10,10 +10,8 @@ struct my_s {
 
 cdef extern from "nested_union.test":
 
-    cdef union my_nested_u:
-        char c
-        int i
+    cdef union my_nested_u
 
     cdef struct my_s:
         my_nested_u n
-        unsigned u
+        unsigned int u

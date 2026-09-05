@@ -22,8 +22,8 @@ repos:
         args: [--strict]
         files: ^autopxd/
         additional_dependencies:
-          - pycparser
           - click
+          - headerkit>=0.29.0
 
   - repo: https://github.com/mgedmin/check-manifest
     rev: "0.51"

@@ -1,4 +1,4 @@
-"""Tests for autopxd bundled stub files."""
+"""Tests for headerkit bundled stub files."""
 
 import importlib.resources
 import importlib.util
@@ -12,20 +12,20 @@ class TestStubsPackage:
     """Tests that stubs package is properly structured."""
 
     def test_stubs_package_exists(self):
-        """autopxd.stubs is importable."""
-        import autopxd.stubs
+        """headerkit.stubs is importable."""
+        import headerkit.stubs
 
-        assert autopxd.stubs is not None
+        assert headerkit.stubs is not None
 
     def test_stdarg_stub_exists(self):
         """stdarg.pxd stub file exists in package."""
-        files = importlib.resources.files("autopxd.stubs")
+        files = importlib.resources.files("headerkit.stubs")
         stdarg_path = files / "stdarg.pxd"
-        assert stdarg_path.is_file(), "stdarg.pxd should exist in autopxd.stubs"
+        assert stdarg_path.is_file(), "stdarg.pxd should exist in headerkit.stubs"
 
     def test_stdarg_stub_content(self):
         """stdarg.pxd contains va_list declaration."""
-        files = importlib.resources.files("autopxd.stubs")
+        files = importlib.resources.files("headerkit.stubs")
         content = (files / "stdarg.pxd").read_text()
         assert "va_list" in content
         assert "cdef extern from" in content
@@ -48,7 +48,7 @@ class TestStubCythonCompilation:
         test_pxd = tmp_path / "test_import.pxd"
         test_pxd.write_text(
             """\
-from autopxd.stubs.stdarg cimport va_list
+from headerkit.stubs.stdarg cimport va_list
 
 cdef extern from "test.h":
     void test_func(va_list args)
@@ -70,26 +70,26 @@ class TestSocketStubs:
 
     def test_sys_socket_stub_exists(self):
         """sys_socket.pxd exists in stubs package."""
-        files = importlib.resources.files("autopxd.stubs")
+        files = importlib.resources.files("headerkit.stubs")
         path = files / "sys_socket.pxd"
         assert path.is_file()
 
     def test_sys_socket_contains_sockaddr(self):
         """sys_socket.pxd declares sockaddr."""
-        files = importlib.resources.files("autopxd.stubs")
+        files = importlib.resources.files("headerkit.stubs")
         content = (files / "sys_socket.pxd").read_text()
         assert "sockaddr" in content
         assert "socklen_t" in content
 
     def test_netinet_in_stub_exists(self):
         """netinet_in.pxd exists in stubs package."""
-        files = importlib.resources.files("autopxd.stubs")
+        files = importlib.resources.files("headerkit.stubs")
         path = files / "netinet_in.pxd"
         assert path.is_file()
 
     def test_netinet_in_contains_sockaddr_in(self):
         """netinet_in.pxd declares sockaddr_in."""
-        files = importlib.resources.files("autopxd.stubs")
+        files = importlib.resources.files("headerkit.stubs")
         content = (files / "netinet_in.pxd").read_text()
         assert "sockaddr_in" in content
         assert "in_addr" in content
@@ -126,20 +126,13 @@ class TestAllStubsCompile:
     )
     def test_stub_compiles(self, stub_file, tmp_path):
         """Verify stub file is valid Cython syntax."""
-        import os
-
         from Cython.Compiler.Main import CompilationOptions
         from Cython.Compiler.Main import compile as cython_compile
 
-        stub_path = os.path.join(
-            os.path.dirname(__file__),
-            "..",
-            "autopxd",
-            "stubs",
-            stub_file,
-        )
+        files = importlib.resources.files("headerkit.stubs")
+        stub_resource = files / stub_file
 
-        if not os.path.exists(stub_path):
+        if not stub_resource.is_file():
             pytest.skip(f"Stub {stub_file} not yet created")
 
         # Create a pyx that imports from the stub
@@ -149,9 +142,9 @@ class TestAllStubsCompile:
         is_cpp_stub = stub_name.startswith("cpp")
         if is_cpp_stub:
             pyx_content = "# distutils: language = c++\n"
-            pyx_content += f"from autopxd.stubs.{stub_name} cimport *\n"
+            pyx_content += f"from headerkit.stubs.{stub_name} cimport *\n"
         else:
-            pyx_content = f"from autopxd.stubs.{stub_name} cimport *\n"
+            pyx_content = f"from headerkit.stubs.{stub_name} cimport *\n"
 
         pyx_file = tmp_path / "test_stub.pyx"
         pyx_file.write_text(pyx_content)

@@ -36,11 +36,11 @@ class TestDependencyResolution:
         """Chained typedefs from included headers should be resolved."""
         # Create helper header with typedef chain
         helper_h = tmp_path / "helper.h"
-        helper_h.write_text("typedef unsigned long uLong;\n" "typedef unsigned int uInt;\n")
+        helper_h.write_text("typedef unsigned long uLong;\ntypedef unsigned int uInt;\n")
 
         # Create main header that uses these types
         main_h = tmp_path / "main.h"
-        main_h.write_text('#include "helper.h"\n' "uLong checksum(uInt value);\n")
+        main_h.write_text('#include "helper.h"\nuLong checksum(uInt value);\n')
 
         # Generate pxd
         with open(main_h) as f:
@@ -58,13 +58,11 @@ class TestDependencyResolution:
         """Struct typedefs from included headers should be resolved."""
         # Create helper header with struct typedef
         helper_h = tmp_path / "helper.h"
-        helper_h.write_text(
-            "typedef struct stream_s {\n" "    void* next_in;\n" "    unsigned int avail_in;\n" "} stream_t;\n"
-        )
+        helper_h.write_text("typedef struct stream_s {\n    void* next_in;\n    unsigned int avail_in;\n} stream_t;\n")
 
         # Create main header that uses the typedef
         main_h = tmp_path / "main.h"
-        main_h.write_text('#include "helper.h"\n' "int process(stream_t* s);\n")
+        main_h.write_text('#include "helper.h"\nint process(stream_t* s);\n')
 
         # Generate pxd
         with open(main_h) as f:
@@ -89,7 +87,7 @@ class TestDependencyResolution:
 
         # Create main header that uses only voidpf
         main_h = tmp_path / "main.h"
-        main_h.write_text('#include "helper.h"\n' "voidpf get_ptr(void);\n")
+        main_h.write_text('#include "helper.h"\nvoidpf get_ptr(void);\n')
 
         # Generate pxd
         with open(main_h) as f:
@@ -115,7 +113,7 @@ class TestDependencyResolution:
         level1_h.write_text('#include "level2.h"\n')
 
         main_h = tmp_path / "main.h"
-        main_h.write_text('#include "level1.h"\n' "size_type get_size(void);\n")
+        main_h.write_text('#include "level1.h"\nsize_type get_size(void);\n')
 
         # Generate pxd
         with open(main_h) as f:

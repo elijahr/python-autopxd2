@@ -2,25 +2,50 @@
 
 ## Recommended Installation
 
-Install autopxd2 and the libclang backend for full C/C++ support:
+Install autopxd2:
 
 ```bash
 pip install autopxd2
 ```
 
-Then install the `clang2` package matching your system's LLVM version:
+autopxd2 uses `headerkit`, which vendors LLVM clang Python bindings for LLVM 18–23 directly. There is no need to install a separate `clang2` or `clang` Python package.
+
+You only need the system `libclang` shared library (`libclang.so`, `libclang.dylib`, or `libclang.dll`).
+
+### Automatic libclang Installation
+
+HeaderKit provides a built-in installer to automatically download and set up `libclang` for your platform:
 
 ```bash
-# One-liner: detect LLVM version and install matching clang2
-pip install "clang2==$(llvm-config --version | cut -d. -f1).*"
+python -m headerkit.install_libclang
 ```
 
-See [libclang Setup](#libclang-setup) below for platform-specific LLVM installation.
+## System Package Managers
 
-!!! warning "Without clang2"
-    Without the `clang2` package, autopxd2 falls back to the legacy **pycparser** backend,
-    which only supports C99 and lacks macro extraction, circular dependency handling,
-    and C++ support. **libclang is strongly recommended for all use cases.**
+Alternatively, you can install LLVM / libclang using your system's package manager:
+
+### macOS
+
+```bash
+brew install llvm
+```
+
+### Ubuntu / Debian
+
+```bash
+sudo apt-get install libclang-dev llvm
+```
+
+### Fedora / RHEL
+
+```bash
+sudo dnf install clang-devel llvm
+```
+
+### Windows
+
+1. Install LLVM from [releases.llvm.org](https://releases.llvm.org/) or via `winget install LLVM.LLVM`
+2. Ensure the LLVM `bin` directory is in your `PATH`
 
 ## Development Installation
 
@@ -34,7 +59,7 @@ pip install -e .[dev]
 
 ## Docker (No Installation Required)
 
-Use the Docker image for libclang support without installing anything locally:
+Use the Docker image for pre-configured libclang support without installing anything on your host system:
 
 ```bash
 docker run --rm -v $(pwd):/work -w /work ghcr.io/elijahr/python-autopxd2 autopxd myheader.h
@@ -42,101 +67,7 @@ docker run --rm -v $(pwd):/work -w /work ghcr.io/elijahr/python-autopxd2 autopxd
 
 See [Docker Usage](docker.md) for more details.
 
-## libclang Setup
-
-The libclang backend (recommended for all use cases) requires:
-
-1. The system libclang library (LLVM)
-2. The Python `clang2` package matching your LLVM version
-
-!!! important "Version Matching Required"
-    The `clang2` Python package **must match your system's LLVM version**.
-    For example, LLVM 18 requires `clang2==18.*`.
-
-### Quick Install (One-Liner)
-
-If you have LLVM already installed, use this one-liner to install the matching clang2 package:
-
-=== "pip"
-
-    ```bash
-    pip install "clang2==$(llvm-config --version | cut -d. -f1).*"
-    ```
-
-=== "uv"
-
-    ```bash
-    uv pip install "clang2==$(llvm-config --version | cut -d. -f1).*"
-    ```
-
-### macOS
-
-```bash
-# Install LLVM (if not already installed)
-brew install llvm
-
-# Install matching clang2 package (one-liner)
-pip install "clang2==$($(brew --prefix llvm)/bin/llvm-config --version | cut -d. -f1).*"
-```
-
-Or with uv:
-
-```bash
-uv pip install "clang2==$($(brew --prefix llvm)/bin/llvm-config --version | cut -d. -f1).*"
-```
-
-### Ubuntu/Debian
-
-```bash
-# Install LLVM (if not already installed)
-sudo apt-get install libclang-dev llvm
-
-# Install matching clang2 package (one-liner)
-pip install "clang2==$(llvm-config --version | cut -d. -f1).*"
-```
-
-Or with uv:
-
-```bash
-uv pip install "clang2==$(llvm-config --version | cut -d. -f1).*"
-```
-
-### Fedora/RHEL
-
-```bash
-# Install LLVM
-sudo dnf install clang-devel llvm
-
-# Install matching clang2 package
-pip install "clang2==$(llvm-config --version | cut -d. -f1).*"
-```
-
-### Windows
-
-1. Install LLVM from [releases.llvm.org](https://releases.llvm.org/)
-2. Add LLVM `bin` directory to your PATH
-3. Install matching clang2 package:
-
-```powershell
-# Check version first
-llvm-config --version
-
-# Install matching package (replace XX with major version)
-pip install "clang2==XX.*"
-```
-
-### Manual Version Check
-
-If the one-liner doesn't work, check your version manually:
-
-```bash
-llvm-config --version
-# Output: 18.1.3 (means you need clang2==18.*)
-
-pip install "clang2==18.*"
-```
-
-### Verifying Installation
+## Verifying Installation
 
 Check that autopxd2 can find libclang:
 
@@ -144,22 +75,11 @@ Check that autopxd2 can find libclang:
 autopxd --list-backends
 ```
 
-If libclang is installed correctly, you should see:
+If libclang is installed correctly, you will see:
 
 ```
 Available backends:
   libclang     Full C/C++ support via LLVM [available] (default)
-  pycparser    Legacy C99 parser [available]
 
 Default: libclang
-```
-
-### Troubleshooting
-
-If you try to use the libclang backend without clang2 installed, autopxd2 will detect your LLVM version and show the exact install command:
-
-```
-ValueError: libclang backend requires the clang2 package.
-Detected LLVM version 18 on your system.
-Install with: pip install 'clang2==18.*'
 ```

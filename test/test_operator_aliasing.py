@@ -1,9 +1,8 @@
 """Test operator aliasing for unsupported C++ operators."""
 
 import pytest
-
-from autopxd.backends import get_backend
-from autopxd.ir_writer import write_pxd
+from headerkit.backends import get_backend
+from headerkit.writers.cython import write_pxd
 
 
 @pytest.mark.libclang

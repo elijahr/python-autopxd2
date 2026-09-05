@@ -3,7 +3,7 @@
 autopxd2 supports C++ headers through the libclang backend.
 
 !!! important
-    C++ support requires the libclang backend. The default pycparser backend only supports C99.
+    C++ support requires the libclang backend, which is the only backend in autopxd2.
 
 ## Basic C++ Usage
 
@@ -20,16 +20,26 @@ docker run --rm -v $(pwd):/work -w /work ghcr.io/elijahr/python-autopxd2 autopxd
 
 ## Supported C++ Features
 
-### Classes
+### Classes & Structs
 
-C++ classes are converted to Cython structs:
+C++ classes and structs are converted to Cython `cppclass` definitions with support for multiple inheritance, constructors, destructors, `@staticmethod`, and `const` member methods:
 
 ```cpp
 // widget.hpp
-class Widget {
+class BaseWidget {
+public:
+    virtual void show();
+};
+
+class Widget : public BaseWidget {
 public:
     int width;
     int height;
+    Widget();
+    Widget(int w, int h);
+    virtual ~Widget();
+    int area() const;
+    static Widget create();
 };
 ```
 
@@ -38,20 +48,32 @@ Generates:
 ```cython
 cdef extern from "widget.hpp":
 
-    cdef struct Widget:
+    cdef cppclass BaseWidget:
+        void show()
+
+    cdef cppclass Widget(BaseWidget):
         int width
         int height
+        Widget()
+        Widget(int w, int h)
+        int area() const
+        @staticmethod
+        Widget create()
 ```
 
-### Structs
+### Generic Function & Method Templates
 
-C++ structs work the same as C:
+Generic C++ function and method templates are fully supported using Cython template brackets syntax:
 
 ```cpp
-struct Point {
-    double x;
-    double y;
-};
+template<typename T>
+T max_val(T a, T b);
+```
+
+Generates:
+
+```cython
+T max_val[T](T a, T b)
 ```
 
 ### Functions
@@ -74,21 +96,9 @@ Currently, only top-level declarations are extracted. Namespaced declarations ar
 
 ## Limitations
 
-### Methods
-
-Class methods are not included in the generated `.pxd`. Only public data members are extracted.
-
-For full method support, you'll need to manually add method declarations or use Cython's `cppclass` syntax.
-
-### Templates
-
-Template classes are supported through the libclang backend, including primary templates
-and full specializations. See [C++ Template Support](backends.md#c-template-support-libclang-only)
-for details.
-
 ### Overloading
 
-Multiple overloaded functions with the same name may produce conflicts. You may need to manually select which overload to use.
+Multiple overloaded free functions with identical names may produce conflicts in C mode. In C++ mode (`--cpp`), Cython natively supports function overloading.
 
 ## Best Practices
 

@@ -29,11 +29,11 @@ def get_cpp_test_cases():
     return glob.glob(os.path.join(CASES_DIR, "*.cpptest"))
 
 
-@pytest.mark.pycparser
+@pytest.mark.libclang
 @pytest.mark.parametrize("file_path", get_test_cases(), ids=lambda p: os.path.basename(p))
-def test_regression_pycparser(file_path, tmp_path):
-    """Test regression case with pycparser backend."""
-    assert_test_file_equals(file_path, tmp_path, backend="pycparser")
+def test_regression_libclang_c(file_path, tmp_path):
+    """Test C regression case with libclang backend."""
+    assert_test_file_equals(file_path, tmp_path, backend="libclang")
 
 
 @pytest.mark.libclang

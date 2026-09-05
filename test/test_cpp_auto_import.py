@@ -1,13 +1,15 @@
 """Tests for C++ STL auto-import."""
 
 import pytest
+from headerkit.backends import is_backend_available
 
 from autopxd import translate
 
 # Mark entire module as requiring libclang
 pytestmark = pytest.mark.libclang
 
-libclang = pytest.importorskip("clang.cindex")
+if not is_backend_available("libclang"):
+    pytest.skip("libclang not available", allow_module_level=True)
 
 
 class TestCppAutoImport:
