@@ -136,7 +136,6 @@ LIBRARY_CONFIGS = {
         # fmt uses malloc without including cstdlib
         "preamble": "#include <cstdlib>",
         "pxd_only": True,  # Complex templates with forward refs
-        "skip_reason": "fmt header parsing takes >5 minutes",
     },
     "spdlog": {
         "detection": [
@@ -172,7 +171,11 @@ LIBRARY_CONFIGS = {
         "std": "c++17",
         # doctest uses operator+= which Cython doesn't support
         "pxd_only": True,
-        "skip_reason": "doctest header parsing takes >5 minutes",
+        # Measured on Apple M4 Pro / macOS 26.5.1, doctest 2.5.3, libclang backend:
+        # backend.parse() of the 9148-line header takes 1.5s and yields 147 declarations,
+        # but write_pxd() then exceeds the 300s pytest-timeout inside
+        # headerkit.writers.cython._format_ctype. The cost is in pxd generation, not parsing.
+        "skip_reason": "doctest pxd generation exceeds the 300s timeout (parse is 1.5s; see comment above)",
     },
     "boost_lockfree": {
         "detection": [

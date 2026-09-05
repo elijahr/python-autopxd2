@@ -38,18 +38,22 @@ def pytest_configure(config: pytest.Config) -> None:
         pytest.param("libclang", marks=pytest.mark.libclang),
         pytest.param(
             "tree-sitter",
-            marks=pytest.mark.skipif(
-                not is_backend_available("tree-sitter"),
-                reason="tree-sitter optional dependency not installed",
-            ),
+            marks=[
+                pytest.mark.treesitter,
+                pytest.mark.skipif(
+                    not is_backend_available("tree-sitter"),
+                    reason="tree-sitter optional dependency not installed",
+                ),
+            ],
         ),
     ]
 )
 def backend(request: pytest.FixtureRequest):
-    """Parameterized fixture providing the libclang backend.
+    """Parameterized fixture providing the libclang and tree-sitter backends.
 
     Each parameter is marked with its backend name, so you can filter:
         pytest -m "not libclang"      # exclude libclang parameterizations
+        pytest -m "treesitter"        # run only tree-sitter parameterizations
 
     Fails if the backend is not available.
     """

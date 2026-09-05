@@ -1,4 +1,5 @@
 import fnmatch
+import glob
 import json
 import os
 import sys
@@ -31,9 +32,86 @@ def _debug_print(msg: str) -> None:
     print(f"[autopxd] {msg}", file=sys.stderr)
 
 
+def _normalize_for_match(path: str) -> str:
+    """Normalize a path for comparison, mirroring headerkit's ``normalize_path``."""
+    return path.replace("\\", "/").lower()
+
+
+def _whitelist_search_dirs(hdrname: str, include_dirs: list[str] | None) -> list[str]:
+    """Directories a relative whitelist pattern is resolved against, in priority order.
+
+    Mirrors headerkit's rule: the parsed file's own directory first, then the
+    include search path, then the process working directory.
+    """
+    dirs = [os.path.dirname(os.path.abspath(hdrname)) or os.getcwd()]
+    if include_dirs:
+        dirs.extend(include_dirs)
+    dirs.append(os.getcwd())
+    return dirs
+
+
+def _whitelist_candidates(pattern: str, search_dirs: list[str]) -> list[str]:
+    """Absolute forms a whitelist pattern may take, in priority order."""
+    if os.path.isabs(pattern):
+        absolute = os.path.abspath(pattern)
+        return [_normalize_for_match(absolute), _normalize_for_match(os.path.realpath(absolute))]
+    candidates: list[str] = []
+    for directory in search_dirs:
+        joined = os.path.abspath(os.path.join(directory, pattern))
+        for variant in (joined, os.path.realpath(joined)):
+            normalized = _normalize_for_match(variant)
+            if normalized not in candidates:
+                candidates.append(normalized)
+    return candidates
+
+
+_GLOB_MAGIC_CHARS = "*?["
+
+
+def _has_glob_magic(pattern: str) -> bool:
+    """Report whether a whitelist entry contains glob metacharacters.
+
+    Equivalent to the undocumented ``glob.has_magic``, which matches ``[*?[]``.
+    Spelled out here so autopxd does not depend on a private stdlib helper.
+    """
+    return any(char in pattern for char in _GLOB_MAGIC_CHARS)
+
+
+def _expand_whitelist_for_backend(
+    whitelist: list[str],
+    hdrname: str,
+    include_dirs: list[str] | None,
+) -> list[str]:
+    """Turn user whitelist patterns into concrete paths the backend can resolve.
+
+    headerkit keeps an included file's declarations only when the whitelist names
+    a path that resolves to a real file, so a glob has to be expanded here or the
+    declarations it selects never reach the post-filter at all.  Non-glob entries
+    are forwarded untouched and left for headerkit to resolve with its own rules.
+    A glob that matches nothing is dropped.
+    """
+    expanded: list[str] = []
+    for pattern in whitelist:
+        if not _has_glob_magic(pattern):
+            expanded.append(pattern)
+            continue
+        if os.path.isabs(pattern):
+            matches = glob.glob(pattern)
+        else:
+            matches = []
+            for directory in _whitelist_search_dirs(hdrname, include_dirs):
+                matches.extend(glob.glob(os.path.join(directory, pattern)))
+        for match in matches:
+            if os.path.isfile(match) and match not in expanded:
+                expanded.append(match)
+    return expanded
+
+
 def _filter_by_whitelist(
     declarations: list[Declaration],
     whitelist: list[str],
+    hdrname: str = "",
+    include_dirs: list[str] | None = None,
 ) -> list[Declaration]:
     """Filter declarations to only those from whitelisted files.
 
@@ -42,30 +120,52 @@ def _filter_by_whitelist(
     - "*.h" - all .h files
     - "include/*.h" - all .h files in include/
 
+    A pattern containing no path separator is matched against the declaration
+    file's BASENAME, so both a bare filename and a bare glob keep working
+    wherever the file lives.  A pattern containing a separator is matched
+    against the declaration file's absolute path; a relative such pattern is
+    resolved the way headerkit resolves one -- against the parsed file's own
+    directory first, then each include directory, then the working directory --
+    and matches if any of those resolutions matches.
+
+    Backends report ``location.file`` as whatever path reached the parser, which
+    is often relative (e.g. ``./tux_foo.h``), so both sides are made absolute
+    before comparison; symlinked and non-symlinked forms are both tried.
+
     Declarations without location info are excluded when whitelist is active.
 
-    Path normalization is applied for cross-platform compatibility:
-    - Paths are normalized with os.path.normpath
-    - On Windows, case-insensitive comparison is used
+    Path comparison is case-insensitive and separator-normalized for
+    cross-platform compatibility.
     """
-    result = []
-    # Normalize whitelist patterns
-    normalized_whitelist = [os.path.normpath(p) for p in whitelist]
+    search_dirs = _whitelist_search_dirs(hdrname, include_dirs)
 
+    basename_patterns: list[str] = []
+    path_patterns: list[str] = []
+    for pattern in whitelist:
+        normalized = pattern.replace("\\", "/")
+        if "/" in normalized:
+            path_patterns.append(_normalize_for_match(normalized))
+        else:
+            basename_patterns.append(_normalize_for_match(normalized))
+
+    resolved_patterns: list[str] = []
+    for pattern in path_patterns:
+        resolved_patterns.extend(_whitelist_candidates(pattern, search_dirs))
+
+    result = []
     for decl in declarations:
         if decl.location is None:
             continue
-        decl_file = os.path.normpath(decl.location.file)
-        for pattern in normalized_whitelist:
-            # On Windows, use case-insensitive matching
-            if sys.platform == "win32":
-                if fnmatch.fnmatch(decl_file.lower(), pattern.lower()):
-                    result.append(decl)
-                    break
-            else:
-                if fnmatch.fnmatch(decl_file, pattern):
-                    result.append(decl)
-                    break
+        decl_abs = os.path.abspath(decl.location.file)
+        decl_forms = {
+            _normalize_for_match(decl_abs),
+            _normalize_for_match(os.path.realpath(decl_abs)),
+        }
+        decl_base = _normalize_for_match(os.path.basename(decl_abs))
+        if any(fnmatch.fnmatch(decl_base, pattern) for pattern in basename_patterns) or any(
+            fnmatch.fnmatch(form, pattern) for form in decl_forms for pattern in resolved_patterns
+        ):
+            result.append(decl)
     return result
 
 
@@ -145,6 +245,7 @@ def translate(
         project_prefixes=project_prefixes,
         recursive_includes=recursive_includes,
         max_depth=max_depth,
+        whitelist=_expand_whitelist_for_backend(whitelist, hdrname, include_dirs or None) if whitelist else None,
     )
 
     if debug:
@@ -152,7 +253,12 @@ def translate(
 
     # Apply whitelist filter
     if whitelist:
-        header.declarations = _filter_by_whitelist(header.declarations, whitelist)
+        header.declarations = _filter_by_whitelist(
+            header.declarations,
+            whitelist,
+            hdrname=hdrname,
+            include_dirs=include_dirs or None,
+        )
         if debug:
             _debug_print(f"After whitelist: {len(header.declarations)} declarations")
 
@@ -203,22 +309,35 @@ def resolve_backend(
 ) -> str:
     """Resolve which backend to use based on options.
 
+    ``auto`` resolves to the registered default backend when that backend is
+    available, and otherwise to the first available backend.
+
     :param backend: Backend option value (auto, libclang, or any registered backend).
     :returns: Resolved backend name.
-    :raises SystemExit: If required backend is unavailable.
+    :raises SystemExit: If the requested backend, or every backend, is unavailable.
     """
-    if backend == "auto":
-        resolved = get_default_backend()
-    else:
-        resolved = backend
+    if backend != "auto":
+        if not is_backend_available(backend):
+            if backend == "libclang":
+                click.echo(LIBCLANG_REQUIRED_ERROR, err=True)
+            else:
+                click.echo(f"Error: Backend '{backend}' is not available.", err=True)
+            raise SystemExit(1)
+        return backend
 
-    if not is_backend_available(resolved):
-        if resolved == "libclang":
-            click.echo(LIBCLANG_REQUIRED_ERROR, err=True)
-        else:
-            click.echo(f"Error: Backend '{resolved}' is not available.", err=True)
-        raise SystemExit(1)
-    return resolved
+    # "auto" means the default backend when it is usable, else the first backend
+    # that reports itself available.  headerkit picks its default at registration
+    # time, without regard to whether that backend can actually run here.
+    default = get_default_backend()
+    if is_backend_available(default):
+        return default
+    for info in get_backend_info():
+        name = str(info["name"])
+        if info["available"]:
+            return name
+
+    click.echo(LIBCLANG_REQUIRED_ERROR, err=True)
+    raise SystemExit(1)
 
 
 @click.command(
@@ -378,6 +497,7 @@ def cli(
         return
 
     # If infile was not given, check if stdin has piped data
+    from_stdin = infile is None or infile.name == "<stdin>"
     if infile is None:
         content = ""
         if not sys.stdin.isatty():
@@ -398,6 +518,24 @@ def cli(
         cpp_mode = True
 
     resolved_backend = resolve_backend(backend)
+
+    # --std and --clang-arg reach the compiler driver only on libclang; any other
+    # backend would drop them silently and emit plausible but wrong output.
+    if resolved_backend != "libclang":
+        clang_only = []
+        if std:
+            clang_only.append("--std")
+        if clang_arg:
+            clang_only.append("--clang-arg")
+        if clang_only:
+            click.echo(
+                f"Error: {' and '.join(clang_only)} {'are' if len(clang_only) > 1 else 'is'} "
+                f"only supported by the libclang backend, "
+                f"but the resolved backend is '{resolved_backend}'.\n"
+                f"Use --backend libclang, or drop the option.",
+                err=True,
+            )
+            raise SystemExit(1)
 
     # Merge deprecated --compiler-directive into --define
     all_defines = defines + defines_deprecated
@@ -428,9 +566,10 @@ def cli(
     # Convert project_prefixes tuple to tuple or None
     project_prefixes_arg = project_prefixes if project_prefixes else None
 
-    hdrname = "input.h" if raw_hdrname in ("<stdin>", "input.h") else raw_hdrname
-    if cpp_mode and hdrname == "input.h":
-        hdrname = "input.hpp"
+    if from_stdin:
+        hdrname = "input.hpp" if cpp_mode else "input.h"
+    else:
+        hdrname = raw_hdrname
 
     outfile.write(
         translate(

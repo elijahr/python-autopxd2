@@ -36,6 +36,7 @@ implemented. The qualifiers are only "stripped" from Cython's view of the
 types; the actual C code still has full qualifier information.
 """
 
+import pytest
 from headerkit.backends import get_backend
 
 
@@ -102,6 +103,7 @@ class TestAtomicQualifier:
         assert "_Atomic" not in pxd
 
 
+@pytest.mark.libclang
 class TestRestrictQualifier:
     """Test __restrict and __restrict__ qualifier handling."""
 
@@ -136,6 +138,7 @@ class TestRestrictQualifier:
         assert "__restrict" not in pxd
 
 
+@pytest.mark.libclang
 class TestNoreturnQualifier:
     """Test _Noreturn qualifier handling."""
 
@@ -153,6 +156,7 @@ class TestNoreturnQualifier:
         assert "_Noreturn" not in pxd
 
 
+@pytest.mark.libclang
 class TestMixedQualifiers:
     """Test combinations of supported and unsupported qualifiers."""
 

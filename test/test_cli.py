@@ -2,6 +2,7 @@
 
 import json
 import os
+import pathlib
 import tempfile
 
 import pytest
@@ -36,7 +37,7 @@ class TestBackendInfo:
         """get_backend_info should return a list of backend info dicts."""
         info = get_backend_info()
         assert isinstance(info, list)
-        assert len(info) >= 1  # libclang
+        assert {b["name"] for b in info} == {"libclang", "tree-sitter"}
 
     def test_backend_info_has_required_fields(self) -> None:
         """Each backend info should have name, available, default, description."""
@@ -107,14 +108,16 @@ class TestListBackendsJson:
         assert "--json requires --list-backends" in result.output
 
 
+@pytest.mark.libclang
 class TestBackendOption:
     """Tests for --backend option."""
 
     def test_backend_auto_accepted(self, simple_header_file) -> None:
-        """--backend auto should be accepted."""
+        """--backend auto should resolve to an available backend and translate."""
         runner = CliRunner()
         result = runner.invoke(cli, ["--backend", "auto", simple_header_file])
-        assert "No such option" not in result.output
+        assert result.exit_code == 0
+        assert "int x" in result.output
 
     def test_backend_invalid_rejected(self, simple_header_file) -> None:
         """--backend with invalid value should error."""
@@ -123,90 +126,141 @@ class TestBackendOption:
         assert result.exit_code != 0
 
 
+@pytest.mark.libclang
 class TestQuietOption:
     """Tests for --quiet option."""
 
     def test_quiet_accepted(self, simple_header_file) -> None:
-        """--quiet should be accepted."""
+        """--quiet should translate and emit only the pxd, no diagnostics."""
         runner = CliRunner()
         result = runner.invoke(cli, ["--quiet", simple_header_file])
-        assert "No such option" not in result.output
+        assert result.exit_code == 0
+        assert "int x" in result.output
 
     def test_quiet_short_form(self, simple_header_file) -> None:
-        """-q should work as short form."""
+        """-q should behave identically to --quiet."""
         runner = CliRunner()
-        result = runner.invoke(cli, ["-q", simple_header_file])
-        assert "No such option" not in result.output
+        long_form = runner.invoke(cli, ["--quiet", simple_header_file])
+        short_form = runner.invoke(cli, ["-q", simple_header_file])
+        assert short_form.exit_code == 0
+        assert short_form.output == long_form.output
 
 
+@pytest.mark.libclang
 class TestCppOption:
     """Tests for --cpp option."""
 
     def test_cpp_accepted(self, simple_header_file) -> None:
-        """--cpp should be accepted."""
+        """--cpp should parse the header in C++ mode and still translate it."""
         runner = CliRunner()
         result = runner.invoke(cli, ["--cpp", simple_header_file])
-        assert "No such option" not in result.output
+        assert result.exit_code == 0
+        assert "int x" in result.output
 
     def test_cpp_short_form(self, simple_header_file) -> None:
-        """-x should work as short form."""
+        """-x should behave identically to --cpp."""
         runner = CliRunner()
-        result = runner.invoke(cli, ["-x", simple_header_file])
-        assert "No such option" not in result.output
+        long_form = runner.invoke(cli, ["--cpp", simple_header_file])
+        short_form = runner.invoke(cli, ["-x", simple_header_file])
+        assert short_form.exit_code == 0
+        assert short_form.output == long_form.output
 
 
+@pytest.mark.libclang
 class TestStdOption:
     """Tests for --std option."""
 
     def test_std_accepted(self, simple_header_file) -> None:
-        """--std should be accepted."""
+        """--std c11 should be passed to the parser and translate successfully."""
         runner = CliRunner()
         result = runner.invoke(cli, ["--std", "c11", simple_header_file])
-        assert "No such option" not in result.output
+        assert result.exit_code == 0
+        assert "int x" in result.output
 
     def test_std_cpp17_accepted(self, simple_header_file) -> None:
-        """--std c++17 should be accepted."""
+        """--std c++17 with --cpp should be passed to the parser and translate successfully."""
+        runner = CliRunner()
+        result = runner.invoke(cli, ["--cpp", "--std", "c++17", simple_header_file])
+        assert result.exit_code == 0
+        assert "int x" in result.output
+
+    def test_std_cpp17_without_cpp_mode_errors(self, simple_header_file) -> None:
+        """A C++ std without --cpp is rejected: libclang parses a .h file as C."""
         runner = CliRunner()
         result = runner.invoke(cli, ["--std", "c++17", simple_header_file])
-        assert "No such option" not in result.output
+        assert result.exit_code != 0
 
 
+@pytest.mark.libclang
 class TestClangArgOption:
     """Tests for --clang-arg option."""
 
     def test_clang_arg_accepted(self, simple_header_file) -> None:
-        """--clang-arg should be accepted."""
+        """--clang-arg should be forwarded to the parser without breaking translation."""
         runner = CliRunner()
         result = runner.invoke(cli, ["--clang-arg", "-DFOO=1", simple_header_file])
-        assert "No such option" not in result.output
+        assert result.exit_code == 0
+        assert "int x" in result.output
+
+    def test_clang_arg_defines_macro(self) -> None:
+        """--clang-arg -D should make a macro-guarded declaration visible."""
+        runner = CliRunner()
+        source = "#ifdef FOO\nint guarded_fn(void);\n#endif\nint always_fn(void);\n"
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".h", delete=False, encoding="utf-8") as f:
+            f.write(source)
+            path = f.name
+        try:
+            without = runner.invoke(cli, [path])
+            with_define = runner.invoke(cli, ["--clang-arg", "-DFOO", path])
+            assert without.exit_code == 0
+            assert with_define.exit_code == 0
+            assert "guarded_fn" not in without.output
+            assert "guarded_fn" in with_define.output
+            assert "always_fn" in without.output
+        finally:
+            os.unlink(path)
 
     def test_clang_arg_multiple(self, simple_header_file) -> None:
         """--clang-arg can be specified multiple times."""
         runner = CliRunner()
         result = runner.invoke(cli, ["--clang-arg", "-DFOO", "--clang-arg", "-DBAR", simple_header_file])
-        assert "No such option" not in result.output
+        assert result.exit_code == 0
+        assert "int x" in result.output
 
 
+@pytest.mark.libclang
 class TestWhitelistOption:
     """Tests for --whitelist option."""
 
-    def test_whitelist_accepted(self, simple_header_file) -> None:
-        """--whitelist should be accepted."""
+    def test_whitelist_excludes_non_whitelisted_header(self, simple_header_file) -> None:
+        """A whitelist that omits the input header should drop its declarations."""
         runner = CliRunner()
         result = runner.invoke(cli, ["--whitelist", "foo.h", simple_header_file])
-        assert "No such option" not in result.output
+        assert result.exit_code == 0
+        assert "int x" not in result.output
+        assert "pass" in result.output
+
+    def test_whitelist_includes_whitelisted_header(self, simple_header_file) -> None:
+        """A whitelist naming the input header should keep its declarations."""
+        runner = CliRunner()
+        result = runner.invoke(cli, ["--whitelist", simple_header_file, simple_header_file])
+        assert result.exit_code == 0
+        assert "int x" in result.output
 
     def test_whitelist_short_form(self, simple_header_file) -> None:
-        """-w should work as short form."""
+        """-w should behave identically to --whitelist."""
         runner = CliRunner()
-        result = runner.invoke(cli, ["-w", "foo.h", simple_header_file])
-        assert "No such option" not in result.output
+        long_form = runner.invoke(cli, ["--whitelist", "foo.h", simple_header_file])
+        short_form = runner.invoke(cli, ["-w", "foo.h", simple_header_file])
+        assert short_form.exit_code == 0
+        assert short_form.output == long_form.output
 
     def test_whitelist_multiple(self, simple_header_file) -> None:
         """--whitelist can be specified multiple times."""
         runner = CliRunner()
         result = runner.invoke(cli, ["-w", "foo.h", "-w", "bar.h", simple_header_file])
-        assert "No such option" not in result.output
+        assert result.exit_code == 0
+        assert "int x" not in result.output
 
 
 @pytest.mark.libclang
@@ -313,46 +367,89 @@ class TestEndToEnd:
             assert "uint" in output
 
 
+@pytest.fixture
+def nested_header_dir():
+    """Create a directory holding outer.h, which includes a sibling inner.h."""
+    with tempfile.TemporaryDirectory() as tmp:
+        directory = pathlib.Path(tmp)
+        (directory / "inner.h").write_text("int inner_fn(void);\n", encoding="utf-8")
+        (directory / "outer.h").write_text('#include "inner.h"\nint outer_fn(void);\n', encoding="utf-8")
+        yield directory
+
+
+@pytest.mark.libclang
 class TestProjectPrefixOption:
     """Tests for --project-prefix option."""
 
-    def test_project_prefix_accepted(self, simple_header_file) -> None:
-        """--project-prefix should be accepted."""
+    def test_project_prefix_pulls_in_included_header(self, nested_header_dir) -> None:
+        """A prefix covering the include dir should bring the included header's decls in."""
         runner = CliRunner()
-        result = runner.invoke(cli, ["--project-prefix", "/some/path", simple_header_file])
-        assert "No such option" not in result.output
+        outer = str(nested_header_dir / "outer.h")
+        without = runner.invoke(cli, [outer])
+        with_prefix = runner.invoke(cli, ["--project-prefix", str(nested_header_dir), outer])
+        assert without.exit_code == 0
+        assert with_prefix.exit_code == 0
+        assert "inner_fn" not in without.output
+        assert "inner_fn" in with_prefix.output
+        assert "outer_fn" in with_prefix.output
 
-    def test_project_prefix_short_form(self, simple_header_file) -> None:
-        """-P should work as short form."""
+    def test_project_prefix_short_form(self, nested_header_dir) -> None:
+        """-P should behave identically to --project-prefix."""
         runner = CliRunner()
-        result = runner.invoke(cli, ["-P", "/some/path", simple_header_file])
-        assert "No such option" not in result.output
+        outer = str(nested_header_dir / "outer.h")
+        long_form = runner.invoke(cli, ["--project-prefix", str(nested_header_dir), outer])
+        short_form = runner.invoke(cli, ["-P", str(nested_header_dir), outer])
+        assert short_form.exit_code == 0
+        assert short_form.output == long_form.output
 
-    def test_project_prefix_multiple(self, simple_header_file) -> None:
-        """--project-prefix can be specified multiple times."""
+    def test_project_prefix_multiple(self, nested_header_dir) -> None:
+        """Several -P prefixes should be honored together."""
         runner = CliRunner()
-        result = runner.invoke(cli, ["-P", "/path1", "-P", "/path2", simple_header_file])
-        assert "No such option" not in result.output
+        outer = str(nested_header_dir / "outer.h")
+        result = runner.invoke(cli, ["-P", "/nonexistent-prefix", "-P", str(nested_header_dir), outer])
+        assert result.exit_code == 0
+        assert "inner_fn" in result.output
+        assert "outer_fn" in result.output
 
 
+@pytest.mark.libclang
 class TestNoRecursiveOption:
-    """Tests for --no-recursive option."""
+    """Tests for --no-recursive option.
 
-    def test_no_recursive_accepted(self, simple_header_file) -> None:
-        """--no-recursive should be accepted."""
+    The flag's effect is not observable in single-file CLI output: with the input
+    header's own directory as a project prefix, output is byte-identical with and
+    without it. These tests therefore pin only that the flag parses and still
+    produces a correct translation.
+    """
+
+    def test_no_recursive_still_translates(self, nested_header_dir) -> None:
+        """--no-recursive should not prevent the input header from being translated."""
         runner = CliRunner()
-        result = runner.invoke(cli, ["--no-recursive", simple_header_file])
-        assert "No such option" not in result.output
+        result = runner.invoke(cli, ["--no-recursive", str(nested_header_dir / "outer.h")])
+        assert result.exit_code == 0
+        assert "outer_fn" in result.output
 
 
+@pytest.mark.libclang
 class TestMaxDepthOption:
-    """Tests for --max-depth option."""
+    """Tests for --max-depth option.
 
-    def test_max_depth_accepted(self, simple_header_file) -> None:
-        """--max-depth should be accepted."""
+    As with --no-recursive, the depth limit has no observable effect on single-file
+    CLI output, so these tests pin argument parsing and a correct translation only.
+    """
+
+    def test_max_depth_still_translates(self, nested_header_dir) -> None:
+        """--max-depth should not prevent the input header from being translated."""
         runner = CliRunner()
-        result = runner.invoke(cli, ["--max-depth", "5", simple_header_file])
-        assert "No such option" not in result.output
+        result = runner.invoke(cli, ["--max-depth", "5", str(nested_header_dir / "outer.h")])
+        assert result.exit_code == 0
+        assert "outer_fn" in result.output
+
+    def test_max_depth_rejects_non_integer(self, nested_header_dir) -> None:
+        """--max-depth should reject a non-integer value."""
+        runner = CliRunner()
+        result = runner.invoke(cli, ["--max-depth", "abc", str(nested_header_dir / "outer.h")])
+        assert result.exit_code != 0
 
 
 @pytest.mark.libclang
@@ -446,10 +543,17 @@ class TestLibclangEndToEnd:
         assert result.exit_code != 0
         assert "Error: Backend 'nonexistent_backend' is not available." in result.output
 
+
+@pytest.mark.treesitter
+@pytest.mark.skipif(
+    not is_backend_available("tree-sitter"),
+    reason="tree-sitter optional dependency not installed",
+)
+class TestTreeSitterEndToEnd:
+    """End-to-end CLI tests for the tree-sitter backend."""
+
     def test_treesitter_backend_cli(self) -> None:
         """--backend tree-sitter should parse C and C++ declarations."""
-        if not is_backend_available("tree-sitter"):
-            pytest.skip("tree-sitter optional dependency not installed")
         runner = CliRunner()
         result = runner.invoke(cli, ["--backend", "tree-sitter", "-"], input="int add(int a, int b);\n")
         assert result.exit_code == 0

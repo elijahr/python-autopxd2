@@ -132,8 +132,10 @@ class TestAllStubsCompile:
         files = importlib.resources.files("headerkit.stubs")
         stub_resource = files / stub_file
 
-        if not stub_resource.is_file():
-            pytest.skip(f"Stub {stub_file} not yet created")
+        assert stub_resource.is_file(), (
+            f"Stub {stub_file} is missing from the installed headerkit.stubs package. "
+            f"autopxd depends on it, so a dropped or renamed stub is a breaking change, not a skip."
+        )
 
         # Create a pyx that imports from the stub
         stub_name = stub_file[:-4]  # Remove .pxd
