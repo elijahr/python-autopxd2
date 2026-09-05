@@ -59,10 +59,10 @@ class TestRealisticCppHeaders:
         return get_backend("libclang")
 
     @pytest.mark.parametrize("fixture_name", list(CPP_FIXTURES.keys()))
-    def test_parse_cpp_fixture(self, libclang_backend, fixture_name):
+    def test_parse_cpp_fixture(self, backend, fixture_name):
         """Test that backend can parse C++ headers."""
         code = CPP_FIXTURES[fixture_name]
-        header = libclang_backend.parse(code, f"{fixture_name}.hpp", extra_args=["-x", "c++"])
+        header = backend.parse(code, f"{fixture_name}.hpp", extra_args=["-x", "c++"])
 
         assert len(header.declarations) > 0
 

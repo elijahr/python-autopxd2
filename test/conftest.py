@@ -36,6 +36,13 @@ def pytest_configure(config: pytest.Config) -> None:
 @pytest.fixture(
     params=[
         pytest.param("libclang", marks=pytest.mark.libclang),
+        pytest.param(
+            "tree-sitter",
+            marks=pytest.mark.skipif(
+                not is_backend_available("tree-sitter"),
+                reason="tree-sitter optional dependency not installed",
+            ),
+        ),
     ]
 )
 def backend(request: pytest.FixtureRequest):

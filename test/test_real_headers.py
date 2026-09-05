@@ -521,6 +521,22 @@ class TestSimpleCHeader:
         assert "buffer_new" in func_names
         assert "log_printf" in func_names
 
+    def test_parses_with_both_backends(self, backend):
+        """Verify simple_c.h parses successfully with both libclang and tree-sitter."""
+        c_path = os.path.join(REAL_HEADERS_DIR, "simple_c.h")
+        if not os.path.exists(c_path):
+            pytest.skip("simple_c.h not found in test/real_headers/")
+
+        with open(c_path, encoding="utf-8") as f:
+            code = f.read()
+
+        header = backend.parse(code, "simple_c.h")
+        assert len(header.declarations) > 0
+        structs = [d for d in header.declarations if isinstance(d, Struct)]
+        assert len(structs) >= 3
+        funcs = [d for d in header.declarations if isinstance(d, Function)]
+        assert len(funcs) >= 3
+
 
 class TestCppHeaders:
     """Test parsing C++ headers."""
