@@ -46,6 +46,25 @@ class TestRealisticCHeaders:
             filename=f"{fixture_name}.h",
         )
 
+    @pytest.mark.parametrize("fixture_name", list(C_FIXTURES.keys()))
+    def test_generate_pxd_c_fixture_treesitter_compiles(self, fixture_name, tmp_path):
+        """Test pxd generation from realistic C headers using tree-sitter compiles with Cython."""
+        from headerkit.backends import is_backend_available
+
+        if not is_backend_available("tree-sitter"):
+            pytest.skip("tree-sitter optional dependency not installed")
+
+        import autopxd
+        from test.cython_utils import validate_cython_compiles
+
+        code = C_FIXTURES[fixture_name]
+        pxd = autopxd.translate(code.strip(), f"{fixture_name}.h", backend="tree-sitter")
+        assert len(pxd) > 0
+
+        header_file = tmp_path / f"{fixture_name}.h"
+        header_file.write_text(code.strip())
+        validate_cython_compiles(pxd, tmp_path, cplus=False, include_dirs=[str(tmp_path)])
+
 
 @pytest.mark.libclang
 class TestRealisticCppHeaders:
@@ -81,3 +100,27 @@ class TestRealisticCppHeaders:
             cplus=True,
             extra_args=["-x", "c++"],
         )
+
+    @pytest.mark.parametrize("fixture_name", list(CPP_FIXTURES.keys()))
+    def test_generate_pxd_cpp_fixture_treesitter_compiles(self, fixture_name, tmp_path):
+        """Test pxd generation from C++ headers using tree-sitter compiles with Cython."""
+        from headerkit.backends import is_backend_available
+
+        if not is_backend_available("tree-sitter"):
+            pytest.skip("tree-sitter optional dependency not installed")
+
+        import autopxd
+        from test.cython_utils import validate_cython_compiles
+
+        code = CPP_FIXTURES[fixture_name]
+        pxd = autopxd.translate(
+            code.strip(),
+            f"{fixture_name}.hpp",
+            backend="tree-sitter",
+            extra_args=["-x", "c++"],
+        )
+        assert len(pxd) > 0
+
+        header_file = tmp_path / f"{fixture_name}.hpp"
+        header_file.write_text(code.strip())
+        validate_cython_compiles(pxd, tmp_path, cplus=True, include_dirs=[str(tmp_path)])
