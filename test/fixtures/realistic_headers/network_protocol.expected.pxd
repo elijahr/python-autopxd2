@@ -77,13 +77,13 @@ cdef extern from "network_protocol.h":
 
     ctypedef connection connection_t
 
-    ctypedef void (*on_connect_cb)(connection_t*, void*)
+    ctypedef void (*on_connect_cb)(connection_t* conn, void* user_data)
 
-    ctypedef void (*on_disconnect_cb)(connection_t*, int, void*)
+    ctypedef void (*on_disconnect_cb)(connection_t* conn, int reason, void* user_data)
 
-    ctypedef void (*on_message_cb)(connection_t*, msg_header_t*, const void*, void*)
+    ctypedef void (*on_message_cb)(connection_t* conn, const msg_header_t* header, const void* payload, void* user_data)
 
-    ctypedef void (*on_error_cb)(connection_t*, int, const char*, void*)
+    ctypedef void (*on_error_cb)(connection_t* conn, int error_code, const char* message, void* user_data)
 
     cdef struct callbacks:
         on_connect_cb on_connect
@@ -98,7 +98,7 @@ cdef extern from "network_protocol.h":
 
     void conn_destroy(connection_t* conn)
 
-    int conn_connect(connection_t* conn, callbacks_t* callbacks)
+    int conn_connect(connection_t* conn, const callbacks_t* callbacks)
 
     int conn_disconnect(connection_t* conn)
 
@@ -106,4 +106,4 @@ cdef extern from "network_protocol.h":
 
     int conn_poll(connection_t* conn, int timeout_ms)
 
-    int conn_is_connected(connection_t* conn)
+    int conn_is_connected(const connection_t* conn)

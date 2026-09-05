@@ -4,10 +4,10 @@ Several tools exist to parse header files and automatically produce Cython bindi
 
 ## Maintenance Status
 
-| Tool | Status | Last Update (as of Dec 2025) |
+| Tool | Status | Most recent release |
 |------|--------|--------------|
 | [autowrap](https://github.com/uweschmitt/autowrap) | ✅ Active | v0.24.0 (2025) |
-| [python-autopxd2](https://github.com/elijahr/python-autopxd2) | ✅ Active | v3.2.1 (2025) |
+| [python-autopxd2](https://github.com/elijahr/python-autopxd2) | ✅ Active | v4.0.0 (2026) |
 | [cwrap](https://github.com/geggo/cwrap) | ❌ Dead | 8163ff2 (2019) |
 | [xdress](https://github.com/xdress/xdress) | ❌ Dead | eb7f0a0 (2014) |
 | [cython-codegen](https://github.com/cournape/cython-codegen) | ❌ Dead | b1856d3 (2011) |
@@ -56,8 +56,8 @@ Manual work: Write Cython <-> Python interface (.pyx file)
 - You need custom exception handling or operator overloads
 - You're willing to manually write .pxd declarations with annotations
 
-```
-autowrap --out py_mylib.pyx mylib.pxd
+```shell
+autowrap --out mylib.pyx mylib.pxd
 ```
 
 Input: C/C++ <-> Cython interface (.pxd file with special comment annotations)
@@ -82,7 +82,7 @@ Manual work: Write C/C++ <-> Cython interface (.pxd file)
 | Tool               | C   | C++        | Fortran | Parser Backend             |
 |--------------------|-----|------------|---------|----------------------------|
 | autowrap           | ✅  | ✅         | ❌      | Cython parser (reads .pxd) |
-| python-autopxd2    | ✅  | ✅         | ❌      | libclang                   |
+| python-autopxd2    | ✅  | ✅         | ❌      | libclang / tree-sitter     |
 | cwrap              | ✅  | ⚠️ Partial | ❌      | libclang / gcc_xml         |
 | xdress             | ✅  | ✅         | ❌      | libclang / pycparser       |
 | cython-codegen     | ✅  | ❓         | ❌      | gcc_xml                    |
@@ -121,7 +121,7 @@ Manual work: Write C/C++ <-> Cython interface (.pxd file)
 ### xdress
 
 https://github.com/xdress/xdress
-Last release over a decade ago. 72 open issues, 13 open PRs.
+Last release over a decade ago. The issue and pull request queues have gone unattended since.
 
 ### cython-codegen (xml2cython.py)
 

@@ -34,7 +34,7 @@ cdef extern from "database_lib.h":
 
     ctypedef db_statement db_stmt
 
-    ctypedef int (*db_callback)(void*, int, char**, char**)
+    ctypedef int (*db_callback)(void* user_data, int ncols, char** values, char** names)
 
     int db_open(const char* filename, db** ppDb)
 

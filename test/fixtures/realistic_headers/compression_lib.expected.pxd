@@ -10,9 +10,9 @@ cdef extern from "compression_lib.h":
 
     ctypedef void* voidp
 
-    ctypedef voidp (*alloc_func)(voidp, uInt, uInt)
+    ctypedef voidp (*alloc_func)(voidp opaque, uInt items, uInt size)
 
-    ctypedef void (*free_func)(voidp, voidp)
+    ctypedef void (*free_func)(voidp opaque, voidp address)
 
     ctypedef compress_stream_s compress_stream
 
@@ -32,7 +32,7 @@ cdef extern from "compression_lib.h":
 
     cdef struct internal_state
 
-    cdef enum compress_status:
+    ctypedef enum compress_status:
         COMPRESS_OK
         COMPRESS_STREAM_END
         COMPRESS_NEED_DICT
@@ -73,6 +73,6 @@ cdef extern from "compression_lib.h":
 
     uLong compress_bound(uLong sourceLen)
 
-    int compress_buffer(Byte* dest, uLong* destLen, Byte* source, uLong sourceLen)
+    int compress_buffer(Byte* dest, uLong* destLen, const Byte* source, uLong sourceLen)
 
-    int decompress_buffer(Byte* dest, uLong* destLen, Byte* source, uLong sourceLen)
+    int decompress_buffer(Byte* dest, uLong* destLen, const Byte* source, uLong sourceLen)

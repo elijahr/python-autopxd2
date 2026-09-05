@@ -11,6 +11,6 @@ cdef extern from "inline_proto_struct.test":
 
     cdef struct my_struct:
         void (*my_func_1)()
-        void (*my_func_2)(my_struct*)
-        int (*my_func_3)(char*, char**, char**)
-        int*** (*my_func_4)(char*, char**, char**)
+        void (*my_func_2)(my_struct* p)
+        int (*my_func_3)(char* a1, char** a2, char** a3[3][4])
+        int*** (*my_func_4)(char* a1, char** a2, char** a3[3][4])

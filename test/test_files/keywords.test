@@ -34,11 +34,10 @@ union and {
 False yield[1][0];
 
 ---
-
 cdef extern from "keywords.test":
 
-    cdef struct class_
-    cdef union and_
+    cdef struct class_ "class"
+    cdef union and_ "and"
 
     ctypedef int False_ "False"
 
@@ -48,9 +47,8 @@ cdef extern from "keywords.test":
 
     ctypedef False_ def_ "def"
 
-    ctypedef void (*foo)(int)
+    ctypedef void (*foo)(int a)
 
-    ctypedef with_ with_ "with"
 
 
     False_** lambda_ "lambda"
@@ -59,7 +57,7 @@ cdef extern from "keywords.test":
         del_ "del"
         and_ "and"
 
-    cdef enum with_ "with":
+    ctypedef enum with_ "with":
         ZERO
         ONE
 
@@ -69,12 +67,12 @@ cdef extern from "keywords.test":
     cdef struct class_ "class":
         int finally_ "finally"
         char* is_ "is"
-        void (*global_ "global")(int)
+        void (*global_ "global")(int a)
 
     cdef union and_ "and":
         char ac
         char* or_ "or"[5]
-        void (*import_ "import")(int)
+        void (*import_ "import")(int yield_)
 
 
     void True_ "True"(def_ from_)

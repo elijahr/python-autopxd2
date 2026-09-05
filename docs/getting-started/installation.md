@@ -20,6 +20,24 @@ HeaderKit provides a built-in installer to automatically download and set up `li
 python -m headerkit.install_libclang
 ```
 
+## Without LLVM: the tree-sitter Backend
+
+If you cannot install a system `libclang`, install the `treesitter` extra instead:
+
+```bash
+pip install "autopxd2[treesitter]"
+```
+
+Then pass `--backend tree-sitter`:
+
+```bash
+autopxd --backend tree-sitter myheader.h myheader.pxd
+```
+
+This backend parses only the file you give it: it does not follow `#include`
+directives, does not extract `#define` macros, and rejects `--std` and
+`--clang-arg`. See [Parser Backends](../user-guide/backends.md).
+
 ## System Package Managers
 
 Alternatively, you can install LLVM / libclang using your system's package manager:
@@ -80,6 +98,10 @@ If libclang is installed correctly, you will see:
 ```
 Available backends:
   libclang     Full C/C++ support via LLVM [available] (default)
+  tree-sitter  Fast C/C++ parsing without system LLVM dependencies [available]
 
 Default: libclang
 ```
+
+The `tree-sitter` line appears once the `treesitter` extra is installed; it is listed
+as unavailable otherwise.

@@ -7,6 +7,7 @@ autopxd2 parses C/C++ header files and generates Cython `.pxd` declaration files
 ## Features
 
 - **Full C/C++ support** - Structs, enums, typedefs, functions, classes, templates, namespaces
+- **Two parser backends** - libclang (default) or tree-sitter, which needs no system LLVM
 - **Macro extraction** - `#define` constants as typed declarations
 - **Automatic imports** - Generates `cimport` statements for standard library types
 - **Docker support** - Generate headers without installing LLVM locally

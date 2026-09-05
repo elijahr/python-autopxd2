@@ -96,9 +96,9 @@ cdef extern from "zlib.h":
 
     int zlib_version
 
-    ctypedef voidpf (*alloc_func)(voidpf, uInt, uInt)
+    ctypedef voidpf (*alloc_func)(voidpf opaque, uInt items, uInt size)
 
-    ctypedef void (*free_func)(voidpf, voidpf)
+    ctypedef void (*free_func)(voidpf opaque, voidpf address)
 
     cdef struct internal_state
 
@@ -151,7 +151,7 @@ cdef extern from "zlib.h":
 
     int inflateEnd(z_streamp strm)
 
-    int deflateSetDictionary(z_streamp strm, Bytef* dictionary, uInt dictLength)
+    int deflateSetDictionary(z_streamp strm, const Bytef* dictionary, uInt dictLength)
 
     int deflateGetDictionary(z_streamp strm, Bytef* dictionary, uInt* dictLength)
 
@@ -171,7 +171,7 @@ cdef extern from "zlib.h":
 
     int deflateSetHeader(z_streamp strm, gz_headerp head)
 
-    int inflateSetDictionary(z_streamp strm, Bytef* dictionary, uInt dictLength)
+    int inflateSetDictionary(z_streamp strm, const Bytef* dictionary, uInt dictLength)
 
     int inflateGetDictionary(z_streamp strm, Bytef* dictionary, uInt* dictLength)
 
@@ -199,23 +199,23 @@ cdef extern from "zlib.h":
 
     uLong zlibCompileFlags()
 
-    int compress(Bytef* dest, uLongf* destLen, Bytef* source, uLong sourceLen)
+    int compress(Bytef* dest, uLongf* destLen, const Bytef* source, uLong sourceLen)
 
-    int compress2(Bytef* dest, uLongf* destLen, Bytef* source, uLong sourceLen, int level)
+    int compress2(Bytef* dest, uLongf* destLen, const Bytef* source, uLong sourceLen, int level)
 
     uLong compressBound(uLong sourceLen)
 
-    int uncompress(Bytef* dest, uLongf* destLen, Bytef* source, uLong sourceLen)
+    int uncompress(Bytef* dest, uLongf* destLen, const Bytef* source, uLong sourceLen)
 
-    int uncompress2(Bytef* dest, uLongf* destLen, Bytef* source, uLong* sourceLen)
+    int uncompress2(Bytef* dest, uLongf* destLen, const Bytef* source, uLong* sourceLen)
 
-    uLong adler32(uLong adler, Bytef* buf, uInt len)
+    uLong adler32(uLong adler, const Bytef* buf, uInt len)
 
-    uLong adler32_z(uLong adler, Bytef* buf, z_size_t len)
+    uLong adler32_z(uLong adler, const Bytef* buf, z_size_t len)
 
-    uLong crc32(uLong crc, Bytef* buf, uInt len)
+    uLong crc32(uLong crc, const Bytef* buf, uInt len)
 
-    uLong crc32_z(uLong crc, Bytef* buf, z_size_t len)
+    uLong crc32_z(uLong crc, const Bytef* buf, z_size_t len)
 
     uLong crc32_combine_op(uLong crc1, uLong crc2, uLong op)
 
@@ -300,7 +300,7 @@ cdef extern from "zlib.h":
 
     int inflateSyncPoint(z_streamp)
 
-    z_crc_t* get_crc_table()
+    const z_crc_t* get_crc_table()
 
     int inflateUndermine(z_streamp, int)
 

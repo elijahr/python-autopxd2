@@ -41,26 +41,34 @@ cdef extern from "c_qualifiers.test":
         const int c
         const char* d
         const char* e
-        char* f
+        char* const f
         const char* g
-        const char* h
-        const char** i
-        const char** j
+        const char* const h
+        const char* const* const i
+        const char** const j
 
     cdef union my_union:
         const int* a
-        int* b
-        my_struct c
-        my_struct* d
-        my_struct* e
+        int* const b
+        const my_struct c
+        const my_struct* d
+        const my_struct* const e
 
-    const int* (*)() my_func_ptr_1
+    ctypedef const int* (*_my_func_ptr_1_ft)()
 
-    int* (*)() my_func_ptr_2
+    _my_func_ptr_1_ft my_func_ptr_1
 
-    const int* (*)() my_func_ptr_3
+    ctypedef int* const (*_my_func_ptr_2_ft)()
 
-    const void (*)(const int*, const int*, const int*, my_struct, my_union*) my_func_ptr_4
+    _my_func_ptr_2_ft my_func_ptr_2
+
+    ctypedef const int* const (*_my_func_ptr_3_ft)()
+
+    _my_func_ptr_3_ft my_func_ptr_3
+
+    ctypedef const void (*_my_func_ptr_4_ft)(const int* a, const int* const b, const int* const c, const my_struct d, const my_union* e)
+
+    _my_func_ptr_4_ft my_func_ptr_4
 
     const int* my_func_1()
 
@@ -68,10 +76,10 @@ cdef extern from "c_qualifiers.test":
 
     const int* my_func_3()
 
-    int* my_func_4()
+    int* const my_func_4()
 
-    const int* my_func_5()
+    const int* const my_func_5()
 
-    void my_func_6(my_struct* s, my_union* u)
+    void my_func_6(const my_struct* s, const my_union* const u)
 
-    void my_func_7(const char* a1, const char** a2, char** a3[3][4])
+    void my_func_7(const char* a1, const char* const* a2, char** const a3[3][4])

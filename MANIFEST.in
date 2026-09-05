@@ -7,16 +7,9 @@
 # Ship the entire tracked test tree; byte-compiled cruft is excluded below.
 graft test
 
-# --- Runtime stub dotfile dropped by setuptools globbing ---
-# The "stubs/darwin-include/**/*" package-data glob does not match leading-dot
-# files, so the sdist's default include misses this tracked stub. It is read at
-# runtime (clang -I include path), so ship it explicitly.
-include autopxd/stubs/darwin-include/.supports-builtin-modules
-
 # --- Top-level docs/metadata worth shipping in source form ---
 include CHANGELOG.md
 include CONTRIBUTING.md
-include regenerate_stubs.py
 
 # --- Test-library install helpers referenced by test/test_real_headers.py ---
 graft scripts

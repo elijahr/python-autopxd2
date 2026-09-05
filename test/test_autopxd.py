@@ -55,33 +55,15 @@ def do_one_cython_vs_header_test(file_path: str, backend: str = "libclang", extr
         extra_args=args if args else None,
         whitelist=whitelist,
     )
-    assert cython == actual.strip() + "\n", f"\nCYTHON:\n{cython}\n\n\nACTUAL:\n{actual}"
+    assert cython == actual, f"\nCYTHON:\n{cython}\n\n\nACTUAL:\n{actual}"
 
     return actual
-
-
-# Test files where libclang produces output that doesn't compile with Cython
-# due to anonymous/unnamed struct handling differences from pycparser.
-# The output correctness is still verified by the assertion in do_one_cython_vs_header_test.
-_SKIP_CYTHON_COMPILATION = {
-    "nested_union.test",
-    "c_qualifiers.test",
-    "nested.test",
-    "globals.test",
-    "anonymous_enum.test",
-    "nested_anonymous_enum.test",
-    "array_simple.test",
-}
 
 
 @pytest.mark.libclang
 @pytest.mark.parametrize("file_path", glob.glob(os.path.abspath(os.path.join(FILES_DIR, "*.test"))))
 def test_cython_vs_header(file_path, tmp_path):
     actual = do_one_cython_vs_header_test(file_path, backend="libclang")
-
-    basename = os.path.basename(file_path)
-    if basename in _SKIP_CYTHON_COMPILATION:
-        return
 
     # Finally ensure the translation is valid Cython !
     src = tmp_path / "x.pyx"

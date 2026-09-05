@@ -20,14 +20,20 @@ autopxd --version
 
 ### `-b, --backend <name>`
 
-Select the parser backend. Options: `auto` (default), `libclang`.
+Select the parser backend. Options: `auto` (default), `libclang`, `tree-sitter`.
 
-- `auto`: Use libclang (the only backend)
+- `auto`: Use the default backend (libclang) when it is available, otherwise the
+  first available backend
 - `libclang`: Full C/C++ support via LLVM
+- `tree-sitter`: Fast C/C++ parsing without system LLVM dependencies
+  (requires `pip install "autopxd2[treesitter]"`)
 
 ```bash
 autopxd --backend libclang myheader.hpp
+autopxd --backend tree-sitter myheader.hpp
 ```
+
+See [Parser Backends](backends.md) for the differences between them.
 
 ### `--list-backends`
 
@@ -35,6 +41,15 @@ Show available backends and exit.
 
 ```bash
 autopxd --list-backends
+```
+
+```console
+$ autopxd --list-backends
+Available backends:
+  libclang     Full C/C++ support via LLVM [available] (default)
+  tree-sitter  Fast C/C++ parsing without system LLVM dependencies [available]
+
+Default: libclang
 ```
 
 ### `--json`

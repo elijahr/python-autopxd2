@@ -10,7 +10,7 @@ cdef extern from "typedef_anonymous_enum.test":
 
 
 
-    cdef enum MyEnumType:
+    ctypedef enum MyEnumType:
         C1
         C2
         C3

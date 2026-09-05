@@ -3,4 +3,11 @@
 ---
 
 cdef extern from "whitelist.test":
-    pass
+
+    cdef struct tux
+
+    void foo(tux*, int a)
+
+    cdef struct tux:
+        int a
+        int b

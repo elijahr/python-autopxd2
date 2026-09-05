@@ -1,6 +1,6 @@
 # IR Module
 
-The IR (Intermediate Representation) module provides data structures for representing C/C++ declarations in a parser-agnostic format.
+The IR (Intermediate Representation) module provides data structures for representing C/C++ declarations in a parser-agnostic format. It is `headerkit.ir`; autopxd2 consumes it rather than defining its own.
 
 ::: headerkit.ir
     options:

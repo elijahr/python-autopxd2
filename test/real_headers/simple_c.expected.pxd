@@ -2,13 +2,13 @@ cdef extern from "simple_c.h":
 
     cdef struct Point
 
-    ctypedef void (*Callback)(void*)
+    ctypedef void (*Callback)(void* user_data)
 
-    ctypedef int (*Comparator)(const void*, const void*)
+    ctypedef int (*Comparator)(const void* a, const void* b)
 
 
 
-    cdef enum ErrorCode:
+    ctypedef enum ErrorCode:
         ERR_OK
         ERR_INVALID
         ERR_NOMEM

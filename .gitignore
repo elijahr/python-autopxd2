@@ -115,4 +115,3 @@ docs/plans/
 logs/
 .envrc
 uv.lock
-.swarm/

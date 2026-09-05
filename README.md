@@ -15,8 +15,8 @@ autopxd2 parses C and C++ header files and generates Cython `.pxd` declaration f
 **Key features:**
 
 - Generates complete `.pxd` declaration files from C/C++ headers
-- Powered by `headerkit` and LLVM `libclang` (supporting LLVM 18–23)
-- Full C++ support: classes, methods, constructors, destructors, multiple inheritance, templates, and namespaces
+- Powered by `headerkit`, with a choice of parser backends: LLVM `libclang` (supporting LLVM 18–23) or `tree-sitter` (no system LLVM required)
+- Full C++ support: classes, methods, constructors, multiple inheritance, templates, and namespaces
 - Automatic system include path detection
 - Auto-generates `cimport` statements for standard library types and bundled stubs
 - Cross-platform support (Linux, macOS, Windows)
@@ -45,7 +45,8 @@ autopxd2 parses C and C++ header files and generates Cython `.pxd` declaration f
 | Feature | Supported |
 |---------|:---------:|
 | Classes and structs (`cppclass`) | ✓ |
-| Constructors and destructors | ✓ |
+| Constructors | ✓ |
+| Destructors | not emitted — Cython `cppclass` blocks do not declare them |
 | Methods (`const`, `@staticmethod`) | ✓ |
 | Multiple inheritance | ✓ |
 | Namespaces (including nested) | ✓ |
@@ -91,6 +92,13 @@ Then specify `--backend tree-sitter`:
 ```shell
 autopxd --backend tree-sitter myheader.h myheader.pxd
 ```
+
+The tree-sitter backend parses the given file only. Compared to libclang it does not:
+
+- follow `#include` directives, so declarations from included headers are absent
+- extract `#define` macros as constants
+- detect system include paths
+- accept `--std` or `--clang-arg` (both are rejected with an error)
 
 ## Quick Start
 

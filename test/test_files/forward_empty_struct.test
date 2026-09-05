@@ -11,6 +11,8 @@ struct my_struct {
 
 cdef extern from "forward_empty_struct.test":
 
+    cdef struct my_struct
+
     void my_func(my_struct*, int a)
 
     cdef struct my_struct:

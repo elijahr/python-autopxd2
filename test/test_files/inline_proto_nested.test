@@ -10,9 +10,9 @@ struct my_struct {
 
 cdef extern from "inline_proto_nested.test":
 
-    void my_func_1(void (*my_cb)(int*), int b)
+    void my_func_1(void (*my_cb)(int* a), int b)
 
-    void my_func_2(void (*my_cb2)(void (*)(int*)), int b)
+    void my_func_2(void (*my_cb2)(void (*my_cb3)(int*)), int b)
 
     cdef struct my_struct:
-        void (*my_func_3)(void (*)(int*), void (*)(int*))
+        void (*my_func_3)(void (*my_cb1)(int*), void (*my_cb2)(int*))

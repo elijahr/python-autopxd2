@@ -1,6 +1,29 @@
-# Parser Backend
+# Parser Backends
 
-autopxd2 uses the **libclang** parser backend for all C/C++ parsing.
+autopxd2 ships two parser backends: **libclang** (the default) and **tree-sitter**.
+
+```console
+$ autopxd --list-backends
+Available backends:
+  libclang     Full C/C++ support via LLVM [available] (default)
+  tree-sitter  Fast C/C++ parsing without system LLVM dependencies [available]
+
+Default: libclang
+```
+
+## Choosing a Backend
+
+| | libclang | tree-sitter |
+|---|---|---|
+| Install | needs the system `libclang` shared library | `pip install "autopxd2[treesitter]"`, no system LLVM |
+| Follows `#include` directives | ✅ | ❌ (parses the given file only) |
+| `#define` macro extraction | ✅ | ❌ |
+| System include path detection | ✅ | ❌ |
+| C++ classes, templates, namespaces | ✅ | ✅ |
+| `--std` / `--clang-arg` | ✅ | ❌ (rejected with an error) |
+
+Use libclang unless you cannot install LLVM. Use tree-sitter for self-contained
+headers in environments where a system `libclang` is unavailable.
 
 ## libclang
 
@@ -28,6 +51,40 @@ autopxd myheader.h
 # For C++ headers
 autopxd myheader.hpp
 ```
+
+## tree-sitter
+
+Uses [tree-sitter](https://tree-sitter.github.io/) grammars for C and C++. It needs no
+system LLVM, so it installs and runs anywhere Python does.
+
+**Install:**
+
+```bash
+pip install "autopxd2[treesitter]"
+```
+
+**Usage:**
+
+```bash
+autopxd --backend tree-sitter myheader.h
+
+# C++ works too
+autopxd --backend tree-sitter --cpp myclass.hpp
+```
+
+**Limitations:**
+
+- Does not follow `#include` directives. Given `#include "inner.h"`, declarations from
+  `inner.h` do not appear in the output; only the parsed file's own declarations do.
+- Does not extract `#define` macros as constants.
+- Does not detect system include paths.
+- Rejects `--std` and `--clang-arg`:
+
+  ```console
+  $ autopxd --backend tree-sitter --std c11 myheader.h
+  Error: --std is only supported by the libclang backend, but the resolved backend is 'tree-sitter'.
+  Use --backend libclang, or drop the option.
+  ```
 
 ## System Include Paths
 
@@ -134,7 +191,7 @@ Expression macros that consist of numeric literals, operators, and other macro r
 
 ## C++ Template Support
 
-The libclang backend supports C++ templates, including primary templates and full specializations.
+The backends support C++ templates, including primary templates and full specializations.
 
 ### Primary Templates
 
@@ -225,10 +282,10 @@ See [Docker Usage](../getting-started/docker.md) for details.
 ```python
 from headerkit.backends import get_backend, list_backends
 
-# List available backends
-print(list_backends())  # ['libclang']
+# List registered backends
+print(list_backends())  # ['libclang', 'tree-sitter']
 
-# Get the backend
+# Get a specific backend
 backend = get_backend("libclang")
 
 # Parse a header

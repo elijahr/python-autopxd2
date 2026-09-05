@@ -9,22 +9,22 @@ cdef extern from "cpp_container.hpp":
         double y
         double magnitude() const
         void normalize()
-        Vector2D operator+(Vector2D& other) const
-        Vector2D operator-(Vector2D& other) const
-        double dot(Vector2D& other) const
+        Vector2D operator+(const Vector2D& other) const
+        Vector2D operator-(const Vector2D& other) const
+        double dot(const Vector2D& other) const
 
     cdef cppclass Rectangle:
         Point origin
         int width
         int height
         int area() const
-        bool contains(Point& p) const
-        bool intersects(Rectangle& other) const
+        bool contains(const Point& p) const
+        bool intersects(const Rectangle& other) const
 
     Vector2D make_vector(double x, double y)
 
     Rectangle make_rectangle(int x, int y, int w, int h)
 
-    double distance(Point& a, Point& b)
+    double distance(const Point& a, const Point& b)
 
-    double distance(Vector2D& a, Vector2D& b)
+    double distance(const Vector2D& a, const Vector2D& b)

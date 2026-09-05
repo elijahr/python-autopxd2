@@ -1,15 +1,16 @@
 # C++ Support
 
-autopxd2 supports C++ headers through the libclang backend.
+autopxd2 supports C++ headers through either parser backend.
 
-!!! important
-    C++ support requires the libclang backend, which is the only backend in autopxd2.
+!!! note
+    The libclang backend (the default) and the tree-sitter backend both parse C++.
+    See [Parser Backends](backends.md) for the trade-offs.
 
 ## Basic C++ Usage
 
 ```bash
-# Use libclang for C++ headers
-autopxd --backend libclang myclass.hpp > myclass.pxd
+# C++ mode is auto-detected from .hpp/.hh/.hxx extensions
+autopxd --cpp myclass.hpp > myclass.pxd
 ```
 
 Or with Docker:
@@ -22,7 +23,9 @@ docker run --rm -v $(pwd):/work -w /work ghcr.io/elijahr/python-autopxd2 autopxd
 
 ### Classes & Structs
 
-C++ classes and structs are converted to Cython `cppclass` definitions with support for multiple inheritance, constructors, destructors, `@staticmethod`, and `const` member methods:
+C++ classes and structs are converted to Cython `cppclass` definitions with support for multiple inheritance, constructors, `@staticmethod`, and `const` member methods.
+
+Destructors are not emitted: a Cython `cppclass` block does not declare them, and Cython calls the C++ destructor automatically for stack-allocated instances.
 
 ```cpp
 // widget.hpp
@@ -87,12 +90,50 @@ double distance(const Point& a, const Point& b);
 Generates:
 
 ```cython
-double distance(const Point & a, const Point & b)
+double distance(const Point& a, const Point& b)
 ```
 
 ### Namespaces
 
-Currently, only top-level declarations are extracted. Namespaced declarations are not directly supported.
+Declarations inside a namespace are emitted in a dedicated `cdef extern from ... namespace` block:
+
+```cpp
+// ns.hpp
+namespace outer {
+    class Widget {
+    public:
+        Widget();
+        int value() const;
+    };
+    int helper(int x);
+}
+```
+
+Generates:
+
+```cython
+cdef extern from "ns.hpp" namespace "outer":
+
+    cdef cppclass Widget:
+        Widget()
+        int value() const
+
+    int helper(int x)
+```
+
+Nested namespaces are joined with `::`:
+
+```cpp
+namespace outer { namespace inner { int f(int); } }
+```
+
+Generates:
+
+```cython
+cdef extern from "nested.hpp" namespace "outer::inner":
+
+    int f(int)
+```
 
 ## Limitations
 
@@ -111,7 +152,7 @@ Multiple overloaded free functions with identical names may produce conflicts in
 
 1. Generate initial pxd:
    ```bash
-   autopxd --backend libclang mylib.hpp > mylib.pxd
+   autopxd mylib.hpp > mylib.pxd
    ```
 
 2. Review and adjust for methods, templates, or other features

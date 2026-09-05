@@ -5,19 +5,18 @@ on:
     - cron: '0 8 * * 1'  # Every Monday at 08:00 UTC
   workflow_dispatch:
 
-permissions:
-  contents: write
-  pull-requests: write
-
 jobs:
   autoupdate:
     name: Update pre-commit hooks
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
 
     steps:
       - uses: actions/checkout@v4
 
-      - uses: astral-sh/setup-uv@v4
+      - uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a  # v4
         with:
           enable-cache: true
           cache-dependency-glob: "**/pyproject.toml"
@@ -32,12 +31,16 @@ jobs:
       - name: Run pre-commit autoupdate
         run: pre-commit autoupdate
 
+      # PRs opened with the default GITHUB_TOKEN do not trigger workflows, so the
+      # updated hooks are exercised here or not at all.
+      - name: Run updated hooks
+        run: pre-commit run --all-files --show-diff-on-failure
+
       - name: Create pull request
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676  # v7
         with:
           commit-message: 'Update pre-commit hooks'
           title: 'Update pre-commit hooks'
           body: |
             Automated update of pre-commit hook versions via `pre-commit autoupdate`.
-          branch: dependabot/pre-commit-autoupdate
-          labels: dependencies
+          branch: chore/pre-commit-autoupdate

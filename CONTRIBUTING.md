@@ -122,16 +122,6 @@ mkdocs build
 2. Ensure all tests pass and pre-commit checks are clean
 3. Submit a pull request with a clear description of the changes
 
-## Regenerating Stub Headers
-
-The stub headers in `autopxd/stubs/` prevent generating Cython code for system headers. To regenerate them (rarely needed):
-
-```shell
-python regenerate_stubs.py
-```
-
-This downloads libc stub headers and generates macOS stubs if on macOS.
-
 ---
 
 # Maintainer Guide
