@@ -313,3 +313,19 @@ cdef extern from "zlib.h":
     int deflateResetKeep(z_streamp)
 
     int gzvprintf(gzFile file, const char* format, va_list va)
+
+    int MAX_MEM_LEVEL
+
+    int MAX_WBITS
+
+    int SEEK_SET
+
+    int SEEK_CUR
+
+    int SEEK_END
+
+    ctypedef char charf
+
+    ctypedef int intf
+
+    ctypedef uInt uIntf

@@ -1,3 +1,5 @@
+from libcpp cimport bool
+
 cdef extern from "simple_cpp.hpp":
 
     cdef struct Point:

@@ -1,8 +1,11 @@
 import fnmatch
-import glob
 import json
 import os
 import sys
+import warnings
+from collections.abc import (
+    Callable,
+)
 from importlib.metadata import (
     version as get_version,
 )
@@ -37,8 +40,8 @@ def _normalize_for_match(path: str) -> str:
     return path.replace("\\", "/").lower()
 
 
-def _whitelist_search_dirs(hdrname: str, include_dirs: list[str] | None) -> list[str]:
-    """Directories a relative whitelist pattern is resolved against, in priority order.
+def _list_search_dirs(hdrname: str, include_dirs: list[str] | None) -> list[str]:
+    """Directories a relative allowlist/denylist pattern is resolved against, in priority order.
 
     Mirrors headerkit's rule: the parsed file's own directory first, then the
     include search path, then the process working directory.
@@ -50,8 +53,8 @@ def _whitelist_search_dirs(hdrname: str, include_dirs: list[str] | None) -> list
     return dirs
 
 
-def _whitelist_candidates(pattern: str, search_dirs: list[str]) -> list[str]:
-    """Absolute forms a whitelist pattern may take, in priority order."""
+def _pattern_candidates(pattern: str, search_dirs: list[str]) -> list[str]:
+    """Absolute forms an allowlist/denylist pattern may take, in priority order."""
     if os.path.isabs(pattern):
         absolute = os.path.abspath(pattern)
         return [_normalize_for_match(absolute), _normalize_for_match(os.path.realpath(absolute))]
@@ -65,60 +68,11 @@ def _whitelist_candidates(pattern: str, search_dirs: list[str]) -> list[str]:
     return candidates
 
 
-_GLOB_MAGIC_CHARS = "*?["
-
-
-def _has_glob_magic(pattern: str) -> bool:
-    """Report whether a whitelist entry contains glob metacharacters.
-
-    Equivalent to the undocumented ``glob.has_magic``, which matches ``[*?[]``.
-    Spelled out here so autopxd does not depend on a private stdlib helper.
-    """
-    return any(char in pattern for char in _GLOB_MAGIC_CHARS)
-
-
-def _expand_whitelist_for_backend(
-    whitelist: list[str],
-    hdrname: str,
-    include_dirs: list[str] | None,
-) -> list[str]:
-    """Turn user whitelist patterns into concrete paths the backend can resolve.
-
-    headerkit keeps an included file's declarations only when the whitelist names
-    a path that resolves to a real file, so a glob has to be expanded here or the
-    declarations it selects never reach the post-filter at all.  Non-glob entries
-    are forwarded untouched and left for headerkit to resolve with its own rules.
-    A glob that matches nothing is dropped.
-    """
-    expanded: list[str] = []
-    for pattern in whitelist:
-        if not _has_glob_magic(pattern):
-            expanded.append(pattern)
-            continue
-        if os.path.isabs(pattern):
-            matches = glob.glob(pattern)
-        else:
-            matches = []
-            for directory in _whitelist_search_dirs(hdrname, include_dirs):
-                matches.extend(glob.glob(os.path.join(directory, pattern)))
-        for match in matches:
-            if os.path.isfile(match) and match not in expanded:
-                expanded.append(match)
-    return expanded
-
-
-def _filter_by_whitelist(
-    declarations: list[Declaration],
-    whitelist: list[str],
-    hdrname: str = "",
-    include_dirs: list[str] | None = None,
-) -> list[Declaration]:
-    """Filter declarations to only those from whitelisted files.
-
-    Uses fnmatch for pattern matching, supporting glob patterns like:
-    - "myheader.h" - exact match
-    - "*.h" - all .h files
-    - "include/*.h" - all .h files in include/
+def _pattern_matcher(
+    patterns: list[str],
+    search_dirs: list[str],
+) -> "Callable[[Declaration], bool]":
+    """Build a predicate reporting whether a declaration's file matches ``patterns``.
 
     A pattern containing no path separator is matched against the declaration
     file's BASENAME, so both a bare filename and a bare glob keep working
@@ -132,16 +86,12 @@ def _filter_by_whitelist(
     is often relative (e.g. ``./tux_foo.h``), so both sides are made absolute
     before comparison; symlinked and non-symlinked forms are both tried.
 
-    Declarations without location info are excluded when whitelist is active.
-
     Path comparison is case-insensitive and separator-normalized for
     cross-platform compatibility.
     """
-    search_dirs = _whitelist_search_dirs(hdrname, include_dirs)
-
     basename_patterns: list[str] = []
     path_patterns: list[str] = []
-    for pattern in whitelist:
+    for pattern in patterns:
         normalized = pattern.replace("\\", "/")
         if "/" in normalized:
             path_patterns.append(_normalize_for_match(normalized))
@@ -150,23 +100,67 @@ def _filter_by_whitelist(
 
     resolved_patterns: list[str] = []
     for pattern in path_patterns:
-        resolved_patterns.extend(_whitelist_candidates(pattern, search_dirs))
+        resolved_patterns.extend(_pattern_candidates(pattern, search_dirs))
 
-    result = []
-    for decl in declarations:
+    def matches(decl: Declaration) -> bool:
         if decl.location is None:
-            continue
+            return False
         decl_abs = os.path.abspath(decl.location.file)
         decl_forms = {
             _normalize_for_match(decl_abs),
             _normalize_for_match(os.path.realpath(decl_abs)),
         }
         decl_base = _normalize_for_match(os.path.basename(decl_abs))
-        if any(fnmatch.fnmatch(decl_base, pattern) for pattern in basename_patterns) or any(
+        return any(fnmatch.fnmatch(decl_base, pattern) for pattern in basename_patterns) or any(
             fnmatch.fnmatch(form, pattern) for form in decl_forms for pattern in resolved_patterns
-        ):
-            result.append(decl)
+        )
+
+    return matches
+
+
+def _filter_declarations(
+    declarations: list[Declaration],
+    allowlist: list[str] | None = None,
+    denylist: list[str] | None = None,
+    hdrname: str = "",
+    include_dirs: list[str] | None = None,
+) -> list[Declaration]:
+    """Narrow declarations to the allowlist, then subtract the denylist.
+
+    headerkit applies both lists while parsing, but it never applies either to
+    the declarations of the file it was handed: an allowlist that omits the
+    input header still yields that header's declarations, and a denylist naming
+    it does not remove them.  This pass closes that gap, so the lists mean the
+    same thing for the root header as for every header it includes.
+
+    Deny is applied after allow, so a file matching both is excluded -- the same
+    precedence headerkit uses.
+
+    Declarations without location info are excluded when an allowlist is active,
+    because nothing can establish that they came from an allowed file.
+    """
+    search_dirs = _list_search_dirs(hdrname, include_dirs)
+    result = declarations
+    if allowlist:
+        allowed = _pattern_matcher(allowlist, search_dirs)
+        result = [decl for decl in result if allowed(decl)]
+    if denylist:
+        denied = _pattern_matcher(denylist, search_dirs)
+        result = [decl for decl in result if not denied(decl)]
     return result
+
+
+_INCLUDE_FOLLOWING_BACKENDS = frozenset({"libclang"})
+
+
+def _backend_follows_includes(backend_name: str) -> bool:
+    """Report whether a backend resolves and parses ``#include`` directives.
+
+    Umbrella-header options only have something to act on when the backend
+    reads included files. A backend that parses just the text it is given
+    cannot honor them.
+    """
+    return backend_name.strip().lower() in _INCLUDE_FOLLOWING_BACKENDS
 
 
 def translate(
@@ -174,12 +168,14 @@ def translate(
     hdrname: str,
     backend: str = "auto",
     extra_args: list[str] | None = None,
-    whitelist: list[str] | None = None,
+    allowlist: list[str] | None = None,
     debug: bool = False,
     use_default_includes: bool = True,
     project_prefixes: tuple[str, ...] | None = None,
     recursive_includes: bool = True,
-    max_depth: int = 10,
+    max_depth: int | None = None,
+    denylist: list[str] | None = None,
+    whitelist: list[str] | None = None,
 ) -> str:
     """Generate Cython .pxd from C/C++ header code.
 
@@ -188,8 +184,11 @@ def translate(
         hdrname: Header filename (used in cdef extern from).
         backend: Backend name ("auto", "libclang").
         extra_args: Extra arguments passed to backend (e.g., ["-I/usr/include"]).
-        whitelist: Only include declarations from files matching these patterns.
-            Supports fnmatch patterns like "*.h", "include/*.h".
+        allowlist: Only include declarations from files matching these patterns.
+            Supports fnmatch patterns like "*.h", "include/*.h". With recursion
+            on (the default) and no allowlist, declarations from every
+            non-system included header are emitted; an allowlist narrows that,
+            in both recursion modes.
         debug: Print debug info to stderr.
         use_default_includes: If True (default), automatically detect and add
             system include directories when using the libclang backend.
@@ -198,17 +197,49 @@ def translate(
             installed in system locations (e.g., ("/opt/homebrew/include/sodium",)).
         recursive_includes: [libclang] If True (default), detect umbrella headers
             and recursively parse included project headers.
-        max_depth: [libclang] Maximum recursion depth for umbrella header
-            processing (default: 10).
+        max_depth: [libclang] Recursion depth limit for umbrella header
+            processing. ``None`` (default) means unspecified and resolves to
+            10. ``0`` disables umbrella expansion. Passing a value to a
+            backend that does not follow includes raises :class:`UserWarning`,
+            because such a caller expects declarations that backend will
+            never produce.
+        denylist: Exclude declarations from files matching these patterns.
+            Same pattern syntax as ``allowlist``. A file matching both lists is
+            excluded: deny wins over allow.
+        whitelist: Deprecated alias for ``allowlist``. Emits
+            :class:`DeprecationWarning`. Passing both raises :class:`ValueError`.
 
     Returns:
         Cython .pxd file contents.
     """
+    if whitelist is not None:
+        if allowlist is not None:
+            raise ValueError(
+                "Pass either allowlist or whitelist, not both. whitelist is the deprecated spelling of allowlist."
+            )
+        warnings.warn(
+            "The 'whitelist' argument is deprecated; use 'allowlist' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        allowlist = whitelist
+
     # Resolve backend
     if backend == "auto":
         backend_name = get_default_backend()
     else:
         backend_name = backend
+
+    if max_depth is not None and not _backend_follows_includes(backend_name):
+        warnings.warn(
+            f"The {backend_name} backend does not follow #include directives, so "
+            f"max_depth={max_depth} cannot be honored and no declarations from "
+            f"included files will appear in the result. Use the libclang backend "
+            f"for umbrella header expansion.",
+            UserWarning,
+            stacklevel=2,
+        )
+    effective_max_depth = 10 if max_depth is None else max_depth
 
     if debug:
         _debug_print(f"Backend: {backend_name}")
@@ -244,23 +275,26 @@ def translate(
         use_default_includes=use_default_includes,
         project_prefixes=project_prefixes,
         recursive_includes=recursive_includes,
-        max_depth=max_depth,
-        whitelist=_expand_whitelist_for_backend(whitelist, hdrname, include_dirs or None) if whitelist else None,
+        max_depth=effective_max_depth,
+        allowlist=allowlist or None,
+        denylist=denylist or None,
     )
 
     if debug:
         _debug_print(f"Found {len(header.declarations)} declarations")
 
-    # Apply whitelist filter
-    if whitelist:
-        header.declarations = _filter_by_whitelist(
+    # headerkit applies both lists while parsing, but never to the root header's
+    # own declarations; this pass makes the lists mean the same thing there.
+    if allowlist or denylist:
+        header.declarations = _filter_declarations(
             header.declarations,
-            whitelist,
+            allowlist=allowlist,
+            denylist=denylist,
             hdrname=hdrname,
             include_dirs=include_dirs or None,
         )
         if debug:
-            _debug_print(f"After whitelist: {len(header.declarations)} declarations")
+            _debug_print(f"After allow/deny filtering: {len(header.declarations)} declarations")
 
     if debug:
         for decl in header.declarations:
@@ -391,11 +425,16 @@ def resolve_backend(
     help="Define preprocessor macro.",
 )
 @click.option(
-    "--whitelist",
-    "-w",
+    "--allowlist",
     multiple=True,
     metavar="<pattern>",
-    help="Only emit from files matching pattern.",
+    help="Only emit declarations from files matching pattern. Repeatable.",
+)
+@click.option(
+    "--denylist",
+    multiple=True,
+    metavar="<pattern>",
+    help="Never emit declarations from files matching pattern. Wins over --allowlist. Repeatable.",
 )
 # === Clang / C++ options ===
 @click.option(
@@ -439,11 +478,18 @@ def resolve_backend(
 @click.option(
     "--max-depth",
     type=int,
-    default=10,
+    default=None,
     metavar="<n>",
-    help="Max recursion depth for umbrella headers (default: 10).",
+    help="Max recursion depth for umbrella headers (default: 10). [libclang]",
 )
 # === Deprecated (hidden) ===
+@click.option(
+    "--whitelist",
+    "-w",
+    multiple=True,
+    metavar="<pattern>",
+    help="Deprecated alias for --allowlist.",
+)
 @click.option(
     "--compiler-directive",
     "defines_deprecated",
@@ -475,11 +521,13 @@ def cli(
     cpp: bool,
     std: str | None,
     clang_arg: tuple[str, ...],
+    allowlist: tuple[str, ...],
+    denylist: tuple[str, ...],
     whitelist: tuple[str, ...],
     no_default_includes: bool,
     project_prefixes: tuple[str, ...],
     no_recursive: bool,
-    max_depth: int,
+    max_depth: int | None,
 ) -> None:
     if version:
         print(__version__)
@@ -561,7 +609,25 @@ def cli(
     for arg in clang_arg:
         extra_args.append(arg)
 
-    whitelist_list = list(whitelist) if whitelist else None
+    if whitelist and allowlist:
+        click.echo(
+            "Error: --whitelist is the deprecated spelling of --allowlist; pass one or the other, not both.",
+            err=True,
+        )
+        raise SystemExit(1)
+    if whitelist:
+        # Warn here rather than letting translate() do it, so --quiet is honored
+        # in the one place that knows about it.
+        if not quiet:
+            warnings.warn(
+                "--whitelist is deprecated, use --allowlist instead.",
+                DeprecationWarning,
+                stacklevel=1,
+            )
+        allowlist = whitelist
+
+    allowlist_list = list(allowlist) if allowlist else None
+    denylist_list = list(denylist) if denylist else None
 
     # Convert project_prefixes tuple to tuple or None
     project_prefixes_arg = project_prefixes if project_prefixes else None
@@ -577,7 +643,8 @@ def cli(
             hdrname=hdrname,
             backend=resolved_backend,
             extra_args=extra_args if extra_args else None,
-            whitelist=whitelist_list,
+            allowlist=allowlist_list,
+            denylist=denylist_list,
             debug=debug,
             use_default_includes=not no_default_includes,
             project_prefixes=project_prefixes_arg,

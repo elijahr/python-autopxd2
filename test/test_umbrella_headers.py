@@ -74,43 +74,6 @@ def backend():
     return get_backend("libclang")
 
 
-class TestUmbrellaHeaderDetection:
-    """Test umbrella header detection heuristics."""
-
-    def test_detects_simple_umbrella_header(self, backend, temp_headers):
-        """Umbrella header with 3+ includes and no declarations is detected."""
-        with open(temp_headers / "all.h") as f:
-            code = f.read()
-
-        header = backend.parse(
-            code,
-            "all.h",
-            include_dirs=[str(temp_headers)],
-            recursive_includes=False,  # Test detection first
-        )
-
-        # Should detect as umbrella header
-        from headerkit.backends.libclang import _is_umbrella_header
-
-        assert _is_umbrella_header(header)
-
-    def test_normal_header_not_detected(self, backend, temp_headers):
-        """Normal header with declarations is not a umbrella header."""
-        with open(temp_headers / "types.h") as f:
-            code = f.read()
-
-        header = backend.parse(
-            code,
-            "types.h",
-            include_dirs=[str(temp_headers)],
-            recursive_includes=False,
-        )
-
-        from headerkit.backends.libclang import _is_umbrella_header
-
-        assert not _is_umbrella_header(header)
-
-
 class TestRecursiveIncludes:
     """Test recursive include parsing."""
 

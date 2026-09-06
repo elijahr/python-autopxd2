@@ -4,12 +4,13 @@ import json
 import os
 import pathlib
 import tempfile
+import warnings
 
 import pytest
 from click.testing import CliRunner
 from headerkit.backends import get_backend_info, is_backend_available
 
-from autopxd import cli
+from autopxd import cli, translate
 
 
 @pytest.fixture
@@ -263,6 +264,184 @@ class TestWhitelistOption:
         assert "int x" not in result.output
 
 
+@pytest.fixture
+def allow_deny_header_dir():
+    """A directory holding outer.h, which includes siblings inner.h and other.h."""
+    with tempfile.TemporaryDirectory() as tmp:
+        directory = pathlib.Path(tmp)
+        (directory / "inner.h").write_text("int inner_fn(void);\n", encoding="utf-8")
+        (directory / "other.h").write_text("int other_fn(void);\n", encoding="utf-8")
+        (directory / "outer.h").write_text(
+            '#include "inner.h"\n#include "other.h"\nint outer_fn(void);\n', encoding="utf-8"
+        )
+        yield directory
+
+
+@pytest.mark.libclang
+class TestAllowlistOption:
+    """Tests for --allowlist, --denylist, and the deprecated --whitelist alias."""
+
+    def test_allowlist_excludes_non_matching_header(self, simple_header_file) -> None:
+        """An allowlist that omits the input header drops its declarations."""
+        runner = CliRunner()
+        result = runner.invoke(cli, ["--allowlist", "foo.h", simple_header_file])
+        assert result.exit_code == 0
+        assert "int x" not in result.output
+        assert "pass" in result.output
+
+    def test_allowlist_keeps_matching_header(self, simple_header_file) -> None:
+        """An allowlist naming the input header keeps its declarations."""
+        runner = CliRunner()
+        result = runner.invoke(cli, ["--allowlist", simple_header_file, simple_header_file])
+        assert result.exit_code == 0
+        assert "int x" in result.output
+
+    def test_allowlist_narrows_included_headers(self, allow_deny_header_dir) -> None:
+        """With recursion on, an allowlist narrows which included headers contribute."""
+        runner = CliRunner()
+        outer = str(allow_deny_header_dir / "outer.h")
+        result = runner.invoke(cli, ["--allowlist", "inner.h", "--allowlist", "outer.h", outer])
+        assert result.exit_code == 0
+        assert "inner_fn" in result.output
+        assert "outer_fn" in result.output
+        assert "other_fn" not in result.output
+
+    def test_allowlist_accepts_glob(self, allow_deny_header_dir) -> None:
+        """A glob allowlist selects included headers without pre-expansion by autopxd."""
+        runner = CliRunner()
+        outer = str(allow_deny_header_dir / "outer.h")
+        result = runner.invoke(cli, ["--allowlist", "o*.h", outer])
+        assert result.exit_code == 0
+        assert "outer_fn" in result.output
+        assert "other_fn" in result.output
+        assert "inner_fn" not in result.output
+
+    def test_denylist_excludes_matching_header(self, allow_deny_header_dir) -> None:
+        """A denylist drops declarations from the headers it names."""
+        runner = CliRunner()
+        outer = str(allow_deny_header_dir / "outer.h")
+        result = runner.invoke(cli, ["--denylist", "inner.h", outer])
+        assert result.exit_code == 0
+        assert "inner_fn" not in result.output
+        assert "outer_fn" in result.output
+        assert "other_fn" in result.output
+
+    def test_denylist_excludes_the_input_header_itself(self, simple_header_file) -> None:
+        """A denylist naming the input header drops that header's own declarations."""
+        runner = CliRunner()
+        result = runner.invoke(cli, ["--denylist", simple_header_file, simple_header_file])
+        assert result.exit_code == 0
+        assert "int x" not in result.output
+
+    def test_denylist_beats_allowlist(self, allow_deny_header_dir) -> None:
+        """A file matching both lists is excluded: deny wins over allow."""
+        runner = CliRunner()
+        outer = str(allow_deny_header_dir / "outer.h")
+        result = runner.invoke(cli, ["--allowlist", "*.h", "--denylist", "inner.h", outer])
+        assert result.exit_code == 0
+        assert "inner_fn" not in result.output
+        assert "outer_fn" in result.output
+        assert "other_fn" in result.output
+
+    def test_denylist_has_no_short_flag(self, simple_header_file) -> None:
+        """--denylist takes no short flag, so -w stays unambiguous."""
+        runner = CliRunner()
+        result = runner.invoke(cli, ["-d", "foo.h", simple_header_file])
+        assert result.exit_code != 0
+
+    def test_whitelist_still_works_and_warns(self, simple_header_file) -> None:
+        """--whitelist keeps working and names --allowlist as its replacement."""
+        runner = CliRunner()
+        with pytest.warns(DeprecationWarning, match="--allowlist"):
+            result = runner.invoke(cli, ["--whitelist", "foo.h", simple_header_file], catch_exceptions=False)
+        assert result.exit_code == 0
+        assert "int x" not in result.output
+
+    def test_whitelist_short_form_still_warns(self, simple_header_file) -> None:
+        """-w is retained for the deprecated spelling and warns the same way."""
+        runner = CliRunner()
+        with pytest.warns(DeprecationWarning, match="--allowlist"):
+            result = runner.invoke(cli, ["-w", "foo.h", simple_header_file], catch_exceptions=False)
+        assert result.exit_code == 0
+        assert "int x" not in result.output
+
+    def test_allowlist_does_not_warn(self, simple_header_file) -> None:
+        """The canonical spelling emits no deprecation warning."""
+        runner = CliRunner()
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", DeprecationWarning)
+            result = runner.invoke(cli, ["--allowlist", "foo.h", simple_header_file], catch_exceptions=False)
+        assert result.exit_code == 0
+
+    def test_quiet_suppresses_the_deprecation_warning(self, simple_header_file) -> None:
+        """--quiet silences the --whitelist deprecation without changing the output."""
+        runner = CliRunner()
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", DeprecationWarning)
+            quiet = runner.invoke(cli, ["--quiet", "-w", "foo.h", simple_header_file], catch_exceptions=False)
+        assert quiet.exit_code == 0
+        with pytest.warns(DeprecationWarning):
+            loud = runner.invoke(cli, ["-w", "foo.h", simple_header_file], catch_exceptions=False)
+        assert quiet.output == loud.output
+
+    def test_allowlist_and_whitelist_together_is_an_error(self, simple_header_file) -> None:
+        """Passing both spellings is an error rather than a silent precedence guess."""
+        runner = CliRunner()
+        result = runner.invoke(cli, ["--allowlist", "foo.h", "-w", "bar.h", simple_header_file])
+        assert result.exit_code == 1
+        assert "not both" in result.output
+
+
+@pytest.mark.libclang
+class TestTranslateAllowDenyApi:
+    """translate() mirrors the CLI's allow/deny behavior."""
+
+    def test_allowlist_narrows(self, allow_deny_header_dir) -> None:
+        outer = allow_deny_header_dir / "outer.h"
+        pxd = translate(outer.read_text(), str(outer), allowlist=["inner.h", "outer.h"])
+        assert "inner_fn" in pxd
+        assert "outer_fn" in pxd
+        assert "other_fn" not in pxd
+
+    def test_allowlist_glob_narrows(self, allow_deny_header_dir) -> None:
+        outer = allow_deny_header_dir / "outer.h"
+        pxd = translate(outer.read_text(), str(outer), allowlist=["o*.h"])
+        assert "outer_fn" in pxd
+        assert "other_fn" in pxd
+        assert "inner_fn" not in pxd
+
+    def test_denylist_excludes(self, allow_deny_header_dir) -> None:
+        outer = allow_deny_header_dir / "outer.h"
+        pxd = translate(outer.read_text(), str(outer), denylist=["inner.h"])
+        assert "inner_fn" not in pxd
+        assert "outer_fn" in pxd
+
+    def test_denylist_beats_allowlist(self, allow_deny_header_dir) -> None:
+        outer = allow_deny_header_dir / "outer.h"
+        pxd = translate(outer.read_text(), str(outer), allowlist=["*.h"], denylist=["inner.h"])
+        assert "inner_fn" not in pxd
+        assert "other_fn" in pxd
+        assert "outer_fn" in pxd
+
+    def test_whitelist_warns_and_forwards(self, allow_deny_header_dir) -> None:
+        outer = allow_deny_header_dir / "outer.h"
+        with pytest.warns(DeprecationWarning, match="allowlist"):
+            deprecated = translate(outer.read_text(), str(outer), whitelist=["inner.h", "outer.h"])
+        canonical = translate(outer.read_text(), str(outer), allowlist=["inner.h", "outer.h"])
+        assert deprecated == canonical
+
+    def test_allowlist_does_not_warn(self, allow_deny_header_dir) -> None:
+        outer = allow_deny_header_dir / "outer.h"
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", DeprecationWarning)
+            translate(outer.read_text(), str(outer), allowlist=["outer.h"])
+
+    def test_both_lists_is_an_error(self, allow_deny_header_dir) -> None:
+        outer = allow_deny_header_dir / "outer.h"
+        with pytest.raises(ValueError, match="not both"):
+            translate(outer.read_text(), str(outer), allowlist=["a.h"], whitelist=["b.h"])
+
+
 @pytest.mark.libclang
 class TestEndToEnd:
     """End-to-end CLI tests."""
@@ -381,17 +560,33 @@ def nested_header_dir():
 class TestProjectPrefixOption:
     """Tests for --project-prefix option."""
 
-    def test_project_prefix_pulls_in_included_header(self, nested_header_dir) -> None:
-        """A prefix covering the include dir should bring the included header's decls in."""
+    def test_included_header_needs_no_prefix_when_recursing(self, nested_header_dir) -> None:
+        """With recursion on (the default), a non-system included header contributes anyway.
+
+        --project-prefix now only reclassifies headers that live in system
+        locations; a sibling header in the input's own directory is already
+        treated as a project header, so the prefix neither adds nor removes
+        anything here -- it only reorders the emitted declarations.
+        """
         runner = CliRunner()
         outer = str(nested_header_dir / "outer.h")
         without = runner.invoke(cli, [outer])
         with_prefix = runner.invoke(cli, ["--project-prefix", str(nested_header_dir), outer])
         assert without.exit_code == 0
         assert with_prefix.exit_code == 0
-        assert "inner_fn" not in without.output
-        assert "inner_fn" in with_prefix.output
-        assert "outer_fn" in with_prefix.output
+        for output in (without.output, with_prefix.output):
+            assert "inner_fn" in output
+            assert "outer_fn" in output
+        assert sorted(without.output.split()) == sorted(with_prefix.output.split())
+
+    def test_no_recursive_drops_the_included_header(self, nested_header_dir) -> None:
+        """--no-recursive confines output to the input header's own declarations."""
+        runner = CliRunner()
+        outer = str(nested_header_dir / "outer.h")
+        result = runner.invoke(cli, ["--no-recursive", outer])
+        assert result.exit_code == 0
+        assert "outer_fn" in result.output
+        assert "inner_fn" not in result.output
 
     def test_project_prefix_short_form(self, nested_header_dir) -> None:
         """-P should behave identically to --project-prefix."""

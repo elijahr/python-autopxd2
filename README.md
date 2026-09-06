@@ -133,7 +133,10 @@ Options:
   --debug / --no-debug           Print debug info to stderr.
   -I, --include-dir <dir>        Add include search path.
   -D, --define <macro>           Define preprocessor macro.
-  -w, --whitelist <pattern>      Only emit from files matching pattern.
+  --allowlist <pattern>          Only emit declarations from files matching pattern.
+  --denylist <pattern>           Never emit declarations from files matching pattern.
+                                 Wins over --allowlist.
+  -w, --whitelist <pattern>      Deprecated alias for --allowlist.
   -x, --cpp                      Parse as C++.
   --std <std>                    Language standard (e.g., c11, c++17).
   --clang-arg <arg>              Pass argument to clang.
@@ -143,6 +146,11 @@ Options:
   --max-depth <n>                Max recursion depth for umbrella headers (default: 10).
   -h, --help                     Show this message and exit.
 ```
+
+By default, declarations from every non-system included header are emitted.
+`--no-recursive` confines the output to the input header's own declarations.
+`--allowlist` narrows the emitted set in either mode, and `--denylist` subtracts
+from it; a file matching both lists is excluded, because deny wins over allow.
 
 ## Automatic Imports
 

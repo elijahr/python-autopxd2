@@ -7,6 +7,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `--allowlist` is the canonical spelling of the header-filtering option, and
+  `--denylist` is its complement. Both are repeatable and take the same
+  patterns. A file matching both lists is excluded: deny wins over allow.
+  `--denylist` has no short flag, so `-w` remains unambiguous.
+- `translate()` gained `allowlist` and `denylist` keyword arguments.
+- `--max-depth` now warns when passed to a backend that does not follow
+  `#include` directives (currently tree-sitter), instead of being ignored
+  silently.
+
+### Changed
+- `--allowlist` and `--denylist` now apply to the input header's own
+  declarations, not only to the headers it includes. An allowlist that does not
+  name the input header drops that header's declarations.
+- `--max-depth` defaults to unset rather than `10`, so an explicitly supplied
+  value can be distinguished from the default. The effective default is
+  unchanged at `10`.
+- Requires `headerkit>=0.38.0`.
+
+### Deprecated
+- `--whitelist` / `-w` is deprecated in favor of `--allowlist`. It still works,
+  keeps its `-w` short flag, and behaves identically, but emits a
+  `DeprecationWarning`; `-q` / `--quiet` suppresses it. Passing both
+  `--allowlist` and `--whitelist` is an error rather than a silent precedence
+  guess. The same applies to `translate(whitelist=...)`, which warns and
+  forwards to `allowlist`, and raises `ValueError` when both are given.
+
+### Removed
+- The glob pre-expansion applied to whitelist patterns before handing them to
+  the backend. headerkit expands globs itself as of 0.38.0, so the workaround
+  no longer changed any result.
+
+### Documentation
+- Recursion semantics are now stated explicitly: with recursion on (the
+  default) and no allowlist, declarations from every non-system included header
+  are emitted; `--no-recursive` confines output to the input header; and an
+  allowlist narrows the emitted set in both modes.
+- `--no-recursive` no longer documents an umbrella-detection threshold. The
+  include-count/declaration-count heuristic was removed upstream: recursion is
+  controlled by the flag alone, and a header with one include is expanded
+  exactly like one with fifty.
+- `--max-depth` no longer claims per-level depth control or circular-include
+  protection. Any value of `1` or greater expands the whole tree; circular
+  includes are prevented by visited-file tracking.
+
 ## [4.0.0] - 2026-09-03
 
 ### Added

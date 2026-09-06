@@ -52,8 +52,14 @@ class TestOperatorAliasing:
         # Verify it's a method declaration with parameter
         assert 'T call "operator()"(int x)' in pxd
 
-    def test_operator_comma_skipped(self, libclang_backend):
-        """Test that operator, is skipped entirely."""
+    def test_operator_comma_not_silently_dropped(self, libclang_backend):
+        """``operator,`` must reach the output rather than vanishing.
+
+        It was previously dropped by a hardcoded unsupported-operator list, so a
+        member function disappeared with no diagnostic and the .pxd still
+        compiled. Cython 3.3 accepts ``operator,`` in a cppclass, so there is
+        nothing to protect against by dropping it.
+        """
         code = """
         class Foo {
         public:
@@ -64,8 +70,29 @@ class TestOperatorAliasing:
         header = libclang_backend.parse(code, "test.h", extra_args=["-x", "c++", "-std=c++11"])
         pxd = write_pxd(header)
 
-        # Should NOT contain operator, in any form
-        assert "operator," not in pxd
+        assert "operator," in pxd
+
+    def test_operator_comma_aliased(self, libclang_backend):
+        """``operator,`` is aliased so a .pyx can actually call it.
+
+        Cython has no syntax for a C++ comma operator, so the unaliased
+        declaration is inert: it cythonizes, compiles, links and imports, but
+        ``a.operator,(b)`` is rejected with "has no attribute 'operator'" and
+        ``a, b`` builds a tuple, emitting zero call sites. The same alias
+        mechanism that makes ``operator->`` and ``operator()`` reachable
+        applies here.
+        """
+        code = """
+        class Foo {
+        public:
+            void operator,(const Foo& other);
+        };
+        """
+
+        header = libclang_backend.parse(code, "test.h", extra_args=["-x", "c++", "-std=c++11"])
+        pxd = write_pxd(header)
+
+        assert 'comma "operator,"(' in pxd
 
     def test_supported_operators_unchanged(self, libclang_backend):
         """Test that supported operators are emitted normally."""
