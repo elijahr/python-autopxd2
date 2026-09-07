@@ -334,7 +334,18 @@ def validate_cython_compiles(
         python_ldflags = []
 
     # Compile
-    compiler = "c++" if cplus else "cc"
+    if sys.platform == "win32":
+        # headerkit parses with clang's default Windows target,
+        # x86_64-pc-windows-msvc. `cc` on Windows resolves to a MinGW driver,
+        # which predefines a different macro set than the parse saw, so
+        # declarations guarded by _MSC_VER come out undeclared. Compile with
+        # the toolchain that produced the IR.
+        compiler = "clang++" if cplus else "clang"
+        # -fPIC is meaningless on Windows and MSVC-target clang rejects it.
+        pic_flags: list[str] = []
+    else:
+        compiler = "c++" if cplus else "cc"
+        pic_flags = ["-fPIC"]
     c_ext = ".cpp" if cplus else ".c"
     c_file = tmp_path / f"test{c_ext}"
 
@@ -347,8 +358,8 @@ def validate_cython_compiles(
                 str(c_file),
                 "-o",
                 str(tmp_path / "test.o"),
-                "-fPIC",
             ]
+            + pic_flags
             + extra_include_flags
             + pkg_cflags
             + python_cflags
@@ -359,15 +370,15 @@ def validate_cython_compiles(
             print(f"C compilation STDOUT: {result.stdout}")
             result.check_returncode()
     else:
-        # Full compile to .so
-        so_file = tmp_path / "test.so"
+        # Full compile to an importable extension module
+        so_file = tmp_path / ("test.pyd" if sys.platform == "win32" else "test.so")
 
         # Use platform-appropriate linker flags
         if sys.platform == "darwin":
             # macOS requires -bundle for Python extensions
             linker_flags = ["-bundle", "-undefined", "dynamic_lookup"]
         else:
-            # Linux and other platforms use -shared
+            # Linux, Windows, and other platforms use -shared
             linker_flags = ["-shared"]
 
         cmd = (
@@ -375,8 +386,8 @@ def validate_cython_compiles(
                 compiler,
             ]
             + linker_flags
+            + pic_flags
             + [
-                "-fPIC",
                 str(c_file),
                 "-o",
                 str(so_file),

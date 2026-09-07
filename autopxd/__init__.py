@@ -40,6 +40,20 @@ def _normalize_for_match(path: str) -> str:
     return path.replace("\\", "/").lower()
 
 
+def _normalize_hdrname(hdrname: str) -> str:
+    """Make a header name safe to embed in the generated ``cdef extern from``.
+
+    The name lands inside a Cython string literal, where a backslash starts an
+    escape sequence: a Windows path such as ``C:\\Users\\...`` is rejected as an
+    invalid ``\\U`` escape. Forward slashes are valid in ``#include`` on every
+    Windows compiler, so convert there. On POSIX a backslash is a legal
+    filename character and is left alone.
+    """
+    if os.sep == "\\":
+        return hdrname.replace("\\", "/")
+    return hdrname
+
+
 def _list_search_dirs(hdrname: str, include_dirs: list[str] | None) -> list[str]:
     """Directories a relative allowlist/denylist pattern is resolved against, in priority order.
 
@@ -212,6 +226,8 @@ def translate(
     Returns:
         Cython .pxd file contents.
     """
+    hdrname = _normalize_hdrname(hdrname)
+
     if whitelist is not None:
         if allowlist is not None:
             raise ValueError(

@@ -366,6 +366,16 @@ class TestZlibHeader:
         found = expected & func_names
         assert len(found) > 0, f"Expected some of {expected}, found functions: {func_names}"
 
+    @pytest.mark.skipif(
+        sys.platform == "win32",
+        reason=(
+            "zlib.expected.pxd is recorded from a POSIX target. Under clang's "
+            "x86_64-pc-windows-msvc target zconf.h takes its _WIN32 branch, which "
+            "adds gzopen_w(const wchar_t*) and widens z_off_t to long long, so the "
+            "generated pxd legitimately differs. Only this golden comparison is "
+            "affected; the other zlib tests still run on Windows."
+        ),
+    )
     def test_pxd_matches_expected(self, zlib_header):
         """Verify generated pxd matches expected output.
 

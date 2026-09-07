@@ -109,7 +109,8 @@ typedef uint32_t my_int;
 void test(void);
 """
         header = backend.parse(code, "test.h", extra_args=system_args)
-        included_basenames = {h.split("/")[-1] for h in header.included_headers}
+        # libclang reports Windows paths with backslashes, so split on both separators.
+        included_basenames = {h.replace("\\", "/").split("/")[-1] for h in header.included_headers}
         assert "stdio.h" in included_basenames
         assert "stdlib.h" in included_basenames
         assert "string.h" in included_basenames

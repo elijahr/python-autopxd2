@@ -106,5 +106,27 @@ def test_cython_vs_cpp_header(file_path, tmp_path, backend):
     cythonize_one(str(src), str(dst), None, False, options=options)
 
 
+class TestHdrnameNormalization:
+    """The header name is embedded in a Cython string literal, so a Windows
+    path must not arrive with backslashes in it."""
+
+    def test_windows_separators_become_forward_slashes(self, monkeypatch):
+        monkeypatch.setattr(autopxd.os, "sep", "\\")
+        assert autopxd._normalize_hdrname(r"C:\Users\runner\main.h") == "C:/Users/runner/main.h"
+
+    def test_posix_backslash_is_a_filename_character(self, monkeypatch):
+        monkeypatch.setattr(autopxd.os, "sep", "/")
+        assert autopxd._normalize_hdrname(r"/tmp/odd\name.h") == r"/tmp/odd\name.h"
+
+    def test_generated_extern_line_has_no_backslash(self, monkeypatch, tmp_path):
+        """The whole point: the emitted pxd must be parseable by Cython."""
+        monkeypatch.setattr(autopxd.os, "sep", "\\")
+        header = tmp_path / "main.h"
+        header.write_text("typedef void* voidpf;\nvoidpf get_ptr(void);\n")
+        pxd = autopxd.translate(header.read_text(), str(header).replace("/", "\\"), backend="libclang")
+        extern_line = next(line for line in pxd.splitlines() if line.startswith("cdef extern from"))
+        assert "\\" not in extern_line
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

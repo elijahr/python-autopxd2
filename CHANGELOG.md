@@ -31,6 +31,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   pin because autopxd2 is a library: an exact pin would make it uninstallable
   alongside other headerkit consumers and would block patch-level fixes.
 
+### Fixed
+- Windows: a header given by absolute path produced an uncompilable `.pxd`. The
+  path is emitted inside a Cython string literal (`cdef extern from "..."`),
+  where a backslash starts an escape sequence, so `C:\Users\...` was rejected
+  as an invalid `\U` escape. Backslashes in the header name are now normalized
+  to forward slashes on Windows, which every Windows compiler accepts in
+  `#include`. POSIX paths are untouched, where a backslash is a legal filename
+  character.
+
 ### Deprecated
 - `--whitelist` / `-w` is deprecated in favor of `--allowlist`. It still works,
   keeps its `-w` short flag, and behaves identically, but emits a
