@@ -21,7 +21,7 @@ jobs:
             python-version: '3.14'
           - os: macos-latest
             python-version: '3.13'
-          # Windows has no system LLVM, so it covers the tree-sitter backend only.
+          # windows-latest ships LLVM/clang preinstalled, so it runs both backends.
           - os: windows-latest
             python-version: '3.13'
 
@@ -65,8 +65,32 @@ jobs:
         if: runner.os == 'macOS'
         run: ./scripts/install-test-libs-macos.sh
 
+      - name: Verify LLVM (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          # windows-latest preinstalls LLVM; verify rather than install it.
+          clang --version
+          which clang || true
+          ls -1 "/c/Program Files/LLVM/bin" | grep -i libclang || true
+
       - name: Install dependencies
         run: uv pip install --system -e '.[test,treesitter]'
+
+      - name: Verify libclang loads (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          # A clang.exe on PATH does not prove libclang.dll can be dlopen'd,
+          # which is what headerkit's vendored bindings actually need.
+          if python -c "import sys; from headerkit.backends import is_backend_available; sys.exit(0 if is_backend_available('libclang') else 1)"; then
+            echo "libclang backend available"
+          else
+            echo "Preinstalled LLVM is not loadable; falling back to headerkit.install_libclang"
+            python -m headerkit.install_libclang
+            python -c "import sys; from headerkit.backends import is_backend_available; sys.exit(0 if is_backend_available('libclang') else 1)"
+            echo "libclang backend available after install_libclang"
+          fi
 
       - name: Install numpy for test headers (Linux/macOS)
         if: runner.os != 'Windows'
@@ -76,7 +100,9 @@ jobs:
         if: runner.os != 'Windows'
         run: pytest ./test --require-all-libraries
 
-      # No system LLVM on the Windows runner: exclude the libclang parameterizations.
-      - name: Test (tree-sitter only)
+      # No install-test-libs script exists for Windows, so the real-header tests
+      # skip on missing system libraries instead of failing. Everything else,
+      # both backends included, runs in full.
+      - name: Test (real-header tests skip on missing libraries)
         if: runner.os == 'Windows'
-        run: pytest ./test -m "not libclang"
+        run: pytest ./test
