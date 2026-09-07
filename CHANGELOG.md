@@ -24,7 +24,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `--max-depth` defaults to unset rather than `10`, so an explicitly supplied
   value can be distinguished from the default. The effective default is
   unchanged at `10`.
-- Requires `headerkit>=0.38.0`.
+- Requires `headerkit>=0.38.0,<0.39`. The upper bound is deliberate: headerkit
+  shipped output-changing behavior and a parameter rename in the 0.38.0 minor
+  release, so an unbounded `>=` would let a future minor silently change the
+  `.pxd` files autopxd2 generates. The bound is a range rather than an exact
+  pin because autopxd2 is a library: an exact pin would make it uninstallable
+  alongside other headerkit consumers and would block patch-level fixes.
 
 ### Deprecated
 - `--whitelist` / `-w` is deprecated in favor of `--allowlist`. It still works,

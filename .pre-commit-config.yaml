@@ -23,7 +23,7 @@ repos:
         files: ^autopxd/
         additional_dependencies:
           - click
-          - headerkit>=0.38.0
+          - headerkit>=0.38.0,<0.39
 
   - repo: https://github.com/mgedmin/check-manifest
     rev: "0.51"

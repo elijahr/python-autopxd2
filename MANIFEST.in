@@ -18,6 +18,7 @@ graft scripts
 exclude .gitignore
 exclude .dockerignore
 exclude .pre-commit-config.yaml
+exclude uv.lock
 exclude Dockerfile
 exclude mkdocs.yml
 prune .github

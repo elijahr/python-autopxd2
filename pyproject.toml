@@ -32,14 +32,14 @@ classifiers = [
 requires-python = ">=3.10"
 dependencies = [
   "Click",
-  "headerkit>=0.38.0",
+  "headerkit>=0.38.0,<0.39",
 ]
 
 [project.optional-dependencies]
 # libclang backend (C++ support) - headerkit vendors clang bindings, kept for backwards compatibility
 libclang = []
 # tree-sitter backend - headerkit owns the tree-sitter dependency set
-treesitter = ["headerkit[treesitter]>=0.38.0"]
+treesitter = ["headerkit[treesitter]>=0.38.0,<0.39"]
 
 # Testing
 # tree-sitter is included so the default dev install exercises both backends
@@ -122,6 +122,7 @@ ignore = [
     ".gitignore",
     ".dockerignore",
     ".pre-commit-config.yaml",
+    "uv.lock",
     "Dockerfile",
     "mkdocs.yml",
     ".github/**",
