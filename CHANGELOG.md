@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Updated test snapshot fixtures (`issue_039_opaque_struct.test`, `keywords.test`, `array_dimensions.test`, `simple_c.expected.pxd`, and `json_lib.expected.pxd`) to reflect HeaderKit 0.46.1+ struct/variable ordering, `ctypedef struct` opaque struct typedef semantics, and topological dependency sort order.
+
 ## [4.0.0] - 2026-10-18
 
 ### Added
