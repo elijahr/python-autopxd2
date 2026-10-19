@@ -7,7 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.0.0] - 2026-10-18
+
 ### Added
+- Complete migration of AST, IR, and the Cython writer to `headerkit`.
 - `--allowlist` is the canonical spelling of the header-filtering option, and
   `--denylist` is its complement. Both are repeatable and take the same
   patterns. A file matching both lists is excluded: deny wins over allow.
@@ -16,17 +19,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `--max-depth` now warns when passed to a backend that does not follow
   `#include` directives (currently tree-sitter), instead of being ignored
   silently.
+- C++ class multiple inheritance rendering in Cython (`cdef cppclass Derived(Base1, Base2):`).
+- C++ constructor rendering in `cppclass` definitions.
+- C++ `@staticmethod` and `const` method qualifier support.
+- C++ generic function and method template support (`T max[T](T a, T b)`).
+- Macro constant expression evaluation support via HeaderKit.
+- Comprehensive tests for C++ class, template, and macro features.
+- Bundled Cython `.pxd` stubs delegated directly to `headerkit.stubs`.
+- Automatic C++ mode detection for C++ header file extensions (`.hpp`, `.hh`, `.hxx`, `.H`, `.tcc`, etc.) without requiring `--cpp`.
+- Automatic `stdin` piping support when running `cat header.h | autopxd` without requiring an explicit `-` argument.
+- **tree-sitter parser backend** - Parses C and C++ without a system LLVM install.
+  Install with `pip install "autopxd2[treesitter]"` and select with
+  `--backend tree-sitter`. It parses only the file it is given: it does not follow
+  `#include` directives, does not extract `#define` macros, and does not detect
+  system include paths.
+- `treesitter` packaging extra.
 
 ### Changed
 - Dropped Python 3.10 support; minimum supported Python version is now `>=3.11`.
+- `libclang` is now the default parser backend; `tree-sitter` is available as an
+  opt-in alternative.
+- `--backend auto` resolves to libclang when it is available, and otherwise to the
+  first available backend, instead of failing when libclang is missing.
+- Removed runtime dependency on `clang2` in favor of HeaderKit's vendored LLVM 18–23 bindings.
+- Updated `headerkit` dependency requirement to `>=0.38.0,<1.0.0` (widened from `<0.39` to support newer HeaderKit releases including 0.46.0).
 - `--allowlist` and `--denylist` now apply to the input header's own
   declarations, not only to the headers it includes. An allowlist that does not
   name the input header drops that header's declarations.
 - `--max-depth` defaults to unset rather than `10`, so an explicitly supplied
   value can be distinguished from the default. The effective default is
   unchanged at `10`.
-- Requires `headerkit>=0.38.0,<1.0.0`. Widened from `<0.39` to support newer
-  HeaderKit releases (including 0.46.0).
 
 ### Fixed
 - Windows MSVC compilation: in `test/test_real_headers.py`, `Python.h` smoke test
@@ -39,6 +61,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   to forward slashes on Windows, which every Windows compiler accepts in
   `#include`. POSIX paths are untouched, where a backslash is a legal filename
   character.
+- `--cpp` no longer rewrites the header name to `input.hpp` for a real file named
+  `input.h`; the rewrite now applies only to input read from stdin.
+- `--std` and `--clang-arg` now fail with an explicit error when the resolved backend
+  is not libclang, instead of being silently dropped.
 
 ### Deprecated
 - `--whitelist` / `-w` is deprecated in favor of `--allowlist`. It still works,
@@ -49,6 +75,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   forwards to `allowlist`, and raises `ValueError` when both are given.
 
 ### Removed
+- `pycparser` backend and all pycparser-specific code.
+- `pycparser` runtime dependency.
+- `--backend pycparser` CLI option.
+- `regenerate_stubs.py` script.
+- `stubs/include/` and `stubs/darwin-include/` directories (120+ pycparser fake headers).
+- **BREAKING: `autopxd.ir` and `autopxd.ir_writer`, which were public API, are gone.**
+  Import from headerkit instead: `autopxd.ir` -> `headerkit.ir`, and
+  `autopxd.ir_writer.write_pxd` -> `headerkit.writers.cython.write_pxd`.
+  `autopxd.translate` and the `autopxd` CLI are unchanged.
+- `autopxd.declarations`, `autopxd.cython_types`, and `autopxd.keywords` internal modules.
+- Fallback from libclang to pycparser behavior.
+- `test/test_ir.py` and `test/test_cython_types.py` (upstreamed to headerkit).
 - The glob pre-expansion applied to whitelist patterns before handing them to
   the backend. headerkit expands globs itself as of 0.38.0, so the workaround
   no longer changed any result.
@@ -65,57 +103,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `--max-depth` no longer claims per-level depth control or circular-include
   protection. Any value of `1` or greater expands the whole tree; circular
   includes are prevented by visited-file tracking.
-
-## [4.0.0] - 2026-09-03
-
-### Added
-- Complete migration of AST, IR, and the Cython writer to `headerkit`
-- C++ class multiple inheritance rendering in Cython (`cdef cppclass Derived(Base1, Base2):`)
-- C++ constructor rendering in `cppclass` definitions
-- C++ `@staticmethod` and `const` method qualifier support
-- C++ generic function and method template support (`T max[T](T a, T b)`)
-- Macro constant expression evaluation support via HeaderKit
-- Comprehensive tests for C++ class, template, and macro features
-- Bundled Cython `.pxd` stubs delegated directly to `headerkit.stubs`
-- Automatic C++ mode detection for C++ header file extensions (`.hpp`, `.hh`, `.hxx`, `.H`, `.tcc`, etc.) without requiring `--cpp`
-- Automatic `stdin` piping support when running `cat header.h | autopxd` without requiring an explicit `-` argument
-- **tree-sitter parser backend** - Parses C and C++ without a system LLVM install.
-  Install with `pip install "autopxd2[treesitter]"` and select with
-  `--backend tree-sitter`. It parses only the file it is given: it does not follow
-  `#include` directives, does not extract `#define` macros, and does not detect
-  system include paths.
-- `treesitter` packaging extra
-
-### Changed
-- `libclang` is now the default parser backend; `tree-sitter` is available as an
-  opt-in alternative
-- `--backend auto` resolves to libclang when it is available, and otherwise to the
-  first available backend, instead of failing when libclang is missing
-- Removed runtime dependency on `clang2` in favor of HeaderKit's vendored LLVM 18–23 bindings
-- Updated `headerkit` dependency requirement to `>=0.38.0`
-
-### Fixed
-- `--cpp` no longer rewrites the header name to `input.hpp` for a real file named
-  `input.h`; the rewrite now applies only to input read from stdin
-- `--std` and `--clang-arg` now fail with an explicit error when the resolved backend
-  is not libclang, instead of being silently dropped
-- `--whitelist` patterns are now resolved to concrete paths (relative to the parsed
-  file's directory, the include search path, and the working directory) before they
-  reach the backend, so glob patterns select declarations from included headers
-
-### Removed
-- `pycparser` backend and all pycparser-specific code
-- `pycparser` runtime dependency
-- `--backend pycparser` CLI option
-- `regenerate_stubs.py` script
-- `stubs/include/` and `stubs/darwin-include/` directories (120+ pycparser fake headers)
-- **BREAKING: `autopxd.ir` and `autopxd.ir_writer`, which were public API, are gone.**
-  Import from headerkit instead: `autopxd.ir` -> `headerkit.ir`, and
-  `autopxd.ir_writer.write_pxd` -> `headerkit.writers.cython.write_pxd`.
-  `autopxd.translate` and the `autopxd` CLI are unchanged.
-- `autopxd.declarations`, `autopxd.cython_types`, and `autopxd.keywords` internal modules
-- Fallback from libclang to pycparser behavior
-- `test/test_ir.py` and `test/test_cython_types.py` (upstreamed to headerkit)
 
 ## [3.2.3] - 2026-06-05
 
