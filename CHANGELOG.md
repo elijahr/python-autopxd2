@@ -7,8 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.0.1] - 2026-10-19
+
 ### Changed
-- Updated test snapshot fixtures (`issue_039_opaque_struct.test`, `keywords.test`, `array_dimensions.test`, `simple_c.expected.pxd`, and `json_lib.expected.pxd`) to reflect HeaderKit 0.46.1+ struct/variable ordering, `ctypedef struct` opaque struct typedef semantics, and topological dependency sort order.
+- Updated test snapshot fixtures (`issue_039_opaque_struct.test`, `keywords.test`, `array_dimensions.test`, `simple_c.expected.pxd`, and `json_lib.expected.pxd`) to reflect HeaderKit 0.46.2 struct/variable ordering, `ctypedef struct` opaque struct typedef semantics, and topological dependency sort order.
+- Bumped `headerkit` dependency requirement to `>=0.46.2,<1.0.0`.
 
 ## [4.0.0] - 2026-10-18
 
@@ -298,7 +301,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - macOS support
 
-[Unreleased]: https://github.com/elijahr/python-autopxd2/compare/v4.0.0...HEAD
+[Unreleased]: https://github.com/elijahr/python-autopxd2/compare/v4.0.1...HEAD
+[4.0.1]: https://github.com/elijahr/python-autopxd2/compare/v4.0.0...v4.0.1
 [4.0.0]: https://github.com/elijahr/python-autopxd2/compare/v3.2.3...v4.0.0
 [3.2.3]: https://github.com/elijahr/python-autopxd2/compare/v3.2.2...v3.2.3
 [3.2.2]: https://github.com/elijahr/python-autopxd2/compare/v3.2.1...v3.2.2
