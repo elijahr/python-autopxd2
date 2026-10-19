@@ -18,20 +18,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   silently.
 
 ### Changed
+- Dropped Python 3.10 support; minimum supported Python version is now `>=3.11`.
 - `--allowlist` and `--denylist` now apply to the input header's own
   declarations, not only to the headers it includes. An allowlist that does not
   name the input header drops that header's declarations.
 - `--max-depth` defaults to unset rather than `10`, so an explicitly supplied
   value can be distinguished from the default. The effective default is
   unchanged at `10`.
-- Requires `headerkit>=0.38.0,<0.39`. The upper bound is deliberate: headerkit
-  shipped output-changing behavior and a parameter rename in the 0.38.0 minor
-  release, so an unbounded `>=` would let a future minor silently change the
-  `.pxd` files autopxd2 generates. The bound is a range rather than an exact
-  pin because autopxd2 is a library: an exact pin would make it uninstallable
-  alongside other headerkit consumers and would block patch-level fixes.
+- Requires `headerkit>=0.38.0,<1.0.0`. Widened from `<0.39` to support newer
+  HeaderKit releases (including 0.46.0).
 
 ### Fixed
+- Windows MSVC compilation: in `test/test_real_headers.py`, `Python.h` smoke test
+  now uses an explicit C variable statement (`cdef PyObject* obj = NULL`) rather than
+  synthesized `sizeof(PyMODINIT_FUNC)`, which expanded to invalid C `sizeof(__declspec(dllexport) PyObject*)`.
 - Windows: a header given by absolute path produced an uncompilable `.pxd`. The
   path is emitted inside a Cython string literal (`cdef extern from "..."`),
   where a backslash starts an escape sequence, so `C:\Users\...` was rejected

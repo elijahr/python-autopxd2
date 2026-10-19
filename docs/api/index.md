@@ -2,7 +2,7 @@
 
 autopxd2's own Python API is small: a `translate()` function and a Click command.
 Everything else — the intermediate representation, the parser backends, and the
-Cython writer — lives in [`headerkit`](https://github.com/elijahr/headerkit), which
+Cython writer — lives in [`headerkit`](https://github.com/axiomantic/headerkit), which
 autopxd2 builds on. The pages below document the headerkit APIs that autopxd2 uses,
 so that callers of `translate()` can work with the objects it produces.
 
