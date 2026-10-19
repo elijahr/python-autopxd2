@@ -51,8 +51,6 @@ cdef extern from "keywords.test":
 
 
 
-    False_** lambda_ "lambda"
-
     cdef enum try_ "try":
         del_ "del"
         and_ "and"
@@ -60,8 +58,6 @@ cdef extern from "keywords.test":
     ctypedef enum with_ "with":
         ZERO
         ONE
-
-    False_ yield_ "yield"[1][0]
 
 
     cdef struct class_ "class":
@@ -73,6 +69,11 @@ cdef extern from "keywords.test":
         char ac
         char* or_ "or"[5]
         void (*import_ "import")(int yield_)
+
+
+    False_** lambda_ "lambda"
+
+    False_ yield_ "yield"[1][0]
 
 
     void True_ "True"(def_ from_)

@@ -29,6 +29,7 @@ cdef extern from "array_dimensions.test":
         TWO
         THREE
 
+
     char* my_ptr_array[]
 
     int my_array[5][6]

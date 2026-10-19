@@ -19,8 +19,6 @@ cdef extern from "simple_c.h":
         LOG_WARN
         LOG_ERROR
 
-    int global_debug_enabled
-
 
     cdef struct Point:
         int x
@@ -34,6 +32,9 @@ cdef extern from "simple_c.h":
         char* data
         unsigned int length
         unsigned int capacity
+
+
+    int global_debug_enabled
 
 
     Point point_create(int x, int y)
