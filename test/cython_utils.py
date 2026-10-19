@@ -147,8 +147,25 @@ def _derive_smoke_test_pyx(pxd_content: str, pxd_module: str, cplus: bool) -> st
             body.append(f"    _p = <void*>&{slot[owner]}.{field}")
     for name in dict.fromkeys(decls.enum_members):
         body.append(f"    _n += <long long>{name}")
+    c_helpers: list[str] = []
+    cy_externs: list[str] = []
     for name in dict.fromkeys(decls.functions):
-        body.append(f"    _p = <void*>&{name}")
+        if cplus:
+            body.append(f"    _p = <void*>&{name}")
+        else:
+            # In C, declarations may be macro functions (e.g. #define FOO(x)).
+            # In C, taking the address of a macro function (&FOO) fails with undeclared
+            # identifier. We use a C helper with #ifdef: if FOO is a macro, it is satisfied;
+            # if FOO is a real C function, it takes (void*)&FOO, ensuring the symbol exists.
+            c_helpers.append(f"""static inline void _touch_func_{name}(void **p) {{
+#ifdef {name}
+    (void)p;
+#else
+    *p = (void*)&{name};
+#endif
+}}""")
+            cy_externs.append(f"    void _touch_func_{name}(void **p)")
+            body.append(f"    _touch_func_{name}(&_p)")
     for name in dict.fromkeys(decls.variables):
         # sizeof rather than address-of: object-like macros are emitted as
         # plain variables in the pxd and have no address in C.
@@ -157,9 +174,20 @@ def _derive_smoke_test_pyx(pxd_content: str, pxd_module: str, cplus: bool) -> st
     body.append("    _n = _n")
 
     indented = "\n".join(body)
+    cdef_extern = ""
+    if c_helpers:
+        c_block = "\n".join(c_helpers)
+        cy_block = "\n".join(cy_externs)
+        cdef_extern = f"""cdef extern from *:
+    \"\"\"
+{c_block}
+    \"\"\"
+{cy_block}
+"""
+
     return f"""from {pxd_module} cimport *
 
-cdef void {_TOUCH_FUNC}() noexcept:
+{cdef_extern}cdef void {_TOUCH_FUNC}() noexcept:
 {indented}
 """
 

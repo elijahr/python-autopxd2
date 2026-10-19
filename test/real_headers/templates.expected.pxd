@@ -14,7 +14,7 @@ cdef extern from "templates.hpp":
         int special_value
         int get_special()
 
-    # NOTE: Template has non-type parameter 'N' (int). Cython does not support non-type template parameters. Use specific instantiations as needed.
+    # NOTE: Template has non-type parameter 'N' (int). Non-type template parameter may require explicit instantiation in foreign language bindings.
     cdef cppclass FixedArray[T]:
         T* data
         int size()

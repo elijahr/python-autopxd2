@@ -32,6 +32,8 @@ cdef extern from "json_lib.h":
         char text[160]
 
 
+    int JSON_INDENT(int n)
+
     const char* json_object_iter_key(void* iter)
 
     json_type json_typeof(const json_t* json)

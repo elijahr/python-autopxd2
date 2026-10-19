@@ -94,7 +94,17 @@ cdef extern from "zlib.h":
 
     int Z_NULL
 
-    int zlib_version
+    int deflateInit(int strm, int level)
+
+    int inflateInit(int strm)
+
+    int deflateInit2(int strm, int level, int method, int windowBits, int memLevel, int strategy)
+
+    int inflateInit2(int strm, int windowBits)
+
+    int inflateBackInit(int strm, int windowBits, int window)
+
+    int gzgetc(int g)
 
     ctypedef voidpf (*alloc_func)(voidpf opaque, uInt items, uInt size)
 
@@ -317,6 +327,8 @@ cdef extern from "zlib.h":
     int MAX_MEM_LEVEL
 
     int MAX_WBITS
+
+    int OF(int args)
 
     int SEEK_SET
 

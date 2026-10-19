@@ -15,13 +15,51 @@ cdef extern from "jansson.h":
 
     int JANSSON_THREAD_SAFE_REFCOUNT
 
+    int JANSSON_ATTRS(int x)
+
     const char* JSON_INTEGER_FORMAT
 
-    int json_auto_t
+    int json_typeof(int json)
+
+    int json_is_object(int json)
+
+    int json_is_array(int json)
+
+    int json_is_string(int json)
+
+    int json_is_integer(int json)
+
+    int json_is_real(int json)
+
+    int json_is_number(int json)
+
+    int json_is_true(int json)
+
+    int json_is_false(int json)
+
+    int json_is_boolean(int json)
+
+    int json_is_null(int json)
+
+    int json_boolean(int val)
+
+    int JSON_INTERNAL_INCREF(int json)
+
+    int JSON_INTERNAL_DECREF(int json)
 
     int JSON_ERROR_TEXT_LENGTH
 
     int JSON_ERROR_SOURCE_LENGTH
+
+    int json_object_foreach(int object, int key, int value)
+
+    int json_object_keylen_foreach(int object, int key, int key_len, int value)
+
+    int json_object_foreach_safe(int object, int n, int key, int value)
+
+    int json_object_keylen_foreach_safe(int object, int n, int key, int key_len, int value)
+
+    int json_array_foreach(int array, int index, int value)
 
     int JSON_VALIDATE_ONLY
 
@@ -39,6 +77,8 @@ cdef extern from "jansson.h":
 
     int JSON_MAX_INDENT
 
+    int JSON_INDENT(int n)
+
     int JSON_COMPACT
 
     int JSON_ENSURE_ASCII
@@ -50,6 +90,8 @@ cdef extern from "jansson.h":
     int JSON_ENCODE_ANY
 
     int JSON_ESCAPE_SLASH
+
+    int JSON_REAL_PRECISION(int n)
 
     int JSON_EMBED
 
