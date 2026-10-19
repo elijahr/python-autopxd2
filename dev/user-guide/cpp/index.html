@@ -16,14 +16,14 @@
         <link rel="prev" href="../backends/">
       
       
-        <link rel="next" href="../../api/">
+        <link rel="next" href="../../comparison/">
       
       
         
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -631,10 +631,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#classes" class="md-nav__link">
+  <a href="#classes-structs" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Classes
+        Classes &amp; Structs
       
     </span>
   </a>
@@ -642,10 +642,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#structs" class="md-nav__link">
+  <a href="#generic-function-method-templates" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Structs
+        Generic Function &amp; Method Templates
       
     </span>
   </a>
@@ -692,28 +692,6 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#methods" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Methods
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#templates" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Templates
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#overloading" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -755,6 +733,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../comparison/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Comparison
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -989,10 +995,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#classes" class="md-nav__link">
+  <a href="#classes-structs" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Classes
+        Classes &amp; Structs
       
     </span>
   </a>
@@ -1000,10 +1006,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#structs" class="md-nav__link">
+  <a href="#generic-function-method-templates" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Structs
+        Generic Function &amp; Method Templates
       
     </span>
   </a>
@@ -1048,28 +1054,6 @@
   
     <nav class="md-nav" aria-label="Limitations">
       <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#methods" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Methods
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#templates" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Templates
-      
-    </span>
-  </a>
-  
-</li>
         
           <li class="md-nav__item">
   <a href="#overloading" class="md-nav__link">
@@ -1130,61 +1114,102 @@
 
 
 <h1 id="c-support">C++ Support<a class="headerlink" href="#c-support" title="Permanent link">&para;</a></h1>
-<p>autopxd2 supports C++ headers through the libclang backend.</p>
-<div class="admonition important">
-<p class="admonition-title">Important</p>
-<p>C++ support requires the libclang backend. The default pycparser backend only supports C99.</p>
+<p>autopxd2 supports C++ headers through either parser backend.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The libclang backend (the default) and the tree-sitter backend both parse C++.
+See <a href="../backends/">Parser Backends</a> for the trade-offs.</p>
 </div>
 <h2 id="basic-c-usage">Basic C++ Usage<a class="headerlink" href="#basic-c-usage" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Use libclang for C++ headers</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>autopxd<span class="w"> </span>--backend<span class="w"> </span>libclang<span class="w"> </span>myclass.hpp<span class="w"> </span>&gt;<span class="w"> </span>myclass.pxd
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># C++ mode is auto-detected from .hpp/.hh/.hxx extensions</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>autopxd<span class="w"> </span>--cpp<span class="w"> </span>myclass.hpp<span class="w"> </span>&gt;<span class="w"> </span>myclass.pxd
 </code></pre></div>
 <p>Or with Docker:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>-v<span class="w"> </span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>:/work<span class="w"> </span>-w<span class="w"> </span>/work<span class="w"> </span>ghcr.io/elijahr/python-autopxd2<span class="w"> </span>autopxd<span class="w"> </span>myclass.hpp
 </code></pre></div>
 <h2 id="supported-c-features">Supported C++ Features<a class="headerlink" href="#supported-c-features" title="Permanent link">&para;</a></h2>
-<h3 id="classes">Classes<a class="headerlink" href="#classes" title="Permanent link">&para;</a></h3>
-<p>C++ classes are converted to Cython structs:</p>
+<h3 id="classes-structs">Classes &amp; Structs<a class="headerlink" href="#classes-structs" title="Permanent link">&para;</a></h3>
+<p>C++ classes and structs are converted to Cython <code>cppclass</code> definitions with support for multiple inheritance, constructors, <code>@staticmethod</code>, and <code>const</code> member methods.</p>
+<p>Destructors are not emitted: a Cython <code>cppclass</code> block does not declare them, and Cython calls the C++ destructor automatically for stack-allocated instances.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1">// widget.hpp</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">Widget</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">BaseWidget</span><span class="w"> </span><span class="p">{</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="k">public</span><span class="o">:</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">width</span><span class="p">;</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">height</span><span class="p">;</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="p">};</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span><span class="k">virtual</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="n">show</span><span class="p">();</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="p">};</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="k">class</span><span class="w"> </span><span class="nc">Widget</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="n">BaseWidget</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="k">public</span><span class="o">:</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">width</span><span class="p">;</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">height</span><span class="p">;</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="w">    </span><span class="n">Widget</span><span class="p">();</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="w">    </span><span class="n">Widget</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">w</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">h</span><span class="p">);</span>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="w">    </span><span class="k">virtual</span><span class="w"> </span><span class="o">~</span><span class="n">Widget</span><span class="p">();</span>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="nf">area</span><span class="p">()</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a><span class="w">    </span><span class="k">static</span><span class="w"> </span><span class="n">Widget</span><span class="w"> </span><span class="nf">create</span><span class="p">();</span>
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a><span class="p">};</span>
 </code></pre></div>
 <p>Generates:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">cdef</span><span class="w"> </span><span class="kr">extern</span> <span class="k">from</span> <span class="s">&quot;widget.hpp&quot;</span><span class="p">:</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">cdef</span><span class="w"> </span><span class="kr">extern</span> <span class="k">from</span> <span class="s">"widget.hpp"</span><span class="p">:</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="k">cdef</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">Widget</span><span class="p">:</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>        <span class="nb">int</span> <span class="n">width</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>        <span class="nb">int</span> <span class="n">height</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="k">cdef</span><span class="w"> </span><span class="k">cppclass</span><span class="w"> </span><span class="nc">BaseWidget</span><span class="p">:</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>        <span class="n">void</span> <span class="n">show</span><span class="p">()</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="k">cdef</span><span class="w"> </span><span class="k">cppclass</span><span class="w"> </span><span class="nc">Widget</span><span class="p">(</span><span class="n">BaseWidget</span><span class="p">):</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>        <span class="nb">int</span> <span class="n">width</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>        <span class="nb">int</span> <span class="n">height</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>        <span class="n">Widget</span><span class="p">()</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>        <span class="n">Widget</span><span class="p">(</span><span class="nb">int</span> <span class="n">w</span><span class="p">,</span> <span class="nb">int</span> <span class="n">h</span><span class="p">)</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>        <span class="nb">int</span> <span class="n">area</span><span class="p">()</span> <span class="n">const</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>        <span class="nd">@staticmethod</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>        <span class="n">Widget</span> <span class="n">create</span><span class="p">()</span>
 </code></pre></div>
-<h3 id="structs">Structs<a class="headerlink" href="#structs" title="Permanent link">&para;</a></h3>
-<p>C++ structs work the same as C:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">struct</span><span class="w"> </span><span class="nc">Point</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">    </span><span class="kt">double</span><span class="w"> </span><span class="n">x</span><span class="p">;</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="kt">double</span><span class="w"> </span><span class="n">y</span><span class="p">;</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="p">};</span>
+<h3 id="generic-function-method-templates">Generic Function &amp; Method Templates<a class="headerlink" href="#generic-function-method-templates" title="Permanent link">&para;</a></h3>
+<p>Generic C++ function and method templates are fully supported using Cython template brackets syntax:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">T</span><span class="o">&gt;</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">T</span><span class="w"> </span><span class="n">max_val</span><span class="p">(</span><span class="n">T</span><span class="w"> </span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">T</span><span class="w"> </span><span class="n">b</span><span class="p">);</span>
+</code></pre></div>
+<p>Generates:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">T</span> <span class="n">max_val</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="n">T</span> <span class="n">a</span><span class="p">,</span> <span class="n">T</span> <span class="n">b</span><span class="p">)</span>
 </code></pre></div>
 <h3 id="functions">Functions<a class="headerlink" href="#functions" title="Permanent link">&para;</a></h3>
 <p>Global functions are converted directly:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kt">double</span><span class="w"> </span><span class="nf">distance</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">Point</span><span class="o">&amp;</span><span class="w"> </span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">Point</span><span class="o">&amp;</span><span class="w"> </span><span class="n">b</span><span class="p">);</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kt">double</span><span class="w"> </span><span class="nf">distance</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">Point</span><span class="o">&amp;</span><span class="w"> </span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">Point</span><span class="o">&amp;</span><span class="w"> </span><span class="n">b</span><span class="p">);</span>
 </code></pre></div>
 <p>Generates:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nb">double</span> <span class="n">distance</span><span class="p">(</span><span class="n">const</span> <span class="n">Point</span> <span class="o">&amp;</span> <span class="n">a</span><span class="p">,</span> <span class="n">const</span> <span class="n">Point</span> <span class="o">&amp;</span> <span class="n">b</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nb">double</span> <span class="n">distance</span><span class="p">(</span><span class="n">const</span> <span class="n">Point</span><span class="o">&amp;</span> <span class="n">a</span><span class="p">,</span> <span class="n">const</span> <span class="n">Point</span><span class="o">&amp;</span> <span class="n">b</span><span class="p">)</span>
 </code></pre></div>
 <h3 id="namespaces">Namespaces<a class="headerlink" href="#namespaces" title="Permanent link">&para;</a></h3>
-<p>Currently, only top-level declarations are extracted. Namespaced declarations are not directly supported.</p>
+<p>Declarations inside a namespace are emitted in a dedicated <code>cdef extern from ... namespace</code> block:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1">// ns.hpp</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="k">namespace</span><span class="w"> </span><span class="nn">outer</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">    </span><span class="k">class</span><span class="w"> </span><span class="nc">Widget</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">    </span><span class="k">public</span><span class="o">:</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">        </span><span class="n">Widget</span><span class="p">();</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">        </span><span class="kt">int</span><span class="w"> </span><span class="nf">value</span><span class="p">()</span><span class="w"> </span><span class="k">const</span><span class="p">;</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="w">    </span><span class="p">};</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="nf">helper</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">x</span><span class="p">);</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="p">}</span>
+</code></pre></div>
+<p>Generates:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="k">cdef</span><span class="w"> </span><span class="kr">extern</span> <span class="k">from</span> <span class="s">"ns.hpp"</span> <span class="k">namespace</span> <span class="s">"outer"</span><span class="p">:</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>    <span class="k">cdef</span><span class="w"> </span><span class="k">cppclass</span><span class="w"> </span><span class="nc">Widget</span><span class="p">:</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>        <span class="n">Widget</span><span class="p">()</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>        <span class="nb">int</span> <span class="n">value</span><span class="p">()</span> <span class="n">const</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>    <span class="nb">int</span> <span class="n">helper</span><span class="p">(</span><span class="nb">int</span> <span class="n">x</span><span class="p">)</span>
+</code></pre></div>
+<p>Nested namespaces are joined with <code>::</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="k">namespace</span><span class="w"> </span><span class="nn">outer</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">namespace</span><span class="w"> </span><span class="nn">inner</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="nf">f</span><span class="p">(</span><span class="kt">int</span><span class="p">);</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
+</code></pre></div>
+<p>Generates:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="k">cdef</span><span class="w"> </span><span class="kr">extern</span> <span class="k">from</span> <span class="s">"nested.hpp"</span> <span class="k">namespace</span> <span class="s">"outer::inner"</span><span class="p">:</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>    <span class="nb">int</span> <span class="n">f</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+</code></pre></div>
 <h2 id="limitations">Limitations<a class="headerlink" href="#limitations" title="Permanent link">&para;</a></h2>
-<h3 id="methods">Methods<a class="headerlink" href="#methods" title="Permanent link">&para;</a></h3>
-<p>Class methods are not included in the generated <code>.pxd</code>. Only public data members are extracted.</p>
-<p>For full method support, you'll need to manually add method declarations or use Cython's <code>cppclass</code> syntax.</p>
-<h3 id="templates">Templates<a class="headerlink" href="#templates" title="Permanent link">&para;</a></h3>
-<p>Template classes are supported through the libclang backend, including primary templates
-and full specializations. See <a href="../backends/#c-template-support-libclang-only">C++ Template Support</a>
-for details.</p>
 <h3 id="overloading">Overloading<a class="headerlink" href="#overloading" title="Permanent link">&para;</a></h3>
-<p>Multiple overloaded functions with the same name may produce conflicts. You may need to manually select which overload to use.</p>
+<p>Multiple overloaded free functions with identical names may produce conflicts in C mode. In C++ mode (<code>--cpp</code>), Cython natively supports function overloading.</p>
 <h2 id="best-practices">Best Practices<a class="headerlink" href="#best-practices" title="Permanent link">&para;</a></h2>
 <ol>
 <li><strong>Use header-only libraries</strong> where possible for simpler integration</li>
@@ -1196,7 +1221,7 @@ for details.</p>
 <ol>
 <li>
 <p>Generate initial pxd:
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>autopxd<span class="w"> </span>--backend<span class="w"> </span>libclang<span class="w"> </span>mylib.hpp<span class="w"> </span>&gt;<span class="w"> </span>mylib.pxd
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>autopxd<span class="w"> </span>mylib.hpp<span class="w"> </span>&gt;<span class="w"> </span>mylib.pxd
 </code></pre></div></p>
 </li>
 <li>
@@ -1204,14 +1229,14 @@ for details.</p>
 </li>
 <li>
 <p>Create your Cython wrapper:
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c"># mylib.pyx</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="k">from</span><span class="w"> </span><span class="nn">mylib</span><span class="w"> </span><span class="k">cimport</span> <span class="n">Widget</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="k">def</span><span class="w"> </span><span class="nf">create_widget</span><span class="p">(</span><span class="n">width</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">height</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>    <span class="k">cdef</span><span class="w"> </span><span class="kt">Widget</span> <span class="nv">w</span>
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>    <span class="n">w</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="n">width</span>
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>    <span class="n">w</span><span class="o">.</span><span class="n">height</span> <span class="o">=</span> <span class="n">height</span>
-<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>    <span class="k">return</span> <span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="n">w</span><span class="o">.</span><span class="n">height</span><span class="p">)</span>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c"># mylib.pyx</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="k">from</span><span class="w"> </span><span class="nn">mylib</span><span class="w"> </span><span class="k">cimport</span> <span class="n">Widget</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="k">def</span><span class="w"> </span><span class="nf">create_widget</span><span class="p">(</span><span class="n">width</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">height</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>    <span class="k">cdef</span><span class="w"> </span><span class="kt">Widget</span> <span class="nv">w</span>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>    <span class="n">w</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="n">width</span>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>    <span class="n">w</span><span class="o">.</span><span class="n">height</span> <span class="o">=</span> <span class="n">height</span>
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>    <span class="k">return</span> <span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="n">w</span><span class="o">.</span><span class="n">height</span><span class="p">)</span>
 </code></pre></div></p>
 </li>
 </ol>
@@ -1273,7 +1298,7 @@ for details.</p>
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "navigation.top", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

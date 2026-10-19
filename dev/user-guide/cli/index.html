@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -663,10 +663,43 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#-w-whitelist-file" class="md-nav__link">
+  <a href="#-allowlist-pattern" class="md-nav__link">
     <span class="md-ellipsis">
       
-        -w, --whitelist &lt;file&gt;
+        --allowlist &lt;pattern&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-denylist-pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --denylist &lt;pattern&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-w-whitelist-pattern-deprecated" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -w, --whitelist &lt;pattern&gt; (deprecated)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#which-headers-contribute-declarations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Which headers contribute declarations
       
     </span>
   </a>
@@ -962,6 +995,34 @@
     
   
     C++ Support
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../comparison/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Comparison
   
 
     
@@ -1292,10 +1353,43 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#-w-whitelist-file" class="md-nav__link">
+  <a href="#-allowlist-pattern" class="md-nav__link">
     <span class="md-ellipsis">
       
-        -w, --whitelist &lt;file&gt;
+        --allowlist &lt;pattern&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-denylist-pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        --denylist &lt;pattern&gt;
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#-w-whitelist-pattern-deprecated" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        -w, --whitelist &lt;pattern&gt; (deprecated)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#which-headers-contribute-declarations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Which headers contribute declarations
       
     </span>
   </a>
@@ -1570,145 +1664,206 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>autopxd<span class="w"> </span>--version
 </code></pre></div>
 <h3 id="-b-backend-name"><code>-b, --backend &lt;name&gt;</code><a class="headerlink" href="#-b-backend-name" title="Permanent link">&para;</a></h3>
-<p>Select the parser backend. Options: <code>auto</code> (default), <code>libclang</code>, <code>pycparser</code>.</p>
+<p>Select the parser backend. Options: <code>auto</code> (default), <code>libclang</code>, <code>tree-sitter</code>.</p>
 <ul>
-<li><code>auto</code>: Use libclang if available, fall back to pycparser</li>
+<li><code>auto</code>: Use the default backend (libclang) when it is available, otherwise the
+  first available backend</li>
 <li><code>libclang</code>: Full C/C++ support via LLVM</li>
-<li><code>pycparser</code>: Legacy C99 parser (no C++ support)</li>
+<li><code>tree-sitter</code>: Fast C/C++ parsing without system LLVM dependencies
+  (requires <code>pip install "autopxd2[treesitter]"</code>)</li>
 </ul>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>autopxd<span class="w"> </span>--backend<span class="w"> </span>libclang<span class="w"> </span>myheader.hpp
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>autopxd<span class="w"> </span>-b<span class="w"> </span>pycparser<span class="w"> </span>myheader.h
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>autopxd<span class="w"> </span>--backend<span class="w"> </span>tree-sitter<span class="w"> </span>myheader.hpp
 </code></pre></div>
+<p>See <a href="../backends/">Parser Backends</a> for the differences between them.</p>
 <h3 id="-list-backends"><code>--list-backends</code><a class="headerlink" href="#-list-backends" title="Permanent link">&para;</a></h3>
 <p>Show available backends and exit.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>autopxd<span class="w"> </span>--list-backends
 </code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="gp">$ </span>autopxd<span class="w"> </span>--list-backends
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="go">Available backends:</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="go">  libclang     Full C/C++ support via LLVM [available] (default)</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="go">  tree-sitter  Fast C/C++ parsing without system LLVM dependencies [available]</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="go">Default: libclang</span>
+</code></pre></div>
 <h3 id="-json"><code>--json</code><a class="headerlink" href="#-json" title="Permanent link">&para;</a></h3>
 <p>Output in JSON format (for use with <code>--list-backends</code>).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>autopxd<span class="w"> </span>--list-backends<span class="w"> </span>--json
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>autopxd<span class="w"> </span>--list-backends<span class="w"> </span>--json
 </code></pre></div>
 <h3 id="-x-cpp"><code>-x, --cpp</code><a class="headerlink" href="#-x-cpp" title="Permanent link">&para;</a></h3>
 <p>Parse as C++ (requires libclang backend).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>autopxd<span class="w"> </span>--cpp<span class="w"> </span>myclass.hpp
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>autopxd<span class="w"> </span>--cpp<span class="w"> </span>myclass.hpp
 </code></pre></div>
 <h3 id="-std-standard"><code>--std &lt;standard&gt;</code><a class="headerlink" href="#-std-standard" title="Permanent link">&para;</a></h3>
 <p>Specify the language standard (requires libclang backend).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>autopxd<span class="w"> </span>--std<span class="w"> </span>c11<span class="w"> </span>myheader.h
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>autopxd<span class="w"> </span>--std<span class="w"> </span>c++17<span class="w"> </span>myclass.hpp
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>autopxd<span class="w"> </span>--std<span class="w"> </span>c11<span class="w"> </span>myheader.h
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>autopxd<span class="w"> </span>--std<span class="w"> </span>c++17<span class="w"> </span>myclass.hpp
 </code></pre></div>
 <h3 id="-i-include-dir-dir"><code>-I, --include-dir &lt;dir&gt;</code><a class="headerlink" href="#-i-include-dir-dir" title="Permanent link">&para;</a></h3>
 <p>Add a directory to the include search path. Can be specified multiple times.</p>
 <p><strong>Note:</strong> The libclang backend automatically detects system include paths (e.g., <code>/usr/include</code>), so you typically only need <code>-I</code> for project-specific directories.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>autopxd<span class="w"> </span>-I<span class="w"> </span>./include<span class="w"> </span>-I<span class="w"> </span>./third_party<span class="w"> </span>myheader.h
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>autopxd<span class="w"> </span>-I<span class="w"> </span>./include<span class="w"> </span>-I<span class="w"> </span>./third_party<span class="w"> </span>myheader.h
 </code></pre></div>
 <h3 id="-d-define-macro"><code>-D, --define &lt;macro&gt;</code><a class="headerlink" href="#-d-define-macro" title="Permanent link">&para;</a></h3>
 <p>Define a preprocessor macro. Can be specified multiple times.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>autopxd<span class="w"> </span>-D<span class="w"> </span>DEBUG<span class="w"> </span>-D<span class="w"> </span><span class="nv">VERSION</span><span class="o">=</span><span class="m">2</span><span class="w"> </span>myheader.h
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>autopxd<span class="w"> </span>-D<span class="w"> </span>DEBUG<span class="w"> </span>-D<span class="w"> </span><span class="nv">VERSION</span><span class="o">=</span><span class="m">2</span><span class="w"> </span>myheader.h
 </code></pre></div>
-<h3 id="-w-whitelist-file"><code>-w, --whitelist &lt;file&gt;</code><a class="headerlink" href="#-w-whitelist-file" title="Permanent link">&para;</a></h3>
-<p>Only generate declarations from specified files. Can be specified multiple times.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>autopxd<span class="w"> </span>-w<span class="w"> </span>main.h<span class="w"> </span>-w<span class="w"> </span>types.h<span class="w"> </span>combined.h
+<h3 id="-allowlist-pattern"><code>--allowlist &lt;pattern&gt;</code><a class="headerlink" href="#-allowlist-pattern" title="Permanent link">&para;</a></h3>
+<p>Only generate declarations from files matching the pattern. Can be specified multiple times.</p>
+<p>A pattern with no path separator is matched against each file's basename, so <code>types.h</code> and <code>*.h</code> work wherever the file lives. A pattern with a separator is matched against the full path; a relative one is resolved against the input header's own directory, then each <code>-I</code> directory, then the working directory. Glob metacharacters (<code>*</code>, <code>?</code>, <code>[</code>) are supported.</p>
+<p>The allowlist applies to the input header itself as well as to everything it includes, so an allowlist that does not name the input header drops that header's declarations too.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>autopxd<span class="w"> </span>--allowlist<span class="w"> </span>main.h<span class="w"> </span>--allowlist<span class="w"> </span>types.h<span class="w"> </span>combined.h
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>autopxd<span class="w"> </span>--allowlist<span class="w"> </span><span class="s1">'include/*.h'</span><span class="w"> </span>combined.h
 </code></pre></div>
+<h3 id="-denylist-pattern"><code>--denylist &lt;pattern&gt;</code><a class="headerlink" href="#-denylist-pattern" title="Permanent link">&para;</a></h3>
+<p>Never generate declarations from files matching the pattern. Can be specified multiple times. Same pattern syntax as <code>--allowlist</code>.</p>
+<p><strong>Deny wins over allow.</strong> A file matching both lists is excluded. This makes "everything under <code>include/</code>, except the private headers" expressible directly:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>autopxd<span class="w"> </span>--allowlist<span class="w"> </span><span class="s1">'include/*.h'</span><span class="w"> </span>--denylist<span class="w"> </span><span class="s1">'include/*_internal.h'</span><span class="w"> </span>combined.h
+</code></pre></div>
+<p><code>--denylist</code> deliberately has no short flag, so <code>-w</code> stays unambiguous while <code>--whitelist</code> is being retired.</p>
+<h3 id="-w-whitelist-pattern-deprecated"><code>-w, --whitelist &lt;pattern&gt;</code> (deprecated)<a class="headerlink" href="#-w-whitelist-pattern-deprecated" title="Permanent link">&para;</a></h3>
+<p>Deprecated alias for <code>--allowlist</code>, retained with its <code>-w</code> short flag. It still works and behaves identically, but emits a <code>DeprecationWarning</code> naming <code>--allowlist</code> as the replacement. Use <code>-q</code> / <code>--quiet</code> to silence that warning.</p>
+<p>Passing both <code>--allowlist</code> and <code>--whitelist</code> is an error rather than a silent precedence guess.</p>
+<h3 id="which-headers-contribute-declarations">Which headers contribute declarations<a class="headerlink" href="#which-headers-contribute-declarations" title="Permanent link">&para;</a></h3>
+<p>With recursion on — the default — declarations from <strong>every non-system included header</strong> are emitted, not just those of the input header. <code>--no-recursive</code> confines the output to the input header's own declarations.</p>
+<p>An allowlist narrows that set in <strong>both</strong> recursion modes. Combined:</p>
+<table>
+<thead>
+<tr>
+<th>Options</th>
+<th>Declarations emitted</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><em>(default)</em></td>
+<td>The input header, plus every non-system header it includes</td>
+</tr>
+<tr>
+<td><code>--no-recursive</code></td>
+<td>The input header only</td>
+</tr>
+<tr>
+<td><code>--allowlist P</code></td>
+<td>Of the above set, only files matching <code>P</code></td>
+</tr>
+<tr>
+<td><code>--denylist P</code></td>
+<td>Of the above set, minus files matching <code>P</code></td>
+</tr>
+<tr>
+<td><code>--allowlist P --denylist Q</code></td>
+<td>Files matching <code>P</code> and not matching <code>Q</code></td>
+</tr>
+</tbody>
+</table>
 <h3 id="-clang-arg-arg-libclang"><code>--clang-arg &lt;arg&gt;</code> [libclang]<a class="headerlink" href="#-clang-arg-arg-libclang" title="Permanent link">&para;</a></h3>
 <p>Pass an argument directly to libclang. Can be specified multiple times.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>autopxd<span class="w"> </span>--clang-arg<span class="w"> </span>-DFOO<span class="w"> </span>--clang-arg<span class="w"> </span>-I/custom/include<span class="w"> </span>myheader.h
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>autopxd<span class="w"> </span>--clang-arg<span class="w"> </span>-DFOO<span class="w"> </span>--clang-arg<span class="w"> </span>-I/custom/include<span class="w"> </span>myheader.h
 </code></pre></div>
 <h3 id="-no-default-includes-libclang"><code>--no-default-includes</code> [libclang]<a class="headerlink" href="#-no-default-includes-libclang" title="Permanent link">&para;</a></h3>
 <p>Disable automatic detection of system include directories. By default, the libclang backend queries the system clang compiler to find standard include paths. Use this option if you need full control over include paths.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># Disable auto-detection and specify all paths manually</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>autopxd<span class="w"> </span>--no-default-includes<span class="w"> </span>-I<span class="w"> </span>/my/custom/sysroot/include<span class="w"> </span>myheader.h
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># Disable auto-detection and specify all paths manually</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>autopxd<span class="w"> </span>--no-default-includes<span class="w"> </span>-I<span class="w"> </span>/my/custom/sysroot/include<span class="w"> </span>myheader.h
 </code></pre></div>
 <h3 id="-p-project-prefix-path-libclang"><code>-P, --project-prefix &lt;path&gt;</code> [libclang]<a class="headerlink" href="#-p-project-prefix-path-libclang" title="Permanent link">&para;</a></h3>
 <p>Treat headers under the specified path as project headers rather than system headers. This is essential for umbrella headers—headers that include many sub-headers but have few declarations of their own (like <code>sodium.h</code>, <code>openssl/ssl.h</code>).</p>
-<p>Without this option, declarations from sub-headers in system locations (e.g., <code>/usr/include</code>, <code>/opt/homebrew/include</code>) are filtered out. The <code>--project-prefix</code> option whitelists paths so their declarations are included.</p>
+<p>Without this option, declarations from sub-headers in system locations (e.g., <code>/usr/include</code>, <code>/opt/homebrew/include</code>) are filtered out. The <code>--project-prefix</code> option marks paths as project headers so their declarations are included.</p>
 <p>Can be specified multiple times for multiple prefixes.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># Include declarations from all sodium/*.h sub-headers</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>autopxd<span class="w"> </span>-I<span class="w"> </span>/opt/homebrew/include<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">    </span>--project-prefix<span class="w"> </span>/opt/homebrew/include/sodium<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="w">    </span>/opt/homebrew/include/sodium.h
-<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>
-<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="c1"># Multiple prefixes</span>
-<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>autopxd<span class="w"> </span>-I<span class="w"> </span>/usr/include<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="w">    </span>-P<span class="w"> </span>/usr/include/openssl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a><span class="w">    </span>-P<span class="w"> </span>/usr/include/crypto<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a><span class="w">    </span>/usr/include/openssl/ssl.h
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># Include declarations from all sodium/*.h sub-headers</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>autopxd<span class="w"> </span>-I<span class="w"> </span>/opt/homebrew/include<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">    </span>--project-prefix<span class="w"> </span>/opt/homebrew/include/sodium<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="w">    </span>/opt/homebrew/include/sodium.h
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="c1"># Multiple prefixes</span>
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>autopxd<span class="w"> </span>-I<span class="w"> </span>/usr/include<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a><span class="w">    </span>-P<span class="w"> </span>/usr/include/openssl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a><span class="w">    </span>-P<span class="w"> </span>/usr/include/crypto<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a><span class="w">    </span>/usr/include/openssl/ssl.h
 </code></pre></div>
 <h3 id="-no-recursive-libclang"><code>--no-recursive</code> [libclang]<a class="headerlink" href="#-no-recursive-libclang" title="Permanent link">&para;</a></h3>
-<p>Disable recursive parsing of umbrella headers. By default, when an umbrella header is detected, autopxd recursively parses included project headers to collect all declarations. Use this option to only parse the top-level header.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>autopxd<span class="w"> </span>--no-recursive<span class="w"> </span>-P<span class="w"> </span>/opt/homebrew/include/sodium<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">    </span>/opt/homebrew/include/sodium.h
+<p>Confine the output to the input header's own declarations. By default autopxd parses every non-system header the input includes and emits their declarations too.</p>
+<p>Recursion is controlled by this flag alone. There is no include-count or declaration-count heuristic: a header with a single include is expanded exactly like one with fifty. To keep recursion on but restrict which of the reached headers contribute, use <code>--allowlist</code> or <code>--denylist</code> instead.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>autopxd<span class="w"> </span>--no-recursive<span class="w"> </span>-P<span class="w"> </span>/opt/homebrew/include/sodium<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="w">    </span>/opt/homebrew/include/sodium.h
 </code></pre></div>
 <h3 id="-max-depth-n-libclang"><code>--max-depth &lt;n&gt;</code> [libclang]<a class="headerlink" href="#-max-depth-n-libclang" title="Permanent link">&para;</a></h3>
-<p>Set the maximum recursion depth for umbrella header processing (default: 10). This prevents infinite recursion in cases of circular includes.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>autopxd<span class="w"> </span>--max-depth<span class="w"> </span><span class="m">5</span><span class="w"> </span>-P<span class="w"> </span>/opt/homebrew/include/sodium<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">    </span>/opt/homebrew/include/sodium.h
+<p>Limit recursion depth for umbrella header processing (default: 10). <code>0</code> disables umbrella expansion entirely, equivalent to <code>--no-recursive</code>.</p>
+<p>Values of <code>1</code> or greater currently all behave the same: each included header is parsed as its own translation unit, so the compiler has already flattened that header's own includes before the recursion descends a level. Circular includes are prevented by tracking visited files, not by this limit.</p>
+<p>Only the libclang backend follows <code>#include</code> directives. Passing this option to another backend emits a warning, since it cannot be honored.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>autopxd<span class="w"> </span>--max-depth<span class="w"> </span><span class="m">0</span><span class="w"> </span>-P<span class="w"> </span>/opt/homebrew/include/sodium<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="w">    </span>/opt/homebrew/include/sodium.h
 </code></pre></div>
 <h3 id="-q-quiet"><code>-q, --quiet</code><a class="headerlink" href="#-q-quiet" title="Permanent link">&para;</a></h3>
-<p>Suppress warnings (e.g., backend fallback warnings).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>autopxd<span class="w"> </span>-q<span class="w"> </span>myheader.h
+<p>Suppress warnings.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>autopxd<span class="w"> </span>-q<span class="w"> </span>myheader.h
 </code></pre></div>
 <h3 id="-debug-no-debug"><code>--debug / --no-debug</code><a class="headerlink" href="#-debug-no-debug" title="Permanent link">&para;</a></h3>
 <p>Dump preprocessor output to stderr for debugging.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>autopxd<span class="w"> </span>--debug<span class="w"> </span>myheader.h<span class="w"> </span><span class="m">2</span>&gt;preprocessed.txt
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>autopxd<span class="w"> </span>--debug<span class="w"> </span>myheader.h<span class="w"> </span><span class="m">2</span>&gt;preprocessed.txt
 </code></pre></div>
 <h3 id="-h-help"><code>-h, --help</code><a class="headerlink" href="#-h-help" title="Permanent link">&para;</a></h3>
 <p>Show help message and exit.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>autopxd<span class="w"> </span>--help
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>autopxd<span class="w"> </span>--help
 </code></pre></div>
 <h2 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">&para;</a></h2>
 <h3 id="generate-pxd-from-a-header">Generate pxd from a header<a class="headerlink" href="#generate-pxd-from-a-header" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>autopxd<span class="w"> </span>myheader.h<span class="w"> </span>myheader.pxd
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>autopxd<span class="w"> </span>myheader.h<span class="w"> </span>myheader.pxd
 </code></pre></div>
 <h3 id="with-include-directories">With include directories<a class="headerlink" href="#with-include-directories" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>autopxd<span class="w"> </span>-I<span class="w"> </span>/opt/local/include<span class="w"> </span>-I<span class="w"> </span>./third_party<span class="w"> </span>mylib.h<span class="w"> </span>mylib.pxd
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>autopxd<span class="w"> </span>-I<span class="w"> </span>/opt/local/include<span class="w"> </span>-I<span class="w"> </span>./third_party<span class="w"> </span>mylib.h<span class="w"> </span>mylib.pxd
 </code></pre></div>
 <h3 id="using-libclang-for-c">Using libclang for C++<a class="headerlink" href="#using-libclang-for-c" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>autopxd<span class="w"> </span>--backend<span class="w"> </span>libclang<span class="w"> </span>--cpp<span class="w"> </span>myclass.hpp<span class="w"> </span>myclass.pxd
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>autopxd<span class="w"> </span>--backend<span class="w"> </span>libclang<span class="w"> </span>--cpp<span class="w"> </span>myclass.hpp<span class="w"> </span>myclass.pxd
 </code></pre></div>
 <h3 id="using-c17-standard">Using C++17 standard<a class="headerlink" href="#using-c17-standard" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>autopxd<span class="w"> </span>-x<span class="w"> </span>--std<span class="w"> </span>c++17<span class="w"> </span>modern.hpp<span class="w"> </span>modern.pxd
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>autopxd<span class="w"> </span>-x<span class="w"> </span>--std<span class="w"> </span>c++17<span class="w"> </span>modern.hpp<span class="w"> </span>modern.pxd
 </code></pre></div>
 <h3 id="working-with-umbrella-headers">Working with umbrella headers<a class="headerlink" href="#working-with-umbrella-headers" title="Permanent link">&para;</a></h3>
 <p>Umbrella headers like <code>sodium.h</code> include many sub-headers but define few declarations themselves. Use <code>--project-prefix</code> to include declarations from sub-headers:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1"># Generate bindings for libsodium (installed via homebrew)</span>
-<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>autopxd<span class="w"> </span>-I<span class="w"> </span>/opt/homebrew/include<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="w">    </span>-P<span class="w"> </span>/opt/homebrew/include/sodium<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="w">    </span>/opt/homebrew/include/sodium.h<span class="w"> </span>sodium.pxd
-<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>
-<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a><span class="c1"># Generate bindings for OpenSSL</span>
-<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a>autopxd<span class="w"> </span>-I<span class="w"> </span>/usr/include<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a><span class="w">    </span>-P<span class="w"> </span>/usr/include/openssl<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a><span class="w">    </span>/usr/include/openssl/ssl.h<span class="w"> </span>ssl.pxd
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="c1"># Generate bindings for libsodium (installed via homebrew)</span>
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>autopxd<span class="w"> </span>-I<span class="w"> </span>/opt/homebrew/include<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a><span class="w">    </span>-P<span class="w"> </span>/opt/homebrew/include/sodium<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="w">    </span>/opt/homebrew/include/sodium.h<span class="w"> </span>sodium.pxd
+<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a>
+<a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a><span class="c1"># Generate bindings for OpenSSL</span>
+<a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a>autopxd<span class="w"> </span>-I<span class="w"> </span>/usr/include<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a><span class="w">    </span>-P<span class="w"> </span>/usr/include/openssl<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-24-9" name="__codelineno-24-9" href="#__codelineno-24-9"></a><span class="w">    </span>/usr/include/openssl/ssl.h<span class="w"> </span>ssl.pxd
 </code></pre></div>
 <h3 id="check-available-backends">Check available backends<a class="headerlink" href="#check-available-backends" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>autopxd<span class="w"> </span>--list-backends
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>autopxd<span class="w"> </span>--list-backends
 </code></pre></div>
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
 <h3 id="libclang-not-available">libclang not available<a class="headerlink" href="#libclang-not-available" title="Permanent link">&para;</a></h3>
-<p>If you see "libclang not available, falling back to pycparser", install the system libclang library:</p>
+<p>If you see "libclang backend not available", install libclang:</p>
+<p><strong>Using headerkit:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>python<span class="w"> </span>-m<span class="w"> </span>headerkit.install_libclang
+</code></pre></div></p>
 <p><strong>Ubuntu/Debian:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>apt<span class="w"> </span>install<span class="w"> </span>libclang-dev
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>apt<span class="w"> </span>install<span class="w"> </span>libclang-dev
 </code></pre></div></p>
 <p><strong>macOS:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>brew<span class="w"> </span>install<span class="w"> </span>llvm
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>brew<span class="w"> </span>install<span class="w"> </span>llvm
 </code></pre></div></p>
 <p><strong>Or use Docker:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>-v<span class="w"> </span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>:/work<span class="w"> </span>-w<span class="w"> </span>/work<span class="w"> </span>ghcr.io/elijahr/python-autopxd2<span class="w"> </span>autopxd<span class="w"> </span>myheader.h
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>-v<span class="w"> </span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>:/work<span class="w"> </span>-w<span class="w"> </span>/work<span class="w"> </span>ghcr.io/elijahr/python-autopxd2<span class="w"> </span>autopxd<span class="w"> </span>myheader.h
 </code></pre></div></p>
 <h3 id="c-parsing-fails">C++ parsing fails<a class="headerlink" href="#c-parsing-fails" title="Permanent link">&para;</a></h3>
 <p>Make sure you're using the libclang backend:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>autopxd<span class="w"> </span>--backend<span class="w"> </span>libclang<span class="w"> </span>--cpp<span class="w"> </span>myheader.hpp
+<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>autopxd<span class="w"> </span>--backend<span class="w"> </span>libclang<span class="w"> </span>--cpp<span class="w"> </span>myheader.hpp
 </code></pre></div>
 <h3 id="empty-output-from-umbrella-headers">Empty output from umbrella headers<a class="headerlink" href="#empty-output-from-umbrella-headers" title="Permanent link">&para;</a></h3>
-<p>If you're parsing an umbrella header (like <code>sodium.h</code>) and getting empty or minimal output, the sub-headers are probably in a system location. Use <code>--project-prefix</code> to whitelist them:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="c1"># Find where the library headers are installed</span>
-<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>pkg-config<span class="w"> </span>--cflags<span class="w"> </span>libsodium
-<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a><span class="c1"># Output: -I/opt/homebrew/include</span>
-<a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a>
-<a id="__codelineno-28-5" name="__codelineno-28-5" href="#__codelineno-28-5"></a><span class="c1"># Use --project-prefix with the sub-header directory</span>
-<a id="__codelineno-28-6" name="__codelineno-28-6" href="#__codelineno-28-6"></a>autopxd<span class="w"> </span>-I<span class="w"> </span>/opt/homebrew/include<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-28-7" name="__codelineno-28-7" href="#__codelineno-28-7"></a><span class="w">    </span>-P<span class="w"> </span>/opt/homebrew/include/sodium<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-28-8" name="__codelineno-28-8" href="#__codelineno-28-8"></a><span class="w">    </span>/opt/homebrew/include/sodium.h
+<p>If you're parsing an umbrella header (like <code>sodium.h</code>) and getting empty or minimal output, the sub-headers are probably in a system location. Use <code>--project-prefix</code> to mark them as project headers:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a><span class="c1"># Find where the library headers are installed</span>
+<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a>pkg-config<span class="w"> </span>--cflags<span class="w"> </span>libsodium
+<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a><span class="c1"># Output: -I/opt/homebrew/include</span>
+<a id="__codelineno-31-4" name="__codelineno-31-4" href="#__codelineno-31-4"></a>
+<a id="__codelineno-31-5" name="__codelineno-31-5" href="#__codelineno-31-5"></a><span class="c1"># Use --project-prefix with the sub-header directory</span>
+<a id="__codelineno-31-6" name="__codelineno-31-6" href="#__codelineno-31-6"></a>autopxd<span class="w"> </span>-I<span class="w"> </span>/opt/homebrew/include<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-31-7" name="__codelineno-31-7" href="#__codelineno-31-7"></a><span class="w">    </span>-P<span class="w"> </span>/opt/homebrew/include/sodium<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-31-8" name="__codelineno-31-8" href="#__codelineno-31-8"></a><span class="w">    </span>/opt/homebrew/include/sodium.h
 </code></pre></div>
 <p>You can verify the prefix is working by using <code>--debug</code> to see which declarations are being found.</p>
 <h2 id="exit-codes">Exit Codes<a class="headerlink" href="#exit-codes" title="Permanent link">&para;</a></h2>
@@ -1792,7 +1947,7 @@
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "navigation.top", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>
