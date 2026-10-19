@@ -42,7 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `--backend auto` resolves to libclang when it is available, and otherwise to the
   first available backend, instead of failing when libclang is missing.
 - Removed runtime dependency on `clang2` in favor of HeaderKit's vendored LLVM 18–23 bindings.
-- Updated `headerkit` dependency requirement to `>=0.38.0,<1.0.0` (widened from `<0.39` to support newer HeaderKit releases including 0.46.0).
+- Updated `headerkit` dependency requirement to `>=0.46.0,<1.0.0` (supports HeaderKit 0.46.0+).
 - `--allowlist` and `--denylist` now apply to the input header's own
   declarations, not only to the headers it includes. An allowlist that does not
   name the input header drops that header's declarations.
@@ -51,9 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   unchanged at `10`.
 
 ### Fixed
-- Windows MSVC compilation: in `test/test_real_headers.py`, `Python.h` smoke test
-  now uses an explicit C variable statement (`cdef PyObject* obj = NULL`) rather than
-  synthesized `sizeof(PyMODINIT_FUNC)`, which expanded to invalid C `sizeof(__declspec(dllexport) PyObject*)`.
+- Real headers test: `Python.h` umbrella header configured as `pxd_only` to reflect that sub-headers in system include paths are skipped and standalone Cython compilation cannot resolve internal CPython types without runtime definitions.
 - Windows: a header given by absolute path produced an uncompilable `.pxd`. The
   path is emitted inside a Cython string literal (`cdef extern from "..."`),
   where a backslash starts an escape sequence, so `C:\Users\...` was rejected
