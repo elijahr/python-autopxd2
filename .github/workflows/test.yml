@@ -14,16 +14,18 @@ jobs:
         include:
           # Floor of requires-python, plus the current and next releases.
           - os: ubuntu-latest
-            python-version: '3.10'
+            python-version: '3.11'
+          - os: ubuntu-latest
+            python-version: '3.12'
           - os: ubuntu-latest
             python-version: '3.13'
           - os: ubuntu-latest
             python-version: '3.14'
           - os: macos-latest
-            python-version: '3.13'
+            python-version: '3.14'
           # windows-latest ships LLVM/clang preinstalled, so it runs both backends.
           - os: windows-latest
-            python-version: '3.13'
+            python-version: '3.14'
 
     steps:
       - uses: actions/checkout@v4
