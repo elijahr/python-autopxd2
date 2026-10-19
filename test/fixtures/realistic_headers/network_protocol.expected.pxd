@@ -1,5 +1,17 @@
 cdef extern from "network_protocol.h":
 
+    int PROTOCOL_VERSION_MAJOR
+
+    int PROTOCOL_VERSION_MINOR
+
+    int MSG_FLAG_ENCRYPTED
+
+    int MSG_FLAG_COMPRESSED
+
+    int MSG_FLAG_FRAGMENTED
+
+    int MSG_FLAG_LAST_FRAGMENT
+
     ctypedef unsigned char net_uint8_t
 
     ctypedef unsigned short net_uint16_t

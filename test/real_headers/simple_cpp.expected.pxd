@@ -1,3 +1,5 @@
+from libcpp cimport bool
+
 cdef extern from "simple_cpp.hpp":
 
     cdef struct Point:
@@ -8,6 +10,6 @@ cdef extern from "simple_cpp.hpp":
         int width
         int height
         void resize(int w, int h)
-        bool isValid()
+        bool isValid() const
 
-    int computeDistance(const Point & a, const Point & b)
+    int computeDistance(const Point& a, const Point& b)

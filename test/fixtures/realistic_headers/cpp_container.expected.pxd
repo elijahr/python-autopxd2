@@ -1,3 +1,5 @@
+from libcpp cimport bool
+
 cdef extern from "cpp_container.hpp":
 
     cdef struct Point:
@@ -7,22 +9,24 @@ cdef extern from "cpp_container.hpp":
     cdef cppclass Vector2D:
         double x
         double y
-        double magnitude()
+        double magnitude() const
         void normalize()
-        Vector2D operator+(const Vector2D & other)
-        Vector2D operator-(const Vector2D & other)
-        double dot(const Vector2D & other)
+        Vector2D operator+(const Vector2D& other) const
+        Vector2D operator-(const Vector2D& other) const
+        double dot(const Vector2D& other) const
 
     cdef cppclass Rectangle:
         Point origin
         int width
         int height
-        int area()
-        bool contains(const Point & p)
-        bool intersects(const Rectangle & other)
+        int area() const
+        bool contains(const Point& p) const
+        bool intersects(const Rectangle& other) const
 
     Vector2D make_vector(double x, double y)
 
     Rectangle make_rectangle(int x, int y, int w, int h)
 
-    double distance(const Point & a, const Point & b)
+    double distance(const Point& a, const Point& b)
+
+    double distance(const Vector2D& a, const Vector2D& b)

@@ -1,14 +1,35 @@
 # Parser Backends
 
-autopxd2 supports two parser backends. **libclang is strongly recommended** for all use cases.
+autopxd2 ships two parser backends: **libclang** (the default) and **tree-sitter**.
 
-## Available Backends
+```console
+$ autopxd --list-backends
+Available backends:
+  libclang     Full C/C++ support via LLVM [available] (default)
+  tree-sitter  Fast C/C++ parsing without system LLVM dependencies [available]
 
-### libclang (Recommended)
+Default: libclang
+```
+
+## Choosing a Backend
+
+| | libclang | tree-sitter |
+|---|---|---|
+| Install | needs the system `libclang` shared library | `pip install "autopxd2[treesitter]"`, no system LLVM |
+| Follows `#include` directives | ✅ | ❌ (parses the given file only) |
+| `#define` macro extraction | ✅ | ❌ |
+| System include path detection | ✅ | ❌ |
+| C++ classes, templates, namespaces | ✅ | ✅ |
+| `--std` / `--clang-arg` | ✅ | ❌ (rejected with an error) |
+
+Use libclang unless you cannot install LLVM. Use tree-sitter for self-contained
+headers in environments where a system `libclang` is unavailable.
+
+## libclang
 
 Uses LLVM's clang library for parsing. Provides the same parser used by production compilers.
 
-**Pros:**
+**Features:**
 
 - Full C++ support (classes, templates, namespaces)
 - Extracts macros as constants (integers, floats, strings, expressions)
@@ -17,21 +38,53 @@ Uses LLVM's clang library for parsing. Provides the same parser used by producti
 - Better error messages
 - Handles complex headers reliably
 
-**Cons:**
+**Limitations:**
 
-- Requires libclang to be installed
-- Python `clang2` package version must match system libclang (these are official LLVM bindings)
-- Slightly slower startup time
+- Requires libclang shared library to be available on your system (use `python -m headerkit.install_libclang` or install LLVM manually)
 - Function-like macros are not extracted
 
 **Usage:**
 
 ```bash
-autopxd --backend libclang myheader.h
+autopxd myheader.h
 
 # For C++ headers
-autopxd --backend libclang myheader.hpp
+autopxd myheader.hpp
 ```
+
+## tree-sitter
+
+Uses [tree-sitter](https://tree-sitter.github.io/) grammars for C and C++. It needs no
+system LLVM, so it installs and runs anywhere Python does.
+
+**Install:**
+
+```bash
+pip install "autopxd2[treesitter]"
+```
+
+**Usage:**
+
+```bash
+autopxd --backend tree-sitter myheader.h
+
+# C++ works too
+autopxd --backend tree-sitter --cpp myclass.hpp
+```
+
+**Limitations:**
+
+- Does not follow `#include` directives. Given `#include "inner.h"`, declarations from
+  `inner.h` do not appear in the output; only the parsed file's own declarations do.
+- Does not extract `#define` macros as constants.
+- Does not detect system include paths.
+- Rejects `--std` and `--clang-arg`:
+
+  ```console
+  $ autopxd --backend tree-sitter --std c11 myheader.h
+  Error: --std is only supported by the libclang backend, but the resolved backend is 'tree-sitter'.
+  Use --backend libclang, or drop the option.
+  ```
 
 ## System Include Paths
 
@@ -54,67 +107,7 @@ You can still add additional include directories:
 autopxd -I /my/project/include myheader.h
 ```
 
-### pycparser (Legacy)
-
-A pure Python C99 parser. Falls back to this if libclang is not available.
-
-!!! warning "Legacy Backend"
-    pycparser is maintained for backwards compatibility but is **not recommended**.
-    It lacks C++ support, macro extraction, and circular dependency handling.
-
-**Cons:**
-
-- C99 only (no C++ support)
-- No macro extraction
-- No circular dependency handling
-- Requires preprocessed code
-- May struggle with complex headers
-
-**Usage:**
-
-```bash
-autopxd --backend pycparser myheader.h
-```
-
-## Choosing a Backend
-
-**Use libclang for everything.** The only reason to use pycparser is if you cannot install LLVM on your system.
-
-| Use Case | Recommended Backend |
-|----------|---------------------|
-| C headers | libclang |
-| C++ headers | libclang |
-| Headers with macros | libclang |
-| Complex library headers | libclang |
-| Cannot install LLVM | pycparser (fallback) |
-
-## Backend Comparison
-
-Both backends produce equivalent output for standard C constructs:
-
-```c
-// input.h
-struct Point {
-    int x;
-    int y;
-};
-
-int distance(struct Point a, struct Point b);
-```
-
-Both backends produce:
-
-```cython
-cdef extern from "input.h":
-
-    cdef struct Point:
-        int x
-        int y
-
-    int distance(Point a, Point b)
-```
-
-## Macro Extraction (libclang only)
+## Macro Extraction
 
 The libclang backend extracts `#define` macros as Cython constant declarations. The type is automatically detected from the macro value.
 
@@ -196,11 +189,9 @@ Expression macros that consist of numeric literals, operators, and other macro r
 - **Empty macros:** `#define EMPTY`
 - **String concatenation:** `#define CONCAT "hello" "world"`
 
-The pycparser backend does not extract macros since it requires preprocessed input.
+## C++ Template Support
 
-## C++ Template Support (libclang only)
-
-The libclang backend supports C++ templates, including primary templates and full specializations.
+The backends support C++ templates, including primary templates and full specializations.
 
 ### Primary Templates
 
@@ -272,9 +263,9 @@ The mangling scheme converts special characters to valid Python identifiers:
 - `::` becomes `_`
 
 Examples:
-- `Container<int>` → `Container_int`
-- `Map<int, double>` → `Map_int_double`
-- `Foo<int*>` → `Foo_int_ptr`
+- `Container<int>` -> `Container_int`
+- `Map<int, double>` -> `Map_int_double`
+- `Foo<int*>` -> `Foo_int_ptr`
 
 ## Using Docker for libclang
 
@@ -289,10 +280,10 @@ See [Docker Usage](../getting-started/docker.md) for details.
 ## Programmatic Backend Selection
 
 ```python
-from autopxd.backends import get_backend, list_backends
+from headerkit.backends import get_backend, list_backends
 
-# List available backends
-print(list_backends())  # ['pycparser', 'libclang'] (if libclang installed)
+# List registered backends
+print(list_backends())  # ['libclang', 'tree-sitter']
 
 # Get a specific backend
 backend = get_backend("libclang")

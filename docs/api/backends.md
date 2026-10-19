@@ -1,10 +1,11 @@
 # Backends
 
-Parser backends convert C/C++ source code into the autopxd IR.
+Parser backends convert C/C++ source code into headerkit's IR. autopxd2 does not
+define backends of its own; it selects among the ones headerkit registers.
 
 ## Backend Registry
 
-::: autopxd.backends
+::: headerkit.backends
     options:
       show_root_heading: true
       show_source: false
@@ -13,20 +14,18 @@ Parser backends convert C/C++ source code into the autopxd IR.
         - list_backends
         - register_backend
 
-## pycparser Backend
-
-::: autopxd.backends.pycparser_backend
-    options:
-      show_root_heading: true
-      show_source: true
-      members:
-        - PycparserBackend
-
 ## libclang Backend
 
-::: autopxd.backends.libclang_backend
+::: headerkit.backends.libclang
     options:
       show_root_heading: true
       show_source: true
       members:
         - LibclangBackend
+
+## tree-sitter Backend
+
+Registered by the `headerkit[treesitter]` extra (installed via
+`pip install "autopxd2[treesitter]"`). Select it with `get_backend("tree-sitter")` or
+`autopxd --backend tree-sitter`. See
+[Parser Backends](../user-guide/backends.md#tree-sitter) for its limitations.

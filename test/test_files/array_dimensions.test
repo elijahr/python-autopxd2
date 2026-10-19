@@ -7,7 +7,7 @@ typedef enum {
         THREE
 } my_enum_t;
 
-char *my_ptr_array[];
+extern char *my_ptr_array[];
 
 int my_array[DIM_X][DIM_Y];
 
@@ -16,6 +16,12 @@ float my_other_array[TWO][THREE];
 ---
 
 cdef extern from "array_dimensions.test":
+
+
+
+    int DIM_X
+
+    int DIM_Y
 
     ctypedef enum my_enum_t:
         ZERO

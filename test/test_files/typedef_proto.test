@@ -8,7 +8,6 @@ typedef int (*my_func_3)(char *a1, char **a2, char **a3[3][4]);
 typedef int ***(*my_func_4)(char *a1, char **a2, char **a3[3][4]);
 
 ---
-
 cdef extern from "typedef_proto.test":
 
     cdef struct my_struct:

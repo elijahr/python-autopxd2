@@ -26,4 +26,4 @@ cdef extern from "enum.test":
 
     float my_array_c3[0]
 
-    float my_array_c4[(0) + 1]
+    float my_array_c4[1]

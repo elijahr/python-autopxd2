@@ -18,16 +18,16 @@ union my_union {
     const struct my_struct * const e;
 };
 
-const int *(*my_func_ptr_1)();
-int * const(*my_func_ptr_2)();
-const int const * const(*my_func_ptr_3)();
+const int *(*my_func_ptr_1)(void);
+int * const(*my_func_ptr_2)(void);
+const int const * const(*my_func_ptr_3)(void);
 void const(*my_func_ptr_4)(const int *a, const int * const b, const int const * const c, const struct my_struct d, const union my_union *e);
 
-const int *my_func_1();
-int const *my_func_2();
-const int const *my_func_3();
-int * const my_func_4();
-const int const * const my_func_5();
+const int *my_func_1(void);
+int const *my_func_2(void);
+const int const *my_func_3(void);
+int * const my_func_4(void);
+const int const * const my_func_5(void);
 void my_func_6(const struct my_struct *s, const union my_union const * const u);
 void my_func_7(const char *a1, char const * const *a2, char ** const a3[3][4]);
 

@@ -2,6 +2,10 @@ import fnmatch
 import json
 import os
 import sys
+import warnings
+from collections.abc import (
+    Callable,
+)
 from importlib.metadata import (
     version as get_version,
 )
@@ -10,17 +14,16 @@ from typing import (
 )
 
 import click
-
-from .backends import (
+from headerkit import (
+    Declaration,
+)
+from headerkit.backends import (
     get_backend,
     get_backend_info,
     get_default_backend,
     is_backend_available,
 )
-from .ir import (
-    Declaration,
-)
-from .ir_writer import (
+from headerkit.writers.cython import (
     write_pxd,
 )
 
@@ -32,42 +35,146 @@ def _debug_print(msg: str) -> None:
     print(f"[autopxd] {msg}", file=sys.stderr)
 
 
-def _filter_by_whitelist(
-    declarations: list[Declaration],
-    whitelist: list[str],
-) -> list[Declaration]:
-    """Filter declarations to only those from whitelisted files.
+def _normalize_for_match(path: str) -> str:
+    """Normalize a path for comparison, mirroring headerkit's ``normalize_path``."""
+    return path.replace("\\", "/").lower()
 
-    Uses fnmatch for pattern matching, supporting glob patterns like:
-    - "myheader.h" - exact match
-    - "*.h" - all .h files
-    - "include/*.h" - all .h files in include/
 
-    Declarations without location info are excluded when whitelist is active.
+def _normalize_hdrname(hdrname: str) -> str:
+    """Make a header name safe to embed in the generated ``cdef extern from``.
 
-    Path normalization is applied for cross-platform compatibility:
-    - Paths are normalized with os.path.normpath
-    - On Windows, case-insensitive comparison is used
+    The name lands inside a Cython string literal, where a backslash starts an
+    escape sequence: a Windows path such as ``C:\\Users\\...`` is rejected as an
+    invalid ``\\U`` escape. Forward slashes are valid in ``#include`` on every
+    Windows compiler, so convert there. On POSIX a backslash is a legal
+    filename character and is left alone.
     """
-    result = []
-    # Normalize whitelist patterns
-    normalized_whitelist = [os.path.normpath(p) for p in whitelist]
+    if os.sep == "\\":
+        return hdrname.replace("\\", "/")
+    return hdrname
 
-    for decl in declarations:
+
+def _list_search_dirs(hdrname: str, include_dirs: list[str] | None) -> list[str]:
+    """Directories a relative allowlist/denylist pattern is resolved against, in priority order.
+
+    Mirrors headerkit's rule: the parsed file's own directory first, then the
+    include search path, then the process working directory.
+    """
+    dirs = [os.path.dirname(os.path.abspath(hdrname)) or os.getcwd()]
+    if include_dirs:
+        dirs.extend(include_dirs)
+    dirs.append(os.getcwd())
+    return dirs
+
+
+def _pattern_candidates(pattern: str, search_dirs: list[str]) -> list[str]:
+    """Absolute forms an allowlist/denylist pattern may take, in priority order."""
+    if os.path.isabs(pattern):
+        absolute = os.path.abspath(pattern)
+        return [_normalize_for_match(absolute), _normalize_for_match(os.path.realpath(absolute))]
+    candidates: list[str] = []
+    for directory in search_dirs:
+        joined = os.path.abspath(os.path.join(directory, pattern))
+        for variant in (joined, os.path.realpath(joined)):
+            normalized = _normalize_for_match(variant)
+            if normalized not in candidates:
+                candidates.append(normalized)
+    return candidates
+
+
+def _pattern_matcher(
+    patterns: list[str],
+    search_dirs: list[str],
+) -> "Callable[[Declaration], bool]":
+    """Build a predicate reporting whether a declaration's file matches ``patterns``.
+
+    A pattern containing no path separator is matched against the declaration
+    file's BASENAME, so both a bare filename and a bare glob keep working
+    wherever the file lives.  A pattern containing a separator is matched
+    against the declaration file's absolute path; a relative such pattern is
+    resolved the way headerkit resolves one -- against the parsed file's own
+    directory first, then each include directory, then the working directory --
+    and matches if any of those resolutions matches.
+
+    Backends report ``location.file`` as whatever path reached the parser, which
+    is often relative (e.g. ``./tux_foo.h``), so both sides are made absolute
+    before comparison; symlinked and non-symlinked forms are both tried.
+
+    Path comparison is case-insensitive and separator-normalized for
+    cross-platform compatibility.
+    """
+    basename_patterns: list[str] = []
+    path_patterns: list[str] = []
+    for pattern in patterns:
+        normalized = pattern.replace("\\", "/")
+        if "/" in normalized:
+            path_patterns.append(_normalize_for_match(normalized))
+        else:
+            basename_patterns.append(_normalize_for_match(normalized))
+
+    resolved_patterns: list[str] = []
+    for pattern in path_patterns:
+        resolved_patterns.extend(_pattern_candidates(pattern, search_dirs))
+
+    def matches(decl: Declaration) -> bool:
         if decl.location is None:
-            continue
-        decl_file = os.path.normpath(decl.location.file)
-        for pattern in normalized_whitelist:
-            # On Windows, use case-insensitive matching
-            if sys.platform == "win32":
-                if fnmatch.fnmatch(decl_file.lower(), pattern.lower()):
-                    result.append(decl)
-                    break
-            else:
-                if fnmatch.fnmatch(decl_file, pattern):
-                    result.append(decl)
-                    break
+            return False
+        decl_abs = os.path.abspath(decl.location.file)
+        decl_forms = {
+            _normalize_for_match(decl_abs),
+            _normalize_for_match(os.path.realpath(decl_abs)),
+        }
+        decl_base = _normalize_for_match(os.path.basename(decl_abs))
+        return any(fnmatch.fnmatch(decl_base, pattern) for pattern in basename_patterns) or any(
+            fnmatch.fnmatch(form, pattern) for form in decl_forms for pattern in resolved_patterns
+        )
+
+    return matches
+
+
+def _filter_declarations(
+    declarations: list[Declaration],
+    allowlist: list[str] | None = None,
+    denylist: list[str] | None = None,
+    hdrname: str = "",
+    include_dirs: list[str] | None = None,
+) -> list[Declaration]:
+    """Narrow declarations to the allowlist, then subtract the denylist.
+
+    headerkit applies both lists while parsing, but it never applies either to
+    the declarations of the file it was handed: an allowlist that omits the
+    input header still yields that header's declarations, and a denylist naming
+    it does not remove them.  This pass closes that gap, so the lists mean the
+    same thing for the root header as for every header it includes.
+
+    Deny is applied after allow, so a file matching both is excluded -- the same
+    precedence headerkit uses.
+
+    Declarations without location info are excluded when an allowlist is active,
+    because nothing can establish that they came from an allowed file.
+    """
+    search_dirs = _list_search_dirs(hdrname, include_dirs)
+    result = declarations
+    if allowlist:
+        allowed = _pattern_matcher(allowlist, search_dirs)
+        result = [decl for decl in result if allowed(decl)]
+    if denylist:
+        denied = _pattern_matcher(denylist, search_dirs)
+        result = [decl for decl in result if not denied(decl)]
     return result
+
+
+_INCLUDE_FOLLOWING_BACKENDS = frozenset({"libclang"})
+
+
+def _backend_follows_includes(backend_name: str) -> bool:
+    """Report whether a backend resolves and parses ``#include`` directives.
+
+    Umbrella-header options only have something to act on when the backend
+    reads included files. A backend that parses just the text it is given
+    cannot honor them.
+    """
+    return backend_name.strip().lower() in _INCLUDE_FOLLOWING_BACKENDS
 
 
 def translate(
@@ -75,22 +182,27 @@ def translate(
     hdrname: str,
     backend: str = "auto",
     extra_args: list[str] | None = None,
-    whitelist: list[str] | None = None,
+    allowlist: list[str] | None = None,
     debug: bool = False,
     use_default_includes: bool = True,
     project_prefixes: tuple[str, ...] | None = None,
     recursive_includes: bool = True,
-    max_depth: int = 10,
+    max_depth: int | None = None,
+    denylist: list[str] | None = None,
+    whitelist: list[str] | None = None,
 ) -> str:
     """Generate Cython .pxd from C/C++ header code.
 
     Args:
         code: C/C++ header source code.
         hdrname: Header filename (used in cdef extern from).
-        backend: Backend name ("auto", "pycparser", "libclang").
+        backend: Backend name ("auto", "libclang").
         extra_args: Extra arguments passed to backend (e.g., ["-I/usr/include"]).
-        whitelist: Only include declarations from files matching these patterns.
-            Supports fnmatch patterns like "*.h", "include/*.h".
+        allowlist: Only include declarations from files matching these patterns.
+            Supports fnmatch patterns like "*.h", "include/*.h". With recursion
+            on (the default) and no allowlist, declarations from every
+            non-system included header are emitted; an allowlist narrows that,
+            in both recursion modes.
         debug: Print debug info to stderr.
         use_default_includes: If True (default), automatically detect and add
             system include directories when using the libclang backend.
@@ -99,17 +211,51 @@ def translate(
             installed in system locations (e.g., ("/opt/homebrew/include/sodium",)).
         recursive_includes: [libclang] If True (default), detect umbrella headers
             and recursively parse included project headers.
-        max_depth: [libclang] Maximum recursion depth for umbrella header
-            processing (default: 10).
+        max_depth: [libclang] Recursion depth limit for umbrella header
+            processing. ``None`` (default) means unspecified and resolves to
+            10. ``0`` disables umbrella expansion. Passing a value to a
+            backend that does not follow includes raises :class:`UserWarning`,
+            because such a caller expects declarations that backend will
+            never produce.
+        denylist: Exclude declarations from files matching these patterns.
+            Same pattern syntax as ``allowlist``. A file matching both lists is
+            excluded: deny wins over allow.
+        whitelist: Deprecated alias for ``allowlist``. Emits
+            :class:`DeprecationWarning`. Passing both raises :class:`ValueError`.
 
     Returns:
         Cython .pxd file contents.
     """
+    hdrname = _normalize_hdrname(hdrname)
+
+    if whitelist is not None:
+        if allowlist is not None:
+            raise ValueError(
+                "Pass either allowlist or whitelist, not both. whitelist is the deprecated spelling of allowlist."
+            )
+        warnings.warn(
+            "The 'whitelist' argument is deprecated; use 'allowlist' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        allowlist = whitelist
+
     # Resolve backend
     if backend == "auto":
         backend_name = get_default_backend()
     else:
         backend_name = backend
+
+    if max_depth is not None and not _backend_follows_includes(backend_name):
+        warnings.warn(
+            f"The {backend_name} backend does not follow #include directives, so "
+            f"max_depth={max_depth} cannot be honored and no declarations from "
+            f"included files will appear in the result. Use the libclang backend "
+            f"for umbrella header expansion.",
+            UserWarning,
+            stacklevel=2,
+        )
+    effective_max_depth = 10 if max_depth is None else max_depth
 
     if debug:
         _debug_print(f"Backend: {backend_name}")
@@ -119,11 +265,8 @@ def translate(
 
     # Parse with backend
     backend_obj = get_backend(backend_name)
-    # Check if backend supports libclang-specific options
-    parse_code = getattr(backend_obj.parse, "__code__", None)
-    parse_varnames = parse_code.co_varnames if parse_code else ()
 
-    # Extract include_dirs from extra_args for backends that support it
+    # Extract include_dirs from extra_args
     # Handle both "-I/path" and "-I", "/path" formats
     include_dirs: list[str] = []
     other_args: list[str] = []
@@ -140,39 +283,34 @@ def translate(
         else:
             other_args.append(arg)
 
-    if "project_prefixes" in parse_varnames:
-        # libclang backend with full umbrella header support
-        # Using runtime introspection to detect supported kwargs, so ignore type check
-        header = backend_obj.parse(
-            code,
-            hdrname,
-            include_dirs=include_dirs or None,
-            extra_args=other_args or None,
-            use_default_includes=use_default_includes,  # type: ignore[call-arg]
-            project_prefixes=project_prefixes,
-            recursive_includes=recursive_includes,
-            max_depth=max_depth,
-        )
-    elif "use_default_includes" in parse_varnames:
-        # libclang backend without umbrella header params
-        header = backend_obj.parse(
-            code,
-            hdrname,
-            extra_args=extra_args or [],
-            use_default_includes=use_default_includes,  # type: ignore[call-arg]
-        )
-    else:
-        # pycparser or other backend
-        header = backend_obj.parse(code, hdrname, extra_args=extra_args or [])
+    header = backend_obj.parse(
+        code,
+        hdrname,
+        include_dirs=include_dirs or None,
+        extra_args=other_args or None,
+        use_default_includes=use_default_includes,
+        project_prefixes=project_prefixes,
+        recursive_includes=recursive_includes,
+        max_depth=effective_max_depth,
+        allowlist=allowlist or None,
+        denylist=denylist or None,
+    )
 
     if debug:
         _debug_print(f"Found {len(header.declarations)} declarations")
 
-    # Apply whitelist filter
-    if whitelist:
-        header.declarations = _filter_by_whitelist(header.declarations, whitelist)
+    # headerkit applies both lists while parsing, but never to the root header's
+    # own declarations; this pass makes the lists mean the same thing there.
+    if allowlist or denylist:
+        header.declarations = _filter_declarations(
+            header.declarations,
+            allowlist=allowlist,
+            denylist=denylist,
+            hdrname=hdrname,
+            include_dirs=include_dirs or None,
+        )
         if debug:
-            _debug_print(f"After whitelist: {len(header.declarations)} declarations")
+            _debug_print(f"After allow/deny filtering: {len(header.declarations)} declarations")
 
     if debug:
         for decl in header.declarations:
@@ -209,133 +347,60 @@ def _print_backends_json() -> None:
 
 DOCKER_DOCS_URL = "https://elijahr.github.io/python-autopxd2/getting-started/docker/"
 
-FALLBACK_WARNING = f"""Warning: libclang not available, falling back to pycparser (legacy).
-Limitations: No C++ support, limited preprocessor handling, may fail on complex headers.
-To fix: Install LLVM/Clang (e.g., apt install libclang-dev, brew install llvm)
-Or use Docker: {DOCKER_DOCS_URL}
-"""
-
-LIBCLANG_REQUIRED_ERROR = f"""Error: libclang backend required but not available.
-Install LLVM/Clang (e.g., apt install libclang-dev, brew install llvm)
+LIBCLANG_REQUIRED_ERROR = f"""Error: libclang backend not available.
+Install libclang with headerkit: python -m headerkit.install_libclang
+Or install LLVM/Clang manually (e.g., apt install libclang-dev, brew install llvm)
 Or use Docker: {DOCKER_DOCS_URL}
 """
 
 
 def resolve_backend(
     backend: str,
-    cpp: bool,
-    quiet: bool,
 ) -> str:
     """Resolve which backend to use based on options.
 
-    :param backend: Backend option value (auto, libclang, pycparser).
-    :param cpp: Whether --cpp was specified.
-    :param quiet: Whether to suppress warnings.
+    ``auto`` resolves to the registered default backend when that backend is
+    available, and otherwise to the first available backend.
+
+    :param backend: Backend option value (auto, libclang, or any registered backend).
     :returns: Resolved backend name.
-    :raises SystemExit: If required backend is unavailable.
+    :raises SystemExit: If the requested backend, or every backend, is unavailable.
     """
-    # Check for conflicting options: --backend pycparser --cpp
-    if cpp and backend == "pycparser":
-        click.echo(
-            "Error: --cpp requires libclang backend (pycparser does not support C++).\n"
-            "Remove --backend pycparser or --cpp.",
-            err=True,
-        )
-        raise SystemExit(1)
-
-    # --cpp implies libclang
-    if cpp:
-        if not is_backend_available("libclang"):
-            click.echo(LIBCLANG_REQUIRED_ERROR, err=True)
+    if backend != "auto":
+        if not is_backend_available(backend):
+            if backend == "libclang":
+                click.echo(LIBCLANG_REQUIRED_ERROR, err=True)
+            else:
+                click.echo(f"Error: Backend '{backend}' is not available.", err=True)
             raise SystemExit(1)
-        return "libclang"
+        return backend
 
-    # Explicit backend selection
-    if backend == "libclang":
-        if not is_backend_available("libclang"):
-            click.echo(LIBCLANG_REQUIRED_ERROR, err=True)
-            raise SystemExit(1)
-        return "libclang"
+    # "auto" means the default backend when it is usable, else the first backend
+    # that reports itself available.  headerkit picks its default at registration
+    # time, without regard to whether that backend can actually run here.
+    default = get_default_backend()
+    if is_backend_available(default):
+        return default
+    for info in get_backend_info():
+        name = str(info["name"])
+        if info["available"]:
+            return name
 
-    if backend == "pycparser":
-        return "pycparser"
-
-    # Auto mode
-    if is_backend_available("libclang"):
-        return "libclang"
-
-    # Fallback to pycparser with warning
-    if not quiet:
-        click.echo(FALLBACK_WARNING, err=True)
-    return "pycparser"
-
-
-def validate_libclang_options(
-    resolved_backend: str,
-    std: str | None,
-    clang_arg: tuple[str, ...],
-    project_prefixes: tuple[str, ...] | None = None,
-    no_recursive: bool = False,
-    max_depth: int = 10,
-) -> None:
-    """Validate that libclang-only options aren't used with pycparser.
-
-    :raises SystemExit: If validation fails.
-    """
-    if resolved_backend != "libclang":
-        if std:
-            click.echo(
-                f"Error: --std requires libclang backend (got {resolved_backend}).\n"
-                "Install LLVM/Clang or remove --std option.",
-                err=True,
-            )
-            raise SystemExit(1)
-        if clang_arg:
-            click.echo(
-                f"Error: --clang-arg requires libclang backend (got {resolved_backend}).\n"
-                "Install LLVM/Clang or remove --clang-arg option.",
-                err=True,
-            )
-            raise SystemExit(1)
-        if project_prefixes:
-            click.echo(
-                f"Error: --project-prefix requires libclang backend (got {resolved_backend}).\n"
-                "Install LLVM/Clang or remove --project-prefix option.",
-                err=True,
-            )
-            raise SystemExit(1)
-        if no_recursive:
-            click.echo(
-                f"Error: --no-recursive requires libclang backend (got {resolved_backend}).\n"
-                "Install LLVM/Clang or remove --no-recursive option.",
-                err=True,
-            )
-            raise SystemExit(1)
-        if max_depth != 10:
-            click.echo(
-                f"Error: --max-depth requires libclang backend (got {resolved_backend}).\n"
-                "Install LLVM/Clang or remove --max-depth option.",
-                err=True,
-            )
-            raise SystemExit(1)
+    click.echo(LIBCLANG_REQUIRED_ERROR, err=True)
+    raise SystemExit(1)
 
 
 @click.command(
     context_settings=CONTEXT_SETTINGS,
-    help="""Generate Cython .pxd declarations from C/C++ headers.
-
-\b
-Options marked [libclang] require the libclang backend.
-""",
+    help="""Generate Cython .pxd declarations from C/C++ headers.""",
 )
 # === General options ===
 @click.option("--version", "-v", is_flag=True, help="Print version and exit.")
 @click.option(
     "--backend",
     "-b",
-    type=click.Choice(["auto", "libclang", "pycparser"], case_sensitive=False),
     default="auto",
-    help="Parser backend (default: auto, prefers libclang).",
+    help="Parser backend (default: auto, using libclang).",
 )
 @click.option(
     "--list-backends",
@@ -359,7 +424,7 @@ Options marked [libclang] require the libclang backend.
     default=False,
     help="Print debug info to stderr.",
 )
-# === Preprocessing options (both backends) ===
+# === Preprocessing options ===
 @click.option(
     "--include-dir",
     "-I",
@@ -376,34 +441,39 @@ Options marked [libclang] require the libclang backend.
     help="Define preprocessor macro.",
 )
 @click.option(
-    "--whitelist",
-    "-w",
+    "--allowlist",
     multiple=True,
     metavar="<pattern>",
-    help="Only emit from files matching pattern.",
+    help="Only emit declarations from files matching pattern. Repeatable.",
 )
-# === libclang-only options ===
+@click.option(
+    "--denylist",
+    multiple=True,
+    metavar="<pattern>",
+    help="Never emit declarations from files matching pattern. Wins over --allowlist. Repeatable.",
+)
+# === Clang / C++ options ===
 @click.option(
     "--cpp",
     "-x",
     is_flag=True,
-    help="[libclang] Parse as C++.",
+    help="Parse as C++.",
 )
 @click.option(
     "--std",
     metavar="<std>",
-    help="[libclang] Language standard (e.g., c11, c++17).",
+    help="Language standard (e.g., c11, c++17).",
 )
 @click.option(
     "--clang-arg",
     multiple=True,
     metavar="<arg>",
-    help="[libclang] Pass argument to clang.",
+    help="Pass argument to clang.",
 )
 @click.option(
     "--no-default-includes",
     is_flag=True,
-    help="[libclang] Disable system include auto-detection.",
+    help="Disable system include auto-detection.",
 )
 # === Umbrella header options ===
 @click.option(
@@ -412,23 +482,30 @@ Options marked [libclang] require the libclang backend.
     "project_prefixes",
     multiple=True,
     metavar="<path>",
-    help="[libclang] Treat path as project (not system) for umbrella headers. "
+    help="Treat path as project (not system) for umbrella headers. "
     "Declarations from headers matching this prefix will be included. "
     "Can be specified multiple times.",
 )
 @click.option(
     "--no-recursive",
     is_flag=True,
-    help="[libclang] Disable recursive parsing of umbrella headers.",
+    help="Disable recursive parsing of umbrella headers.",
 )
 @click.option(
     "--max-depth",
     type=int,
-    default=10,
+    default=None,
     metavar="<n>",
-    help="[libclang] Max recursion depth for umbrella headers (default: 10).",
+    help="Max recursion depth for umbrella headers (default: 10). [libclang]",
 )
 # === Deprecated (hidden) ===
+@click.option(
+    "--whitelist",
+    "-w",
+    multiple=True,
+    metavar="<pattern>",
+    help="Deprecated alias for --allowlist.",
+)
 @click.option(
     "--compiler-directive",
     "defines_deprecated",
@@ -443,7 +520,7 @@ Options marked [libclang] require the libclang backend.
 @click.argument(
     "outfile",
     type=click.File("w"),
-    default=sys.stdout,
+    default="-",
 )
 def cli(
     version: bool,
@@ -460,11 +537,13 @@ def cli(
     cpp: bool,
     std: str | None,
     clang_arg: tuple[str, ...],
+    allowlist: tuple[str, ...],
+    denylist: tuple[str, ...],
     whitelist: tuple[str, ...],
     no_default_includes: bool,
     project_prefixes: tuple[str, ...],
     no_recursive: bool,
-    max_depth: int,
+    max_depth: int | None,
 ) -> None:
     if version:
         print(__version__)
@@ -481,13 +560,46 @@ def cli(
             _print_backends_human()
         return
 
-    # Require infile for translation
+    # If infile was not given, check if stdin has piped data
+    from_stdin = infile is None or infile.name == "<stdin>"
     if infile is None:
-        click.echo("Error: Missing argument 'INFILE'.", err=True)
-        raise SystemExit(2)
+        content = ""
+        if not sys.stdin.isatty():
+            content = sys.stdin.read()
+        if not content:
+            click.echo("Error: Missing argument 'INFILE'.", err=True)
+            raise SystemExit(2)
+        code_input = content
+        raw_hdrname = "input.h"
+    else:
+        code_input = infile.read()
+        raw_hdrname = infile.name
 
-    resolved_backend = resolve_backend(backend, cpp, quiet)
-    validate_libclang_options(resolved_backend, std, clang_arg, project_prefixes, no_recursive, max_depth)
+    # Auto-detect C++ mode from file extension if not explicitly specified
+    cpp_mode = cpp
+    cpp_extensions = (".hpp", ".hh", ".hxx", ".H", ".tcc", ".tpp", ".h++")
+    if not cpp_mode and raw_hdrname != "<stdin>" and any(raw_hdrname.endswith(ext) for ext in cpp_extensions):
+        cpp_mode = True
+
+    resolved_backend = resolve_backend(backend)
+
+    # --std and --clang-arg reach the compiler driver only on libclang; any other
+    # backend would drop them silently and emit plausible but wrong output.
+    if resolved_backend != "libclang":
+        clang_only = []
+        if std:
+            clang_only.append("--std")
+        if clang_arg:
+            clang_only.append("--clang-arg")
+        if clang_only:
+            click.echo(
+                f"Error: {' and '.join(clang_only)} {'are' if len(clang_only) > 1 else 'is'} "
+                f"only supported by the libclang backend, "
+                f"but the resolved backend is '{resolved_backend}'.\n"
+                f"Use --backend libclang, or drop the option.",
+                err=True,
+            )
+            raise SystemExit(1)
 
     # Merge deprecated --compiler-directive into --define
     all_defines = defines + defines_deprecated
@@ -499,6 +611,9 @@ def cli(
 
     # Build extra_args list from CLI options
     extra_args: list[str] = []
+    if cpp_mode:
+        extra_args.append("-x")
+        extra_args.append("c++")
     for define in all_defines:
         extra_args.append(f"-D{define}")
     for directory in include_dir:
@@ -510,18 +625,42 @@ def cli(
     for arg in clang_arg:
         extra_args.append(arg)
 
-    whitelist_list = list(whitelist) if whitelist else None
+    if whitelist and allowlist:
+        click.echo(
+            "Error: --whitelist is the deprecated spelling of --allowlist; pass one or the other, not both.",
+            err=True,
+        )
+        raise SystemExit(1)
+    if whitelist:
+        # Warn here rather than letting translate() do it, so --quiet is honored
+        # in the one place that knows about it.
+        if not quiet:
+            warnings.warn(
+                "--whitelist is deprecated, use --allowlist instead.",
+                DeprecationWarning,
+                stacklevel=1,
+            )
+        allowlist = whitelist
+
+    allowlist_list = list(allowlist) if allowlist else None
+    denylist_list = list(denylist) if denylist else None
 
     # Convert project_prefixes tuple to tuple or None
     project_prefixes_arg = project_prefixes if project_prefixes else None
 
+    if from_stdin:
+        hdrname = "input.hpp" if cpp_mode else "input.h"
+    else:
+        hdrname = raw_hdrname
+
     outfile.write(
         translate(
-            code=infile.read(),
-            hdrname=infile.name,
+            code=code_input,
+            hdrname=hdrname,
             backend=resolved_backend,
             extra_args=extra_args if extra_args else None,
-            whitelist=whitelist_list,
+            allowlist=allowlist_list,
+            denylist=denylist_list,
             debug=debug,
             use_default_includes=not no_default_includes,
             project_prefixes=project_prefixes_arg,

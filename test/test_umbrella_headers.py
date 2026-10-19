@@ -12,10 +12,9 @@ This module tests:
 """
 
 import pytest
-
-from autopxd.backends import get_backend
-from autopxd.ir import Function, Struct
-from autopxd.ir_writer import write_pxd
+from headerkit.backends import get_backend
+from headerkit.ir import Function, Struct
+from headerkit.writers.cython import write_pxd
 
 # Skip tests if libclang is not available
 pytestmark = pytest.mark.libclang
@@ -73,43 +72,6 @@ int size_area(Size* s);
 def backend():
     """Get libclang backend."""
     return get_backend("libclang")
-
-
-class TestUmbrellaHeaderDetection:
-    """Test umbrella header detection heuristics."""
-
-    def test_detects_simple_umbrella_header(self, backend, temp_headers):
-        """Umbrella header with 3+ includes and no declarations is detected."""
-        with open(temp_headers / "all.h") as f:
-            code = f.read()
-
-        header = backend.parse(
-            code,
-            "all.h",
-            include_dirs=[str(temp_headers)],
-            recursive_includes=False,  # Test detection first
-        )
-
-        # Should detect as umbrella header
-        from autopxd.backends.libclang_backend import _is_umbrella_header
-
-        assert _is_umbrella_header(header)
-
-    def test_normal_header_not_detected(self, backend, temp_headers):
-        """Normal header with declarations is not a umbrella header."""
-        with open(temp_headers / "types.h") as f:
-            code = f.read()
-
-        header = backend.parse(
-            code,
-            "types.h",
-            include_dirs=[str(temp_headers)],
-            recursive_includes=False,
-        )
-
-        from autopxd.backends.libclang_backend import _is_umbrella_header
-
-        assert not _is_umbrella_header(header)
 
 
 class TestRecursiveIncludes:

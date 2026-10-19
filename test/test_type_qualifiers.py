@@ -37,18 +37,7 @@ types; the actual C code still has full qualifier information.
 """
 
 import pytest
-
-from autopxd.backends import get_backend
-
-
-def _libclang_available():
-    """Check if libclang backend is available."""
-    try:
-        from autopxd.backends import list_backends
-
-        return "libclang" in list_backends()
-    except Exception:
-        return False
+from headerkit.backends import get_backend
 
 
 class TestAtomicQualifier:
@@ -60,7 +49,7 @@ class TestAtomicQualifier:
         backend = get_backend()
         header = backend.parse(code, "test.h")
 
-        from autopxd.ir_writer import write_pxd
+        from headerkit.writers.cython import write_pxd
 
         pxd = write_pxd(header)
         # _Atomic should be stripped, leaving just 'int'
@@ -73,7 +62,7 @@ class TestAtomicQualifier:
         backend = get_backend()
         header = backend.parse(code, "test.h")
 
-        from autopxd.ir_writer import write_pxd
+        from headerkit.writers.cython import write_pxd
 
         pxd = write_pxd(header)
         # _Atomic should be stripped, extracting inner type
@@ -91,7 +80,7 @@ class TestAtomicQualifier:
         backend = get_backend()
         header = backend.parse(code, "test.h")
 
-        from autopxd.ir_writer import write_pxd
+        from headerkit.writers.cython import write_pxd
 
         pxd = write_pxd(header)
         # Typedef should have _Atomic stripped
@@ -106,7 +95,7 @@ class TestAtomicQualifier:
         backend = get_backend()
         header = backend.parse(code, "test.h")
 
-        from autopxd.ir_writer import write_pxd
+        from headerkit.writers.cython import write_pxd
 
         pxd = write_pxd(header)
         # _Atomic should be stripped from parameter
@@ -114,10 +103,10 @@ class TestAtomicQualifier:
         assert "_Atomic" not in pxd
 
 
+@pytest.mark.libclang
 class TestRestrictQualifier:
     """Test __restrict and __restrict__ qualifier handling."""
 
-    @pytest.mark.skipif(not _libclang_available(), reason="__restrict is a GCC extension, not supported by pycparser")
     def test_restrict_in_function(self):
         """Test __restrict in function parameters."""
         code = """
@@ -127,7 +116,7 @@ class TestRestrictQualifier:
         backend = get_backend("libclang")
         header = backend.parse(code, "test.h")
 
-        from autopxd.ir_writer import write_pxd
+        from headerkit.writers.cython import write_pxd
 
         pxd = write_pxd(header)
         # __restrict should be stripped, const preserved
@@ -135,14 +124,13 @@ class TestRestrictQualifier:
         assert "__restrict" not in pxd
         assert "const" in pxd  # const is supported by Cython
 
-    @pytest.mark.skipif(not _libclang_available(), reason="__restrict__ is a GCC extension, not supported by pycparser")
     def test_restrict_double_underscore(self):
         """Test __restrict__ (double underscore variant)."""
         code = "void copy(char* __restrict__ dst, const char* __restrict__ src);"
         backend = get_backend("libclang")
         header = backend.parse(code, "test.h")
 
-        from autopxd.ir_writer import write_pxd
+        from headerkit.writers.cython import write_pxd
 
         pxd = write_pxd(header)
         # __restrict__ should be stripped
@@ -150,17 +138,17 @@ class TestRestrictQualifier:
         assert "__restrict" not in pxd
 
 
+@pytest.mark.libclang
 class TestNoreturnQualifier:
     """Test _Noreturn qualifier handling."""
 
-    @pytest.mark.skipif(not _libclang_available(), reason="_Noreturn is a C11 keyword, not supported by pycparser")
     def test_noreturn_function(self):
         """Test _Noreturn in function declarations."""
         code = "_Noreturn void abort_program(void);"
         backend = get_backend("libclang")
         header = backend.parse(code, "test.h")
 
-        from autopxd.ir_writer import write_pxd
+        from headerkit.writers.cython import write_pxd
 
         pxd = write_pxd(header)
         # _Noreturn should be stripped
@@ -168,10 +156,10 @@ class TestNoreturnQualifier:
         assert "_Noreturn" not in pxd
 
 
+@pytest.mark.libclang
 class TestMixedQualifiers:
     """Test combinations of supported and unsupported qualifiers."""
 
-    @pytest.mark.skipif(not _libclang_available(), reason="__restrict is a GCC extension, not supported by pycparser")
     def test_const_volatile_atomic_mix(self):
         """Test const, volatile (supported) with _Atomic (unsupported)."""
         code = """
@@ -180,7 +168,7 @@ class TestMixedQualifiers:
         backend = get_backend("libclang")
         header = backend.parse(code, "test.h")
 
-        from autopxd.ir_writer import write_pxd
+        from headerkit.writers.cython import write_pxd
 
         pxd = write_pxd(header)
         # const and volatile should be preserved, _Atomic and __restrict stripped
@@ -205,7 +193,7 @@ class TestSemanticsPreservation:
         backend = get_backend()
         header = backend.parse(code, "test.h")
 
-        from autopxd.ir_writer import write_pxd
+        from headerkit.writers.cython import write_pxd
 
         pxd = write_pxd(header)
 
@@ -226,7 +214,7 @@ class TestSemanticsPreservation:
         backend = get_backend()
         header = backend.parse(code, "test.h")
 
-        from autopxd.ir_writer import write_pxd
+        from headerkit.writers.cython import write_pxd
 
         pxd = write_pxd(header)
 

@@ -115,7 +115,7 @@ def _ensure_header(library: str, filename: str, config: dict) -> Path:
         if "sha256" in config and config["sha256"]:
             actual_hash = _compute_sha256(cache_path)
             if actual_hash != config["sha256"]:
-                raise ValueError(f"Hash mismatch for {filename}: " f"expected {config['sha256']}, got {actual_hash}")
+                raise ValueError(f"Hash mismatch for {filename}: expected {config['sha256']}, got {actual_hash}")
     else:
         raise ValueError(f"No URL or content for {library}/{filename}")
 

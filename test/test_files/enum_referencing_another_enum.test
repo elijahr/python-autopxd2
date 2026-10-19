@@ -31,8 +31,8 @@ cdef extern from "enum_referencing_another_enum.test":
 
     float my_array_b1[10]
 
-    float my_array_b2[(10) + (20)]
+    float my_array_b2[30]
 
-    float my_array_b3[(10) + (10) + 10]
+    float my_array_b3[30]
 
-    float my_array_b4[((10) + (10) + 10) + 1]
+    float my_array_b4[31]

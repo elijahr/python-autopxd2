@@ -1,5 +1,16 @@
 cdef extern from "json_lib.h":
 
+
+
+
+    int JSON_COMPACT
+
+    int JSON_ENSURE_ASCII
+
+    int JSON_SORT_KEYS
+
+    int JSON_PRESERVE_ORDER
+
     ctypedef enum json_type:
         JSON_OBJECT
         JSON_ARRAY
@@ -11,6 +22,19 @@ cdef extern from "json_lib.h":
         JSON_NULL
 
     cdef struct json_t
+
+
+    ctypedef struct json_error_t:
+        int line
+        int column
+        int position
+        char source[80]
+        char text[160]
+
+
+    int JSON_INDENT(int n)
+
+    const char* json_object_iter_key(void* iter)
 
     json_type json_typeof(const json_t* json)
 
@@ -68,8 +92,6 @@ cdef extern from "json_lib.h":
 
     void* json_object_iter_next(json_t* object, void* iter)
 
-    const char* json_object_iter_key(void* iter)
-
     json_t* json_object_iter_value(void* iter)
 
     unsigned long json_object_size(const json_t* object)
@@ -95,13 +117,6 @@ cdef extern from "json_lib.h":
     double json_real_value(const json_t* real)
 
     double json_number_value(const json_t* json)
-
-    ctypedef struct json_error_t:
-        int line
-        int column
-        int position
-        char source[80]
-        char text[160]
 
     json_t* json_loads(const char* input, unsigned long flags, json_error_t* error)
 

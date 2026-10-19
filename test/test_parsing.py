@@ -1,6 +1,6 @@
 """Core parsing tests that run on both backends."""
 
-from autopxd.ir import (
+from headerkit.ir import (
     CType,
     Enum,
     Function,

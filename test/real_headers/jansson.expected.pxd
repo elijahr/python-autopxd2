@@ -1,19 +1,7 @@
 from libc.stdio cimport FILE
-from autopxd.stubs.stdarg cimport va_list
+from headerkit.stubs.stdarg cimport va_list
 
 cdef extern from "jansson.h":
-
-    ctypedef long long json_int_t
-
-    ctypedef size_t (*json_load_callback_t)(void*, size_t, void*)
-
-    ctypedef int (*json_dump_callback_t)(const char*, size_t, void*)
-
-    ctypedef void* (*json_malloc_t)(size_t)
-
-    ctypedef void (*json_free_t)(void*)
-
-
 
     int JANSSON_MAJOR_VERSION
 
@@ -27,13 +15,51 @@ cdef extern from "jansson.h":
 
     int JANSSON_THREAD_SAFE_REFCOUNT
 
+    int JANSSON_ATTRS(int x)
+
     const char* JSON_INTEGER_FORMAT
 
-    int json_auto_t
+    int json_typeof(int json)
+
+    int json_is_object(int json)
+
+    int json_is_array(int json)
+
+    int json_is_string(int json)
+
+    int json_is_integer(int json)
+
+    int json_is_real(int json)
+
+    int json_is_number(int json)
+
+    int json_is_true(int json)
+
+    int json_is_false(int json)
+
+    int json_is_boolean(int json)
+
+    int json_is_null(int json)
+
+    int json_boolean(int val)
+
+    int JSON_INTERNAL_INCREF(int json)
+
+    int JSON_INTERNAL_DECREF(int json)
 
     int JSON_ERROR_TEXT_LENGTH
 
     int JSON_ERROR_SOURCE_LENGTH
+
+    int json_object_foreach(int object, int key, int value)
+
+    int json_object_keylen_foreach(int object, int key, int key_len, int value)
+
+    int json_object_foreach_safe(int object, int n, int key, int value)
+
+    int json_object_keylen_foreach_safe(int object, int n, int key, int key_len, int value)
+
+    int json_array_foreach(int array, int index, int value)
 
     int JSON_VALIDATE_ONLY
 
@@ -51,6 +77,8 @@ cdef extern from "jansson.h":
 
     int JSON_MAX_INDENT
 
+    int JSON_INDENT(int n)
+
     int JSON_COMPACT
 
     int JSON_ENSURE_ASCII
@@ -63,9 +91,11 @@ cdef extern from "jansson.h":
 
     int JSON_ESCAPE_SLASH
 
+    int JSON_REAL_PRECISION(int n)
+
     int JSON_EMBED
 
-    cdef enum json_type:
+    ctypedef enum json_type:
         JSON_OBJECT
         JSON_ARRAY
         JSON_STRING
@@ -75,38 +105,11 @@ cdef extern from "jansson.h":
         JSON_FALSE
         JSON_NULL
 
-    cdef enum json_error_code:
-        json_error_unknown
-        json_error_out_of_memory
-        json_error_stack_overflow
-        json_error_cannot_open_file
-        json_error_invalid_argument
-        json_error_invalid_utf8
-        json_error_premature_end_of_input
-        json_error_end_of_input_expected
-        json_error_invalid_syntax
-        json_error_invalid_format
-        json_error_wrong_type
-        json_error_null_character
-        json_error_null_value
-        json_error_null_byte_in_key
-        json_error_duplicate_key
-        json_error_numeric_overflow
-        json_error_item_not_found
-        json_error_index_out_of_range
-
-
-    ctypedef struct json_error_t:
-        int line
-        int column
-        int position
-        char source[80]
-        char text[160]
-
     ctypedef struct json_t:
         json_type type
-        size_t refcount
+        volatile size_t refcount
 
+    ctypedef long long json_int_t
 
     json_t* json_object()
 
@@ -138,15 +141,42 @@ cdef extern from "jansson.h":
 
     void json_decrefp(json_t** json)
 
-    json_error_code json_error_code(json_error_t* e)
+    ctypedef struct json_error_t:
+        int line
+        int column
+        int position
+        char source[80]
+        char text[160]
+
+    cdef enum json_error_code:
+        json_error_unknown
+        json_error_out_of_memory
+        json_error_stack_overflow
+        json_error_cannot_open_file
+        json_error_invalid_argument
+        json_error_invalid_utf8
+        json_error_premature_end_of_input
+        json_error_end_of_input_expected
+        json_error_invalid_syntax
+        json_error_invalid_format
+        json_error_wrong_type
+        json_error_null_character
+        json_error_null_value
+        json_error_null_byte_in_key
+        json_error_duplicate_key
+        json_error_numeric_overflow
+        json_error_item_not_found
+        json_error_index_out_of_range
+
+    json_error_code json_error_code(const json_error_t* e)
 
     void json_object_seed(size_t seed)
 
-    size_t json_object_size(json_t* object)
+    size_t json_object_size(const json_t* object)
 
-    json_t* json_object_get(json_t* object, const char* key)
+    json_t* json_object_get(const json_t* object, const char* key)
 
-    json_t* json_object_getn(json_t* object, const char* key, size_t key_len)
+    json_t* json_object_getn(const json_t* object, const char* key, size_t key_len)
 
     int json_object_set_new(json_t* object, const char* key, json_t* value)
 
@@ -202,9 +232,9 @@ cdef extern from "jansson.h":
 
     int json_object_update_missing_new(json_t* object, json_t* other)
 
-    size_t json_array_size(json_t* array)
+    size_t json_array_size(const json_t* array)
 
-    json_t* json_array_get(json_t* array, size_t index)
+    json_t* json_array_get(const json_t* array, size_t index)
 
     int json_array_set_new(json_t* array, size_t index, json_t* value)
 
@@ -224,15 +254,15 @@ cdef extern from "jansson.h":
 
     int json_array_insert(json_t* array, size_t ind, json_t* value)
 
-    const char* json_string_value(json_t* string)
+    const char* json_string_value(const json_t* string)
 
-    size_t json_string_length(json_t* string)
+    size_t json_string_length(const json_t* string)
 
-    json_int_t json_integer_value(json_t* integer)
+    json_int_t json_integer_value(const json_t* integer)
 
-    double json_real_value(json_t* real)
+    double json_real_value(const json_t* real)
 
-    double json_number_value(json_t* json)
+    double json_number_value(const json_t* json)
 
     int json_string_set(json_t* string, const char* value)
 
@@ -262,11 +292,13 @@ cdef extern from "jansson.h":
 
     json_t* json_vsprintf(const char* fmt, va_list ap)
 
-    int json_equal(json_t* value1, json_t* value2)
+    int json_equal(const json_t* value1, const json_t* value2)
 
     json_t* json_copy(json_t* value)
 
-    json_t* json_deep_copy(json_t* value)
+    json_t* json_deep_copy(const json_t* value)
+
+    ctypedef size_t (*json_load_callback_t)(void* buffer, size_t buflen, void* data)
 
     json_t* json_loads(const char* input, size_t flags, json_error_t* error)
 
@@ -280,17 +312,23 @@ cdef extern from "jansson.h":
 
     json_t* json_load_callback(json_load_callback_t callback, void* data, size_t flags, json_error_t* error)
 
-    char* json_dumps(json_t* json, size_t flags)
+    ctypedef int (*json_dump_callback_t)(const char* buffer, size_t size, void* data)
 
-    size_t json_dumpb(json_t* json, char* buffer, size_t size, size_t flags)
+    char* json_dumps(const json_t* json, size_t flags)
 
-    int json_dumpf(json_t* json, FILE* output, size_t flags)
+    size_t json_dumpb(const json_t* json, char* buffer, size_t size, size_t flags)
 
-    int json_dumpfd(json_t* json, int output, size_t flags)
+    int json_dumpf(const json_t* json, FILE* output, size_t flags)
 
-    int json_dump_file(json_t* json, const char* path, size_t flags)
+    int json_dumpfd(const json_t* json, int output, size_t flags)
 
-    int json_dump_callback(json_t* json, json_dump_callback_t callback, void* data, size_t flags)
+    int json_dump_file(const json_t* json, const char* path, size_t flags)
+
+    int json_dump_callback(const json_t* json, json_dump_callback_t callback, void* data, size_t flags)
+
+    ctypedef void* (*json_malloc_t)(size_t)
+
+    ctypedef void (*json_free_t)(void*)
 
     void json_set_alloc_funcs(json_malloc_t malloc_fn, json_free_t free_fn)
 
@@ -299,3 +337,11 @@ cdef extern from "jansson.h":
     const char* jansson_version_str()
 
     int jansson_version_cmp(int major, int minor, int micro)
+
+    int JSON_INTEGER_IS_LONG_LONG
+
+    int JSON_HAVE_LOCALECONV
+
+    int JSON_HAVE_ATOMIC_BUILTINS
+
+    int JSON_HAVE_SYNC_BUILTINS

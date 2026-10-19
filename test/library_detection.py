@@ -318,6 +318,8 @@ class ManualDetection:
                 if os.path.exists(path):
                     header_path = path
                     break
+            if not header_path:
+                return None
 
         return DetectionResult(
             found=True,

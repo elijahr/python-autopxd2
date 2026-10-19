@@ -7,17 +7,202 @@ from typing import Any
 
 from Cython.Build.Dependencies import cythonize_one
 from Cython.Compiler.Main import CompilationOptions
+from Cython.Compiler.TreeFragment import parse_from_strings
+
+_TOUCH_FUNC = "_autopxd_gate_touch"
+
+
+def _flatten(node) -> list:
+    """Return the statement nodes of a possibly-nested StatListNode."""
+    if node is None:
+        return []
+    if isinstance(node, (list, tuple)):
+        out = []
+        for item in node:
+            out.extend(_flatten(item))
+        return out
+    if hasattr(node, "stats"):
+        out = []
+        for stat in node.stats:
+            out.extend(_flatten(stat))
+        return out
+    return [node]
+
+
+def _declarator_name(declarator) -> tuple[str | None, bool, bool]:
+    """Walk a declarator chain to its name.
+
+    Returns (name, is_function, is_templated). A Cython template function is
+    spelled ``T maximum[T](T a, T b)``, so its declarator chain carries an
+    array declarator; such a name has no address until it is instantiated.
+    """
+    is_function = False
+    has_array = False
+    while declarator is not None:
+        kind = type(declarator).__name__
+        if kind == "CFuncDeclaratorNode":
+            is_function = True
+        if kind == "CArrayDeclaratorNode":
+            has_array = True
+        if kind == "CNameDeclaratorNode":
+            return declarator.name or None, is_function, is_function and has_array
+        declarator = getattr(declarator, "base", None)
+    return None, is_function, is_function and has_array
+
+
+class _Declarations:
+    """Names declared by a pxd, grouped by how a smoke test must reference them."""
+
+    def __init__(self) -> None:
+        self.types: list[str] = []
+        self.fields: list[tuple[str, str]] = []
+        self.enum_members: list[str] = []
+        self.functions: list[str] = []
+        self.variables: list[str] = []
+
+
+def _collect_declarations(pxd_content: str, cplus: bool) -> _Declarations | None:
+    """Parse a pxd with Cython's own parser and collect referenceable names.
+
+    Returns None when the pxd does not parse; the caller then falls back to a
+    bare cimport and lets cythonize report the underlying parse error.
+    """
+    try:
+        tree = parse_from_strings("test", pxd_content, level="module_pxd")
+    except Exception:  # noqa: BLE001 - any parse error means "cannot derive"
+        return None
+
+    decls = _Declarations()
+
+    def visit(nodes) -> None:
+        for node in nodes:
+            kind = type(node).__name__
+            if kind == "CDefExternNode":
+                visit(_flatten(node.body))
+            elif kind == "CVarDefNode":
+                for declarator in node.declarators:
+                    name, is_function, is_templated = _declarator_name(declarator)
+                    if not name or is_templated:
+                        continue
+                    (decls.functions if is_function else decls.variables).append(name)
+            elif kind == "CStructOrUnionDefNode":
+                if not node.name:
+                    continue
+                decls.types.append(node.name)
+                for attr in _flatten(node.attributes):
+                    for declarator in getattr(attr, "declarators", []):
+                        field, is_function, _ = _declarator_name(declarator)
+                        if field and not is_function:
+                            decls.fields.append((node.name, field))
+            elif kind == "CEnumDefNode":
+                if node.name:
+                    decls.types.append(node.name)
+                for item in _flatten(node.items):
+                    if getattr(item, "name", None):
+                        decls.enum_members.append(item.name)
+            elif kind == "CTypeDefNode":
+                name, _, _ = _declarator_name(node.declarator)
+                if name:
+                    decls.types.append(name)
+            elif kind == "CppClassNode":
+                # Templated classes cannot be named without arguments, and
+                # C++ members are reached through a class instance we cannot
+                # construct blind, so only the plain class name is touched.
+                if node.name and not getattr(node, "templates", None):
+                    decls.types.append(node.name)
+
+    visit(_flatten(tree.body))
+
+    if cplus:
+        # An overloaded name makes a bare address-of ambiguous in C++.
+        counts: dict[str, int] = {}
+        for name in decls.functions:
+            counts[name] = counts.get(name, 0) + 1
+        decls.functions = [n for n in decls.functions if counts[n] == 1]
+
+    return decls
+
+
+def _derive_smoke_test_pyx(pxd_content: str, pxd_module: str, cplus: bool) -> str:
+    """Build a pyx that forces every declaration in the pxd into the C output.
+
+    Cython only emits a declaration's use into the generated C when a symbol is
+    actually referenced. A bare ``cimport *`` therefore compiles the header and
+    none of the generated pxd. This synthesises one reference per declared
+    symbol so the C compiler checks the pxd against the real header.
+    """
+    decls = _collect_declarations(pxd_content, cplus)
+    if decls is None:
+        return f"from {pxd_module} cimport *\n"
+
+    body: list[str] = ["    cdef void *_p = NULL", "    cdef long long _n = 0"]
+    slot = {}
+    for index, name in enumerate(dict.fromkeys(decls.types)):
+        var = f"_t{index}"
+        slot[name] = var
+        body.append(f"    cdef {name} *{var} = NULL")
+        body.append(f"    _p = <void*>{var}")
+    for owner, field in dict.fromkeys(decls.fields):
+        if owner in slot:
+            body.append(f"    _p = <void*>&{slot[owner]}.{field}")
+    for name in dict.fromkeys(decls.enum_members):
+        body.append(f"    _n += <long long>{name}")
+    c_helpers: list[str] = []
+    cy_externs: list[str] = []
+    for name in dict.fromkeys(decls.functions):
+        if cplus:
+            body.append(f"    _p = <void*>&{name}")
+        else:
+            # In C, declarations may be macro functions (e.g. #define FOO(x)).
+            # In C, taking the address of a macro function (&FOO) fails with undeclared
+            # identifier. We use a C helper with #ifdef: if FOO is a macro, it is satisfied;
+            # if FOO is a real C function, it takes (void*)&FOO, ensuring the symbol exists.
+            c_helpers.append(f"""static inline void _touch_func_{name}(void **p) {{
+#ifdef {name}
+    (void)p;
+#else
+    *p = (void*)&{name};
+#endif
+}}""")
+            cy_externs.append(f"    void _touch_func_{name}(void **p)")
+            body.append(f"    _touch_func_{name}(&_p)")
+    for name in dict.fromkeys(decls.variables):
+        # sizeof rather than address-of: object-like macros are emitted as
+        # plain variables in the pxd and have no address in C.
+        body.append(f"    _n += <long long>sizeof({name})")
+    body.append("    _p = _p")
+    body.append("    _n = _n")
+
+    indented = "\n".join(body)
+    cdef_extern = ""
+    if c_helpers:
+        c_block = "\n".join(c_helpers)
+        cy_block = "\n".join(cy_externs)
+        cdef_extern = f"""cdef extern from *:
+    \"\"\"
+{c_block}
+    \"\"\"
+{cy_block}
+"""
+
+    return f"""from {pxd_module} cimport *
+
+{cdef_extern}cdef void {_TOUCH_FUNC}() noexcept:
+{indented}
+"""
 
 
 def _generate_smoke_test_pyx(
     smoke_test: str | dict[str, Any] | None,
     pxd_module: str = "test",
+    pxd_content: str | None = None,
+    cplus: bool = False,
 ) -> str:
     """Generate pyx content with smoke test.
 
     Args:
         smoke_test: Can be:
-            - None: Just import the module
+            - None: derive a body that references every declaration in the pxd
             - str: Simple expression (backward compat)
             - dict with type="expression": Expression
             - dict with type="program": Multi-line code block
@@ -26,7 +211,7 @@ def _generate_smoke_test_pyx(
         Complete pyx file content as string
     """
     if smoke_test is None:
-        return f"from {pxd_module} cimport *\n"
+        return _derive_smoke_test_pyx(pxd_content or "", pxd_module, cplus)
 
     if isinstance(smoke_test, str):
         # Backward compatible: simple expression
@@ -95,7 +280,7 @@ def validate_cython_compiles(
     pxd_file.write_text(pxd_content)
 
     # Generate and write pyx with optional smoke test
-    pyx_content = _generate_smoke_test_pyx(smoke_test)
+    pyx_content = _generate_smoke_test_pyx(smoke_test, pxd_content=pxd_content, cplus=cplus)
     pyx_file = tmp_path / "test.pyx"
     pyx_file.write_text(pyx_content)
 
@@ -117,8 +302,7 @@ def validate_cython_compiles(
         import warnings
 
         warnings.warn(
-            "pkg_config not provided, continuing with header_only compilation "
-            "(C code will be compiled but not linked)",
+            "pkg_config not provided, continuing with header_only compilation (C code will be compiled but not linked)",
             stacklevel=2,
         )
         header_only = True
@@ -178,7 +362,18 @@ def validate_cython_compiles(
         python_ldflags = []
 
     # Compile
-    compiler = "c++" if cplus else "cc"
+    if sys.platform == "win32":
+        # headerkit parses with clang's default Windows target,
+        # x86_64-pc-windows-msvc. `cc` on Windows resolves to a MinGW driver,
+        # which predefines a different macro set than the parse saw, so
+        # declarations guarded by _MSC_VER come out undeclared. Compile with
+        # the toolchain that produced the IR.
+        compiler = "clang++" if cplus else "clang"
+        # -fPIC is meaningless on Windows and MSVC-target clang rejects it.
+        pic_flags: list[str] = []
+    else:
+        compiler = "c++" if cplus else "cc"
+        pic_flags = ["-fPIC"]
     c_ext = ".cpp" if cplus else ".c"
     c_file = tmp_path / f"test{c_ext}"
 
@@ -191,8 +386,8 @@ def validate_cython_compiles(
                 str(c_file),
                 "-o",
                 str(tmp_path / "test.o"),
-                "-fPIC",
             ]
+            + pic_flags
             + extra_include_flags
             + pkg_cflags
             + python_cflags
@@ -203,15 +398,15 @@ def validate_cython_compiles(
             print(f"C compilation STDOUT: {result.stdout}")
             result.check_returncode()
     else:
-        # Full compile to .so
-        so_file = tmp_path / "test.so"
+        # Full compile to an importable extension module
+        so_file = tmp_path / ("test.pyd" if sys.platform == "win32" else "test.so")
 
         # Use platform-appropriate linker flags
         if sys.platform == "darwin":
             # macOS requires -bundle for Python extensions
             linker_flags = ["-bundle", "-undefined", "dynamic_lookup"]
         else:
-            # Linux and other platforms use -shared
+            # Linux, Windows, and other platforms use -shared
             linker_flags = ["-shared"]
 
         cmd = (
@@ -219,8 +414,8 @@ def validate_cython_compiles(
                 compiler,
             ]
             + linker_flags
+            + pic_flags
             + [
-                "-fPIC",
                 str(c_file),
                 "-o",
                 str(so_file),

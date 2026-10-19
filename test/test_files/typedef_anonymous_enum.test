@@ -8,6 +8,8 @@ typedef enum {
 
 cdef extern from "typedef_anonymous_enum.test":
 
+
+
     ctypedef enum MyEnumType:
         C1
         C2

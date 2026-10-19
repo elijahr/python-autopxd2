@@ -36,11 +36,11 @@ class TestDependencyResolution:
         """Chained typedefs from included headers should be resolved."""
         # Create helper header with typedef chain
         helper_h = tmp_path / "helper.h"
-        helper_h.write_text("typedef unsigned long uLong;\n" "typedef unsigned int uInt;\n")
+        helper_h.write_text("typedef unsigned long uLong;\ntypedef unsigned int uInt;\n")
 
         # Create main header that uses these types
         main_h = tmp_path / "main.h"
-        main_h.write_text('#include "helper.h"\n' "uLong checksum(uInt value);\n")
+        main_h.write_text('#include "helper.h"\nuLong checksum(uInt value);\n')
 
         # Generate pxd
         with open(main_h) as f:
@@ -58,13 +58,11 @@ class TestDependencyResolution:
         """Struct typedefs from included headers should be resolved."""
         # Create helper header with struct typedef
         helper_h = tmp_path / "helper.h"
-        helper_h.write_text(
-            "typedef struct stream_s {\n" "    void* next_in;\n" "    unsigned int avail_in;\n" "} stream_t;\n"
-        )
+        helper_h.write_text("typedef struct stream_s {\n    void* next_in;\n    unsigned int avail_in;\n} stream_t;\n")
 
         # Create main header that uses the typedef
         main_h = tmp_path / "main.h"
-        main_h.write_text('#include "helper.h"\n' "int process(stream_t* s);\n")
+        main_h.write_text('#include "helper.h"\nint process(stream_t* s);\n')
 
         # Generate pxd
         with open(main_h) as f:
@@ -77,30 +75,48 @@ class TestDependencyResolution:
         # Verify struct and typedef are present
         assert "stream_s" in pxd or "stream_t" in pxd
 
-    def test_unused_typedef_not_included(self, tmp_path):
-        """Types not used in main file should not be included."""
-        # Create helper header with multiple typedefs
+    def test_unused_typedef_not_included_without_recursion(self, tmp_path):
+        """Without recursion, only types the main file uses are pulled in."""
         helper_h = tmp_path / "helper.h"
-        helper_h.write_text(
-            "typedef void* voidpf;\n"
-            "typedef void* voidpc;\n"  # Not used
-            "typedef int unused_int;\n"  # Not used
-        )
+        helper_h.write_text("typedef void* voidpf;\ntypedef void* voidpc;\ntypedef int unused_int;\n")
 
-        # Create main header that uses only voidpf
         main_h = tmp_path / "main.h"
-        main_h.write_text('#include "helper.h"\n' "voidpf get_ptr(void);\n")
+        main_h.write_text('#include "helper.h"\nvoidpf get_ptr(void);\n')
 
-        # Generate pxd
+        with open(main_h) as f:
+            code = f.read()
+        pxd = translate(code, str(main_h), backend="libclang", recursive_includes=False)
+
+        validate_cython_compiles(pxd, tmp_path)
+
+        # voidpf is used by get_ptr, so it must be resolved from helper.h
+        assert "ctypedef void* voidpf" in pxd
+        # voidpc and unused_int are referenced by nothing
+        assert "voidpc" not in pxd
+        assert "unused_int" not in pxd
+
+    def test_recursion_emits_every_included_declaration(self, tmp_path):
+        """With recursion on (the default), every non-system included declaration is emitted.
+
+        Recursion is controlled by the flag alone, so unused declarations are no
+        longer filtered out; ``recursive_includes=False`` is how a caller asks
+        for the narrow, use-driven output.
+        """
+        helper_h = tmp_path / "helper.h"
+        helper_h.write_text("typedef void* voidpf;\ntypedef void* voidpc;\ntypedef int unused_int;\n")
+
+        main_h = tmp_path / "main.h"
+        main_h.write_text('#include "helper.h"\nvoidpf get_ptr(void);\n')
+
         with open(main_h) as f:
             code = f.read()
         pxd = translate(code, str(main_h), backend="libclang")
 
-        # voidpf should be present (it's used)
-        assert "voidpf" in pxd
+        validate_cython_compiles(pxd, tmp_path)
 
-        # unused_int should NOT be present
-        assert "unused_int" not in pxd
+        assert "ctypedef void* voidpf" in pxd
+        assert "ctypedef void* voidpc" in pxd
+        assert "ctypedef int unused_int" in pxd
 
     def test_deeply_nested_typedef(self, tmp_path):
         """Typedefs from deeply nested includes should be resolved."""
@@ -115,7 +131,7 @@ class TestDependencyResolution:
         level1_h.write_text('#include "level2.h"\n')
 
         main_h = tmp_path / "main.h"
-        main_h.write_text('#include "level1.h"\n' "size_type get_size(void);\n")
+        main_h.write_text('#include "level1.h"\nsize_type get_size(void);\n')
 
         # Generate pxd
         with open(main_h) as f:

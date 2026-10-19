@@ -5,9 +5,9 @@ as constants with appropriate types.
 """
 
 import pytest
+from headerkit.backends import get_backend
+from headerkit.ir import Constant, CType
 
-from autopxd.backends import get_backend
-from autopxd.ir import Constant, CType
 from test.assertions import assert_pxd_equals
 
 # These tests require libclang - exclude with: pytest -m "not libclang"
@@ -284,8 +284,8 @@ class TestExpressionMacros:
         assert len(constants) == 1
         assert constants[0].name == "TOTAL"
         assert constants[0].type == CType("int")
-        # Value is None for expressions (we don't evaluate)
-        assert constants[0].value is None
+        assert constants[0].value == 30
+        assert constants[0].evaluated_value == 30
 
     def test_bitwise_expression(self, libclang_backend):
         """Bitwise expressions should be extracted as int."""

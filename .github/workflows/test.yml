@@ -5,48 +5,32 @@ name: Test
 on: [push, pull_request]
 
 jobs:
-  test-pycparser:
-    name: Test pycparser (${{ matrix.os }})
+  test:
+    name: Test (${{ matrix.os }}, py${{ matrix.python-version }})
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         include:
+          # Floor of requires-python, plus the current and next releases.
           - os: ubuntu-latest
-            python-version: '3.10'
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: astral-sh/setup-uv@v4
-        with:
-          enable-cache: true
-          cache-dependency-glob: "**/pyproject.toml"
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install dependencies
-        run: uv pip install --system -e .[test]
-
-      - name: Test pycparser backend
-        run: pytest ./test -m "not libclang"
-
-  test-libclang:
-    name: Test libclang (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        include:
+            python-version: '3.11'
+          - os: ubuntu-latest
+            python-version: '3.12'
           - os: ubuntu-latest
             python-version: '3.13'
+          - os: ubuntu-latest
+            python-version: '3.14'
           - os: macos-latest
-            python-version: '3.13'
+            python-version: '3.14'
+          # windows-latest ships LLVM/clang preinstalled, so it runs both backends.
+          - os: windows-latest
+            python-version: '3.14'
 
     steps:
       - uses: actions/checkout@v4
 
-      - uses: astral-sh/setup-uv@v4
+      - uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a  # v4
         with:
           enable-cache: true
           cache-dependency-glob: "**/pyproject.toml"
@@ -59,13 +43,11 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update && sudo apt-get install -y libclang-dev llvm
-          # Find libclang and add to library path for Python clang2 bindings
+          # headerkit's vendored clang bindings dlopen libclang, so its directory
+          # must be on the loader path.
           LLVM_LIB_DIR=$(llvm-config --libdir 2>/dev/null || echo "/usr/lib/llvm-14/lib")
           echo "LD_LIBRARY_PATH=${LLVM_LIB_DIR}:${LD_LIBRARY_PATH}" >> $GITHUB_ENV
-          # Get LLVM major version for matching Python clang2 package
-          LLVM_VERSION=$(llvm-config --version 2>/dev/null | cut -d. -f1 || echo "14")
-          echo "LLVM_MAJOR_VERSION=${LLVM_VERSION}" >> $GITHUB_ENV
-          echo "Found LLVM version: $LLVM_VERSION, lib dir: $LLVM_LIB_DIR"
+          echo "libclang lib dir: $LLVM_LIB_DIR"
 
       - name: Install test libraries (Ubuntu)
         if: runner.os == 'Linux'
@@ -74,53 +56,55 @@ jobs:
       - name: Install libclang (macOS)
         if: runner.os == 'macOS'
         run: |
-          # Install LLVM 19 (clang2 supports 16-21)
           brew install llvm@19
           LLVM_PREFIX=$(brew --prefix llvm@19)
+          # headerkit's vendored clang bindings dlopen libclang, so its directory
+          # must be on the loader path.
           echo "DYLD_LIBRARY_PATH=${LLVM_PREFIX}/lib:${DYLD_LIBRARY_PATH}" >> $GITHUB_ENV
-          # Get LLVM major version for matching Python clang2 package
-          LLVM_VERSION=$("${LLVM_PREFIX}/bin/llvm-config" --version | cut -d. -f1)
-          echo "LLVM_MAJOR_VERSION=${LLVM_VERSION}" >> $GITHUB_ENV
-          echo "Found LLVM version: $LLVM_VERSION, prefix: $LLVM_PREFIX"
+          echo "libclang prefix: $LLVM_PREFIX"
+
+      - name: Install test libraries (macOS)
+        if: runner.os == 'macOS'
+        run: ./scripts/install-test-libs-macos.sh
+
+      - name: Verify LLVM (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          # windows-latest preinstalls LLVM; verify rather than install it.
+          clang --version
+          which clang || true
+          ls -1 "/c/Program Files/LLVM/bin" | grep -i libclang || true
 
       - name: Install dependencies
-        run: uv pip install --system -e .[test]
+        run: uv pip install --system -e '.[test,treesitter]'
 
-      - name: Install matching clang2 Python package
+      - name: Verify libclang loads (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
         run: |
-          # Install clang2 package version matching system libclang
-          uv pip install --system "clang2==${LLVM_MAJOR_VERSION}.*"
+          # A clang.exe on PATH does not prove libclang.dll can be dlopen'd,
+          # which is what headerkit's vendored bindings actually need.
+          if python -c "import sys; from headerkit.backends import is_backend_available; sys.exit(0 if is_backend_available('libclang') else 1)"; then
+            echo "libclang backend available"
+          else
+            echo "Preinstalled LLVM is not loadable; falling back to headerkit.install_libclang"
+            python -m headerkit.install_libclang
+            python -c "import sys; from headerkit.backends import is_backend_available; sys.exit(0 if is_backend_available('libclang') else 1)"
+            echo "libclang backend available after install_libclang"
+          fi
 
-      - name: Install numpy for test headers (Linux)
-        if: runner.os == 'Linux'
+      - name: Install numpy for test headers (Linux/macOS)
+        if: runner.os != 'Windows'
         run: uv pip install --system numpy
 
-      - name: Test all backends (Linux)
-        if: runner.os == 'Linux'
+      - name: Test (require all libraries)
+        if: runner.os != 'Windows'
+        run: pytest ./test --require-all-libraries
+
+      # No install-test-libs script exists for Windows, so the real-header tests
+      # skip on missing system libraries instead of failing. Everything else,
+      # both backends included, runs in full.
+      - name: Test (real-header tests skip on missing libraries)
+        if: runner.os == 'Windows'
         run: pytest ./test
-
-      - name: Test (macOS, skip real headers)
-        if: runner.os == 'macOS'
-        run: pytest ./test -m "not real_headers"
-
-  test-windows:
-    name: Test Windows (pycparser)
-    runs-on: windows-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: astral-sh/setup-uv@v4
-        with:
-          enable-cache: true
-          cache-dependency-glob: "**/pyproject.toml"
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.13'
-
-      - name: Install dependencies
-        run: uv pip install --system -e .[test]
-
-      - name: Test pycparser backend
-        run: pytest ./test -m "not libclang"

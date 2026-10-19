@@ -7,13 +7,14 @@ import subprocess
 import sys
 
 import pytest
+from headerkit.backends import is_backend_available
+from headerkit.backends.libclang import LibclangBackend
 
 # These tests require libclang - use pytest -m "not libclang" to exclude
 pytestmark = pytest.mark.libclang
 
-# Guard import for when clang2 is not installed
-clang = pytest.importorskip("clang")
-from autopxd.backends.libclang_backend import LibclangBackend  # noqa: E402
+if not is_backend_available("libclang"):
+    pytest.skip("libclang not available", allow_module_level=True)
 
 
 def _get_system_include_args() -> list[str]:
@@ -108,7 +109,8 @@ typedef uint32_t my_int;
 void test(void);
 """
         header = backend.parse(code, "test.h", extra_args=system_args)
-        included_basenames = {h.split("/")[-1] for h in header.included_headers}
+        # libclang reports Windows paths with backslashes, so split on both separators.
+        included_basenames = {h.replace("\\", "/").split("/")[-1] for h in header.included_headers}
         assert "stdio.h" in included_basenames
         assert "stdlib.h" in included_basenames
         assert "string.h" in included_basenames

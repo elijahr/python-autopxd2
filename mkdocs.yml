@@ -73,6 +73,7 @@ nav:
       - CLI Reference: user-guide/cli.md
       - Parser Backends: user-guide/backends.md
       - C++ Support: user-guide/cpp.md
+      - Comparison: comparison.md
   - API Reference:
       - Overview: api/index.md
       - IR Module: api/ir.md

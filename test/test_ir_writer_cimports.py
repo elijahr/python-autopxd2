@@ -1,6 +1,6 @@
 """Tests for PxdWriter cimport generation."""
 
-from autopxd.ir import CType, Function, Header, Parameter, Pointer
+from headerkit.ir import CType, Function, Header, Parameter, Pointer
 
 
 class TestCimportGeneration:
@@ -18,7 +18,7 @@ class TestCimportGeneration:
                 )
             ],
         )
-        from autopxd.ir_writer import PxdWriter
+        from headerkit.writers.cython import PxdWriter
 
         writer = PxdWriter(header)
         output = writer.write()
@@ -39,7 +39,7 @@ class TestCimportGeneration:
                 )
             ],
         )
-        from autopxd.ir_writer import PxdWriter
+        from headerkit.writers.cython import PxdWriter
 
         writer = PxdWriter(header)
         output = writer.write()
@@ -58,7 +58,7 @@ class TestCimportGeneration:
                 )
             ],
         )
-        from autopxd.ir_writer import PxdWriter
+        from headerkit.writers.cython import PxdWriter
 
         writer = PxdWriter(header)
         output = writer.write()
@@ -68,7 +68,7 @@ class TestCimportGeneration:
         assert "from libc.stdio cimport" in output
 
     def test_va_list_generates_stub_cimport(self):
-        """Using va_list generates autopxd.stubs.stdarg cimport."""
+        """Using va_list generates headerkit.stubs.stdarg cimport."""
         header = Header(
             path="test.h",
             declarations=[
@@ -79,12 +79,12 @@ class TestCimportGeneration:
                 )
             ],
         )
-        from autopxd.ir_writer import PxdWriter
+        from headerkit.writers.cython import PxdWriter
 
         writer = PxdWriter(header)
         output = writer.write()
 
-        assert "from autopxd.stubs.stdarg cimport va_list" in output
+        assert "from headerkit.stubs.stdarg cimport va_list" in output
         # Should NOT have the old inline declaration
         assert "ctypedef struct va_list:" not in output
 
@@ -100,7 +100,7 @@ class TestCimportGeneration:
                 )
             ],
         )
-        from autopxd.ir_writer import PxdWriter
+        from headerkit.writers.cython import PxdWriter
 
         writer = PxdWriter(header)
         output = writer.write()
@@ -127,7 +127,7 @@ class TestCimportGeneration:
                 ),
             ],
         )
-        from autopxd.ir_writer import PxdWriter
+        from headerkit.writers.cython import PxdWriter
 
         writer = PxdWriter(header)
         output = writer.write()

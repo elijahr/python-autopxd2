@@ -7,14 +7,15 @@ import subprocess
 import sys
 
 import pytest
+from headerkit.backends import is_backend_available
 
 from autopxd import translate
 
 # Mark entire module as requiring libclang
 pytestmark = pytest.mark.libclang
 
-# Only run with libclang for header tracking
-libclang = pytest.importorskip("clang.cindex")
+if not is_backend_available("libclang"):
+    pytest.skip("libclang not available", allow_module_level=True)
 
 
 def _get_system_include_args() -> list[str]:
@@ -114,7 +115,7 @@ void log_message(const char *fmt, va_list args);
 """
         result = translate(code, "test.h", backend=backend, extra_args=system_args)
 
-        assert "from autopxd.stubs.stdarg cimport va_list" in result
+        assert "from headerkit.stubs.stdarg cimport va_list" in result
         # Old inline declaration should NOT be present
         assert "ctypedef struct va_list:" not in result
 
@@ -134,7 +135,7 @@ int process(FILE *f, uint32_t flags, va_list args);
         # Find positions of different cimport types
         stdio_line = next(i for i, line in enumerate(lines) if "libc.stdio" in line)
         stdint_line = next(i for i, line in enumerate(lines) if "libc.stdint" in line)
-        stub_line = next(i for i, line in enumerate(lines) if "autopxd.stubs" in line)
+        stub_line = next(i for i, line in enumerate(lines) if "headerkit.stubs" in line)
         extern_line = next(i for i, line in enumerate(lines) if "cdef extern from" in line)
 
         # All cimports before extern

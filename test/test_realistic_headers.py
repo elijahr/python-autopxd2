@@ -1,19 +1,18 @@
-# pylint: disable=attribute-defined-outside-init,import-outside-toplevel,wrong-import-order
+# pylint: disable=attribute-defined-outside-init,wrong-import-order
 """Tests using realistic header fixtures.
 
-These tests verify that both parser backends can handle patterns
-commonly found in real C/C++ libraries.
+These tests verify that the parser backends can handle patterns commonly found
+in real C/C++ libraries.
 """
 
 import os
-import re
 
 import pytest
+from headerkit.backends import is_backend_available
 
-from autopxd.ir import (
-    Function,
-)
+import autopxd
 from test.assertions import assert_pxd_file_equals
+from test.cython_utils import validate_cython_compiles
 from test.fixtures.realistic_headers import (
     C_FIXTURES,
     CPP_FIXTURES,
@@ -21,69 +20,82 @@ from test.fixtures.realistic_headers import (
 
 EXPECTED_DIR = os.path.join(os.path.dirname(__file__), "fixtures", "realistic_headers")
 
+requires_treesitter = pytest.mark.skipif(
+    not is_backend_available("tree-sitter"),
+    reason="tree-sitter optional dependency not installed",
+)
 
-def preprocess_for_pycparser(code: str) -> str:
-    """Remove comments and preprocessor directives for pycparser."""
-    code = re.sub(r"/\*.*?\*/", "", code, flags=re.DOTALL)
-    code = re.sub(r"//.*$", "", code, flags=re.MULTILINE)
-    code = re.sub(r"^#.*$", "", code, flags=re.MULTILINE)
-    return code
+# Symbols each fixture must contribute to generated pxd output. An extern block
+# with zero declarations compiles cleanly, so a length check cannot detect a
+# backend that emits nothing; these names make that failure visible.
+C_FIXTURE_SYMBOLS = {
+    "compression_lib": ("compress_stream", "compress_status", "COMPRESS_OK", "compress_init", "compress_bound"),
+    "database_lib": ("db_callback", "db_open", "db_close", "db_prepare", "db_column_double"),
+    "json_lib": ("json_type", "JSON_OBJECT", "json_error_t", "json_typeof", "json_array_append_new"),
+    "network_protocol": ("msg_type_t", "MSG_CONNECT", "msg_header_t", "callbacks_t", "conn_create"),
+}
 
-
-def get_code_for_backend(code: str, backend_name: str) -> str:
-    """Preprocess code if needed for backend."""
-    if backend_name == "pycparser":
-        return preprocess_for_pycparser(code)
-    return code
+CPP_FIXTURE_SYMBOLS = {
+    "cpp_container": ("Point", "Vector2D", "Rectangle", "make_vector", "distance"),
+}
 
 
 class TestRealisticCHeaders:
-    """Test backends with realistic C headers."""
+    """Test parser backends with realistic C headers."""
 
     @pytest.mark.parametrize("fixture_name", list(C_FIXTURES.keys()))
     def test_parse_c_fixture(self, backend, fixture_name):
         """Test that backend can parse realistic C headers."""
-        code = get_code_for_backend(C_FIXTURES[fixture_name], backend.name)
+        code = C_FIXTURES[fixture_name]
         header = backend.parse(code, f"{fixture_name}.h")
 
         assert len(header.declarations) > 0
         decl_types = {type(d).__name__ for d in header.declarations}
         assert decl_types & {"Function", "Struct", "Typedef", "Enum"}
 
+    @pytest.mark.libclang
     @pytest.mark.parametrize("fixture_name", list(C_FIXTURES.keys()))
     def test_generate_pxd_c_fixture(self, fixture_name, tmp_path):
         """Test pxd generation from realistic C headers matches expected and compiles."""
-        code = preprocess_for_pycparser(C_FIXTURES[fixture_name])
+        code = C_FIXTURES[fixture_name]
         expected_path = os.path.join(EXPECTED_DIR, f"{fixture_name}.expected.pxd")
 
         assert_pxd_file_equals(
             code,
             expected_path,
             tmp_path,
-            backend="pycparser",
+            backend="libclang",
             filename=f"{fixture_name}.h",
         )
 
+    @pytest.mark.treesitter
+    @requires_treesitter
+    @pytest.mark.parametrize("fixture_name", list(C_FIXTURES.keys()))
+    def test_generate_pxd_c_fixture_treesitter_compiles(self, fixture_name, tmp_path):
+        """Test pxd generation from realistic C headers using tree-sitter compiles with Cython."""
+        code = C_FIXTURES[fixture_name]
+        pxd = autopxd.translate(code.strip(), f"{fixture_name}.h", backend="tree-sitter")
 
-@pytest.mark.libclang
+        for symbol in C_FIXTURE_SYMBOLS[fixture_name]:
+            assert symbol in pxd, f"{fixture_name}: tree-sitter output is missing {symbol!r}"
+
+        header_file = tmp_path / f"{fixture_name}.h"
+        header_file.write_text(code.strip())
+        validate_cython_compiles(pxd, tmp_path, cplus=False, include_dirs=[str(tmp_path)])
+
+
 class TestRealisticCppHeaders:
-    """Test C++ headers (libclang only)."""
-
-    @pytest.fixture
-    def libclang_backend(self):
-        """Provide libclang backend for C++ tests."""
-        from autopxd.backends import get_backend
-
-        return get_backend("libclang")
+    """Test C++ headers."""
 
     @pytest.mark.parametrize("fixture_name", list(CPP_FIXTURES.keys()))
-    def test_parse_cpp_fixture(self, libclang_backend, fixture_name):
+    def test_parse_cpp_fixture(self, backend, fixture_name):
         """Test that backend can parse C++ headers."""
         code = CPP_FIXTURES[fixture_name]
-        header = libclang_backend.parse(code, f"{fixture_name}.hpp", extra_args=["-x", "c++"])
+        header = backend.parse(code, f"{fixture_name}.hpp", extra_args=["-x", "c++"])
 
         assert len(header.declarations) > 0
 
+    @pytest.mark.libclang
     @pytest.mark.parametrize("fixture_name", list(CPP_FIXTURES.keys()))
     def test_generate_pxd_cpp_fixture(self, fixture_name, tmp_path):
         """Test pxd generation from C++ headers matches expected and compiles."""
@@ -100,16 +112,22 @@ class TestRealisticCppHeaders:
             extra_args=["-x", "c++"],
         )
 
+    @pytest.mark.treesitter
+    @requires_treesitter
+    @pytest.mark.parametrize("fixture_name", list(CPP_FIXTURES.keys()))
+    def test_generate_pxd_cpp_fixture_treesitter_compiles(self, fixture_name, tmp_path):
+        """Test pxd generation from C++ headers using tree-sitter compiles with Cython."""
+        code = CPP_FIXTURES[fixture_name]
+        pxd = autopxd.translate(
+            code.strip(),
+            f"{fixture_name}.hpp",
+            backend="tree-sitter",
+            extra_args=["-x", "c++"],
+        )
 
-class TestBackendConsistency:
-    """Test that both backends produce consistent results for C code."""
+        for symbol in CPP_FIXTURE_SYMBOLS[fixture_name]:
+            assert symbol in pxd, f"{fixture_name}: tree-sitter output is missing {symbol!r}"
 
-    @pytest.mark.parametrize("fixture_name", list(C_FIXTURES.keys()))
-    def test_function_names_consistent(self, backend, fixture_name):
-        """Test that backend finds expected functions."""
-        code = get_code_for_backend(C_FIXTURES[fixture_name], backend.name)
-        header = backend.parse(code, f"{fixture_name}.h")
-
-        functions = [d for d in header.declarations if isinstance(d, Function)]
-        # Just verify we found some functions (specific count varies by backend)
-        assert len(functions) >= 1, f"No functions found in {fixture_name}"
+        header_file = tmp_path / f"{fixture_name}.hpp"
+        header_file.write_text(code.strip())
+        validate_cython_compiles(pxd, tmp_path, cplus=True, include_dirs=[str(tmp_path)])

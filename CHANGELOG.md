@@ -7,6 +7,101 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.0.0] - 2026-10-18
+
+### Added
+- Complete migration of AST, IR, and the Cython writer to `headerkit`.
+- `--allowlist` is the canonical spelling of the header-filtering option, and
+  `--denylist` is its complement. Both are repeatable and take the same
+  patterns. A file matching both lists is excluded: deny wins over allow.
+  `--denylist` has no short flag, so `-w` remains unambiguous.
+- `translate()` gained `allowlist` and `denylist` keyword arguments.
+- `--max-depth` now warns when passed to a backend that does not follow
+  `#include` directives (currently tree-sitter), instead of being ignored
+  silently.
+- C++ class multiple inheritance rendering in Cython (`cdef cppclass Derived(Base1, Base2):`).
+- C++ constructor rendering in `cppclass` definitions.
+- C++ `@staticmethod` and `const` method qualifier support.
+- C++ generic function and method template support (`T max[T](T a, T b)`).
+- Macro constant expression evaluation support via HeaderKit.
+- Comprehensive tests for C++ class, template, and macro features.
+- Bundled Cython `.pxd` stubs delegated directly to `headerkit.stubs`.
+- Automatic C++ mode detection for C++ header file extensions (`.hpp`, `.hh`, `.hxx`, `.H`, `.tcc`, etc.) without requiring `--cpp`.
+- Automatic `stdin` piping support when running `cat header.h | autopxd` without requiring an explicit `-` argument.
+- **tree-sitter parser backend** - Parses C and C++ without a system LLVM install.
+  Install with `pip install "autopxd2[treesitter]"` and select with
+  `--backend tree-sitter`. It parses only the file it is given: it does not follow
+  `#include` directives, does not extract `#define` macros, and does not detect
+  system include paths.
+- `treesitter` packaging extra.
+
+### Changed
+- Dropped Python 3.10 support; minimum supported Python version is now `>=3.11`.
+- `libclang` is now the default parser backend; `tree-sitter` is available as an
+  opt-in alternative.
+- `--backend auto` resolves to libclang when it is available, and otherwise to the
+  first available backend, instead of failing when libclang is missing.
+- Removed runtime dependency on `clang2` in favor of HeaderKit's vendored LLVM 18–23 bindings.
+- Updated `headerkit` dependency requirement to `>=0.46.0,<1.0.0` (supports HeaderKit 0.46.0+).
+- `--allowlist` and `--denylist` now apply to the input header's own
+  declarations, not only to the headers it includes. An allowlist that does not
+  name the input header drops that header's declarations.
+- `--max-depth` defaults to unset rather than `10`, so an explicitly supplied
+  value can be distinguished from the default. The effective default is
+  unchanged at `10`.
+
+### Fixed
+- Real headers test: `Python.h` umbrella header configured as `pxd_only` to reflect that sub-headers in system include paths are skipped and standalone Cython compilation cannot resolve internal CPython types without runtime definitions.
+- Windows: a header given by absolute path produced an uncompilable `.pxd`. The
+  path is emitted inside a Cython string literal (`cdef extern from "..."`),
+  where a backslash starts an escape sequence, so `C:\Users\...` was rejected
+  as an invalid `\U` escape. Backslashes in the header name are now normalized
+  to forward slashes on Windows, which every Windows compiler accepts in
+  `#include`. POSIX paths are untouched, where a backslash is a legal filename
+  character.
+- `--cpp` no longer rewrites the header name to `input.hpp` for a real file named
+  `input.h`; the rewrite now applies only to input read from stdin.
+- `--std` and `--clang-arg` now fail with an explicit error when the resolved backend
+  is not libclang, instead of being silently dropped.
+
+### Deprecated
+- `--whitelist` / `-w` is deprecated in favor of `--allowlist`. It still works,
+  keeps its `-w` short flag, and behaves identically, but emits a
+  `DeprecationWarning`; `-q` / `--quiet` suppresses it. Passing both
+  `--allowlist` and `--whitelist` is an error rather than a silent precedence
+  guess. The same applies to `translate(whitelist=...)`, which warns and
+  forwards to `allowlist`, and raises `ValueError` when both are given.
+
+### Removed
+- `pycparser` backend and all pycparser-specific code.
+- `pycparser` runtime dependency.
+- `--backend pycparser` CLI option.
+- `regenerate_stubs.py` script.
+- `stubs/include/` and `stubs/darwin-include/` directories (120+ pycparser fake headers).
+- **BREAKING: `autopxd.ir` and `autopxd.ir_writer`, which were public API, are gone.**
+  Import from headerkit instead: `autopxd.ir` -> `headerkit.ir`, and
+  `autopxd.ir_writer.write_pxd` -> `headerkit.writers.cython.write_pxd`.
+  `autopxd.translate` and the `autopxd` CLI are unchanged.
+- `autopxd.declarations`, `autopxd.cython_types`, and `autopxd.keywords` internal modules.
+- Fallback from libclang to pycparser behavior.
+- `test/test_ir.py` and `test/test_cython_types.py` (upstreamed to headerkit).
+- The glob pre-expansion applied to whitelist patterns before handing them to
+  the backend. headerkit expands globs itself as of 0.38.0, so the workaround
+  no longer changed any result.
+
+### Documentation
+- Recursion semantics are now stated explicitly: with recursion on (the
+  default) and no allowlist, declarations from every non-system included header
+  are emitted; `--no-recursive` confines output to the input header; and an
+  allowlist narrows the emitted set in both modes.
+- `--no-recursive` no longer documents an umbrella-detection threshold. The
+  include-count/declaration-count heuristic was removed upstream: recursion is
+  controlled by the flag alone, and a header with one include is expanded
+  exactly like one with fifty.
+- `--max-depth` no longer claims per-level depth control or circular-include
+  protection. Any value of `1` or greater expands the whole tree; circular
+  includes are prevented by visited-file tracking.
+
 ## [3.2.3] - 2026-06-05
 
 ### Fixed
@@ -200,7 +295,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - macOS support
 
-[Unreleased]: https://github.com/elijahr/python-autopxd2/compare/v3.2.3...HEAD
+[Unreleased]: https://github.com/elijahr/python-autopxd2/compare/v4.0.0...HEAD
+[4.0.0]: https://github.com/elijahr/python-autopxd2/compare/v3.2.3...v4.0.0
 [3.2.3]: https://github.com/elijahr/python-autopxd2/compare/v3.2.2...v3.2.3
 [3.2.2]: https://github.com/elijahr/python-autopxd2/compare/v3.2.1...v3.2.2
 [3.2.1]: https://github.com/elijahr/python-autopxd2/compare/v3.2.0...v3.2.1

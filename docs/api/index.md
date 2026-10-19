@@ -1,8 +1,22 @@
 # API Reference
 
-This section documents the public Python API for autopxd2.
+autopxd2's own Python API is small: a `translate()` function and a Click command.
+Everything else — the intermediate representation, the parser backends, and the
+Cython writer — lives in [`headerkit`](https://github.com/axiomantic/headerkit), which
+autopxd2 builds on. The pages below document the headerkit APIs that autopxd2 uses,
+so that callers of `translate()` can work with the objects it produces.
 
-## Modules
+## autopxd
+
+::: autopxd
+    options:
+      show_root_heading: true
+      show_source: true
+      members:
+        - translate
+        - cli
+
+## headerkit Modules
 
 ### [IR Module](ir.md)
 
@@ -16,17 +30,18 @@ The Intermediate Representation (IR) module defines data structures for represen
 
 Parser backend implementations:
 
-- `PycparserBackend` - Pure Python C99 parser
-- `LibclangBackend` - LLVM clang-based parser with C++ support
+- `LibclangBackend` - LLVM clang-based parser with full C/C++ support
+- The `tree-sitter` backend, registered by `headerkit[treesitter]`, is selected by
+  name through `get_backend("tree-sitter")`
 
 ## Quick Example
 
 ```python
-from autopxd.backends import get_backend
-from autopxd.ir_writer import write_pxd
+from headerkit.backends import get_backend
+from headerkit.writers.cython import write_pxd
 
 # Parse a header
-backend = get_backend()  # Uses default (pycparser)
+backend = get_backend()  # Uses default (libclang)
 with open("myheader.h") as f:
     code = f.read()
 
@@ -37,12 +52,21 @@ pxd = write_pxd(header)
 print(pxd)
 ```
 
+Or go straight from source text to `.pxd` text:
+
+```python
+import autopxd
+
+with open("myheader.h") as f:
+    print(autopxd.translate(f.read(), "myheader.h"))
+```
+
 ## Common Patterns
 
 ### Inspecting Parsed Declarations
 
 ```python
-from autopxd.ir import Struct, Function
+from headerkit.ir import Struct, Function
 
 header = backend.parse(code, "header.h")
 
@@ -59,10 +83,10 @@ for decl in header.declarations:
 ### Choosing a Backend
 
 ```python
-from autopxd.backends import get_backend, list_backends
+from headerkit.backends import get_backend, list_backends
 
-# List available backends
-print(list_backends())  # ['pycparser', 'libclang']
+# List registered backends
+print(list_backends())  # ['libclang', 'tree-sitter']
 
 # Get a specific backend
 backend = get_backend("libclang")

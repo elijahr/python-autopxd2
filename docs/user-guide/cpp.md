@@ -1,15 +1,16 @@
 # C++ Support
 
-autopxd2 supports C++ headers through the libclang backend.
+autopxd2 supports C++ headers through either parser backend.
 
-!!! important
-    C++ support requires the libclang backend. The default pycparser backend only supports C99.
+!!! note
+    The libclang backend (the default) and the tree-sitter backend both parse C++.
+    See [Parser Backends](backends.md) for the trade-offs.
 
 ## Basic C++ Usage
 
 ```bash
-# Use libclang for C++ headers
-autopxd --backend libclang myclass.hpp > myclass.pxd
+# C++ mode is auto-detected from .hpp/.hh/.hxx extensions
+autopxd --cpp myclass.hpp > myclass.pxd
 ```
 
 Or with Docker:
@@ -20,16 +21,28 @@ docker run --rm -v $(pwd):/work -w /work ghcr.io/elijahr/python-autopxd2 autopxd
 
 ## Supported C++ Features
 
-### Classes
+### Classes & Structs
 
-C++ classes are converted to Cython structs:
+C++ classes and structs are converted to Cython `cppclass` definitions with support for multiple inheritance, constructors, `@staticmethod`, and `const` member methods.
+
+Destructors are not emitted: a Cython `cppclass` block does not declare them, and Cython calls the C++ destructor automatically for stack-allocated instances.
 
 ```cpp
 // widget.hpp
-class Widget {
+class BaseWidget {
+public:
+    virtual void show();
+};
+
+class Widget : public BaseWidget {
 public:
     int width;
     int height;
+    Widget();
+    Widget(int w, int h);
+    virtual ~Widget();
+    int area() const;
+    static Widget create();
 };
 ```
 
@@ -38,20 +51,32 @@ Generates:
 ```cython
 cdef extern from "widget.hpp":
 
-    cdef struct Widget:
+    cdef cppclass BaseWidget:
+        void show()
+
+    cdef cppclass Widget(BaseWidget):
         int width
         int height
+        Widget()
+        Widget(int w, int h)
+        int area() const
+        @staticmethod
+        Widget create()
 ```
 
-### Structs
+### Generic Function & Method Templates
 
-C++ structs work the same as C:
+Generic C++ function and method templates are fully supported using Cython template brackets syntax:
 
 ```cpp
-struct Point {
-    double x;
-    double y;
-};
+template<typename T>
+T max_val(T a, T b);
+```
+
+Generates:
+
+```cython
+T max_val[T](T a, T b)
 ```
 
 ### Functions
@@ -65,30 +90,56 @@ double distance(const Point& a, const Point& b);
 Generates:
 
 ```cython
-double distance(const Point & a, const Point & b)
+double distance(const Point& a, const Point& b)
 ```
 
 ### Namespaces
 
-Currently, only top-level declarations are extracted. Namespaced declarations are not directly supported.
+Declarations inside a namespace are emitted in a dedicated `cdef extern from ... namespace` block:
+
+```cpp
+// ns.hpp
+namespace outer {
+    class Widget {
+    public:
+        Widget();
+        int value() const;
+    };
+    int helper(int x);
+}
+```
+
+Generates:
+
+```cython
+cdef extern from "ns.hpp" namespace "outer":
+
+    cdef cppclass Widget:
+        Widget()
+        int value() const
+
+    int helper(int x)
+```
+
+Nested namespaces are joined with `::`:
+
+```cpp
+namespace outer { namespace inner { int f(int); } }
+```
+
+Generates:
+
+```cython
+cdef extern from "nested.hpp" namespace "outer::inner":
+
+    int f(int)
+```
 
 ## Limitations
 
-### Methods
-
-Class methods are not included in the generated `.pxd`. Only public data members are extracted.
-
-For full method support, you'll need to manually add method declarations or use Cython's `cppclass` syntax.
-
-### Templates
-
-Template classes are supported through the libclang backend, including primary templates
-and full specializations. See [C++ Template Support](backends.md#c-template-support-libclang-only)
-for details.
-
 ### Overloading
 
-Multiple overloaded functions with the same name may produce conflicts. You may need to manually select which overload to use.
+Multiple overloaded free functions with identical names may produce conflicts in C mode. In C++ mode (`--cpp`), Cython natively supports function overloading.
 
 ## Best Practices
 
@@ -101,7 +152,7 @@ Multiple overloaded functions with the same name may produce conflicts. You may 
 
 1. Generate initial pxd:
    ```bash
-   autopxd --backend libclang mylib.hpp > mylib.pxd
+   autopxd mylib.hpp > mylib.pxd
    ```
 
 2. Review and adjust for methods, templates, or other features

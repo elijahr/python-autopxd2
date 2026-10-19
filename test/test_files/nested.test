@@ -23,6 +23,6 @@ cdef extern from "nested.test":
 
     cdef struct my_s:
         my_nested_u n
-        unsigned u
+        unsigned int u
 
     ctypedef my_s my_t

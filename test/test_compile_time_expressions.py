@@ -1,15 +1,22 @@
 """Test handling of compile-time expressions in typedefs (decltype, sizeof)."""
 
+import sys
+
 import pytest
+from headerkit.backends import is_backend_available
+from headerkit.backends.libclang import LibclangBackend
+from headerkit.ir import Typedef
+from headerkit.writers.cython import write_pxd
 
 # These tests require libclang
 pytestmark = pytest.mark.libclang
 
-# Guard import for when clang2 is not installed
-clang = pytest.importorskip("clang")
-from autopxd.backends.libclang_backend import LibclangBackend  # noqa: E402
-from autopxd.ir import Typedef  # noqa: E402
-from autopxd.ir_writer import write_pxd  # noqa: E402
+# clang targets MSVC on Windows, where the data model is LLP64 and size_t is
+# unsigned long long; the LP64 targets spell it unsigned long.
+SIZE_T_SPELLING = "unsigned long long" if sys.platform == "win32" else "unsigned long"
+
+if not is_backend_available("libclang"):
+    pytest.skip("libclang not available", allow_module_level=True)
 
 
 @pytest.fixture
@@ -67,7 +74,7 @@ class TestSizeofTypedefs:
     """Test resolution of sizeof() expressions in typedefs."""
 
     def test_sizeof_int_resolves(self, backend):
-        """sizeof(int) should resolve to size_t (unsigned long on most platforms)."""
+        """sizeof(int) should resolve to size_t's canonical unsigned integer type."""
         code = "typedef decltype(sizeof(int)) size_type;"
         header = backend.parse(code, "test.cpp", extra_args=["-std=c++11"])
 
@@ -75,8 +82,8 @@ class TestSizeofTypedefs:
         assert typedef.name == "size_type"
 
         pxd = write_pxd(header)
-        # Should resolve to unsigned long (size_t's canonical type)
-        assert "ctypedef unsigned long size_type" in pxd
+        # Should resolve to size_t's canonical type
+        assert f"ctypedef {SIZE_T_SPELLING} size_type" in pxd
         assert "sizeof" not in pxd
         assert "decltype" not in pxd
 
@@ -86,7 +93,7 @@ class TestSizeofTypedefs:
         header = backend.parse(code, "test.cpp", extra_args=["-std=c++11"])
 
         pxd = write_pxd(header)
-        assert "ctypedef unsigned long ptr_size_type" in pxd
+        assert f"ctypedef {SIZE_T_SPELLING} ptr_size_type" in pxd
         assert "sizeof" not in pxd
 
     def test_sizeof_in_struct(self, backend):
@@ -100,7 +107,7 @@ class TestSizeofTypedefs:
         header = backend.parse(code, "test.cpp", extra_args=["-std=c++11"])
 
         pxd = write_pxd(header)
-        assert "ctypedef unsigned long size_type" in pxd
+        assert f"ctypedef {SIZE_T_SPELLING} size_type" in pxd
         assert "cdef struct MyStruct:" in pxd
         assert "size_type size" in pxd
 
@@ -140,7 +147,7 @@ class TestMixedExpressions:
 
         pxd = write_pxd(header)
         assert "ctypedef void* nullptr_t" in pxd
-        assert "ctypedef unsigned long size_type" in pxd
+        assert f"ctypedef {SIZE_T_SPELLING} size_type" in pxd
         assert "nullptr_t ptr" in pxd
         assert "size_type size" in pxd
         assert "decltype" not in pxd
