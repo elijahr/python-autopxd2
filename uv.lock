@@ -72,7 +72,7 @@ wheels = [
 
 [[package]]
 name = "autopxd2"
-version = "4.0.0"
+version = "4.0.1"
 source = { editable = "." }
 dependencies = [
     { name = "click" },
@@ -120,8 +120,8 @@ requires-dist = [
     { name = "autopxd2", extras = ["treesitter"], marker = "extra == 'test'" },
     { name = "click" },
     { name = "cython", marker = "extra == 'test'" },
-    { name = "headerkit", specifier = ">=0.46.0,<1.0.0" },
-    { name = "headerkit", extras = ["treesitter"], marker = "extra == 'treesitter'", specifier = ">=0.46.0,<1.0.0" },
+    { name = "headerkit", specifier = ">=0.46.2,<1.0.0" },
+    { name = "headerkit", extras = ["treesitter"], marker = "extra == 'treesitter'", specifier = ">=0.46.2,<1.0.0" },
     { name = "mike", marker = "extra == 'docs'", specifier = ">=2.0" },
     { name = "mkdocs", marker = "extra == 'docs'", specifier = ">=1.5" },
     { name = "mkdocs-material", marker = "extra == 'docs'", specifier = ">=9.0" },
@@ -418,11 +418,11 @@ wheels = [
 
 [[package]]
 name = "headerkit"
-version = "0.46.0"
+version = "0.46.2"
 source = { registry = "http://proxpi.flanopticon.lan/index/" }
-sdist = { url = "http://proxpi.flanopticon.lan/index/headerkit/headerkit-0.46.0.tar.gz", hash = "sha256:34d58d1919c1855db7866a81eb8a641f00f700da089640ae3a6a75c72e875ef7" }
+sdist = { url = "http://proxpi.flanopticon.lan/index/headerkit/headerkit-0.46.2.tar.gz", hash = "sha256:dea6c7fba6fdc7b3d23de6c0a6cf6d4b751f0d05962a6d9cedc7fe7233325fc0" }
 wheels = [
-    { url = "http://proxpi.flanopticon.lan/index/headerkit/headerkit-0.46.0-py3-none-any.whl", hash = "sha256:3940a6fca45a48522a410c84d3c698a4b9ff792dc37d9fb58847ce33bc1dab24" },
+    { url = "http://proxpi.flanopticon.lan/index/headerkit/headerkit-0.46.2-py3-none-any.whl", hash = "sha256:da01e7bd4d803af364b8fec407205a7ba6bbe7976065a466d11331eb3b9e0448" },
 ]
 
 [package.optional-dependencies]
@@ -1027,14 +1027,14 @@ wheels = [
 
 [[package]]
 name = "python-discovery"
-version = "1.6.0"
+version = "1.6.4"
 source = { registry = "http://proxpi.flanopticon.lan/index/" }
 dependencies = [
     { name = "filelock" },
 ]
-sdist = { url = "http://proxpi.flanopticon.lan/index/python-discovery/python_discovery-1.6.0.tar.gz", hash = "sha256:6393b4eae1be8b2182670635e7baff89ac21cb9f8e86fd1ff40c7b1144febb4c" }
+sdist = { url = "http://proxpi.flanopticon.lan/index/python-discovery/python_discovery-1.6.4.tar.gz", hash = "sha256:bc70d31f0ec5de11eda13d4d64c16e24b3506a65984684f2b6c98cb83b2ea9df" }
 wheels = [
-    { url = "http://proxpi.flanopticon.lan/index/python-discovery/python_discovery-1.6.0-py3-none-any.whl", hash = "sha256:d4e244cf17b8b29819ed78003d55fbacf86eda23425b075454fff9271b79377a" },
+    { url = "http://proxpi.flanopticon.lan/index/python-discovery/python_discovery-1.6.4-py3-none-any.whl", hash = "sha256:530179cc51a1816d512b15635b3dc931295ae12efb183783ad31190a5d425d2b" },
 ]
 
 [[package]]
@@ -1235,11 +1235,11 @@ wheels = [
 
 [[package]]
 name = "urllib3"
-version = "2.7.0"
+version = "2.8.0"
 source = { registry = "http://proxpi.flanopticon.lan/index/" }
-sdist = { url = "http://proxpi.flanopticon.lan/index/urllib3/urllib3-2.7.0.tar.gz", hash = "sha256:231e0ec3b63ceb14667c67be60f2f2c40a518cb38b03af60abc813da26505f4c" }
+sdist = { url = "http://proxpi.flanopticon.lan/index/urllib3/urllib3-2.8.0.tar.gz", hash = "sha256:63bf2ead4c879426ebf22ef2a781eeb4aa3b4ae798a0435506f8687fd5bb9b63" }
 wheels = [
-    { url = "http://proxpi.flanopticon.lan/index/urllib3/urllib3-2.7.0-py3-none-any.whl", hash = "sha256:9fb4c81ebbb1ce9531cce37674bbc6f1360472bc18ca9a553ede278ef7276897" },
+    { url = "http://proxpi.flanopticon.lan/index/urllib3/urllib3-2.8.0-py3-none-any.whl", hash = "sha256:0cf3cae568d36aa9576b28dfb35f11328f1cb974ca7647d9475ebb86c75ac6e3" },
 ]
 
 [[package]]
@@ -1253,17 +1253,18 @@ wheels = [
 
 [[package]]
 name = "virtualenv"
-version = "21.7.8"
+version = "21.14.11"
 source = { registry = "http://proxpi.flanopticon.lan/index/" }
 dependencies = [
     { name = "distlib" },
     { name = "filelock" },
+    { name = "packaging" },
     { name = "platformdirs" },
     { name = "python-discovery" },
 ]
-sdist = { url = "http://proxpi.flanopticon.lan/index/virtualenv/virtualenv-21.7.8.tar.gz", hash = "sha256:1dc49c790072a9072cb1803f9bd62aa69cd583077cada32390f75505cdc64c9b" }
+sdist = { url = "http://proxpi.flanopticon.lan/index/virtualenv/virtualenv-21.14.11.tar.gz", hash = "sha256:593052d8477ea8c55a842387ce111bd08c72618f0c1133c302cafe335e570a57" }
 wheels = [
-    { url = "http://proxpi.flanopticon.lan/index/virtualenv/virtualenv-21.7.8-py3-none-any.whl", hash = "sha256:3040eb3cbf5d32b10ffd57d167e6a162237ad82ba7d8cf1400a1efed593d85ac" },
+    { url = "http://proxpi.flanopticon.lan/index/virtualenv/virtualenv-21.14.11-py3-none-any.whl", hash = "sha256:b319f8590a84e5de5f8f2c803ecd2237e9bc0ffa7c1e875e3169c107cecb7454" },
 ]
 
 [[package]]
