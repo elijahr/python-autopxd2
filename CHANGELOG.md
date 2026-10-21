@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.0.2] - 2026-10-21
+
 ### Changed
 - Improved CLI error message when `libclang` is unavailable: now lists platform
   package manager commands (including Alpine Linux `apk add clang-dev`), details
@@ -315,7 +317,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - macOS support
 
-[Unreleased]: https://github.com/elijahr/python-autopxd2/compare/v4.0.1...HEAD
+[Unreleased]: https://github.com/elijahr/python-autopxd2/compare/v4.0.2...HEAD
+[4.0.2]: https://github.com/elijahr/python-autopxd2/compare/v4.0.1...v4.0.2
 [4.0.1]: https://github.com/elijahr/python-autopxd2/compare/v4.0.0...v4.0.1
 [4.0.0]: https://github.com/elijahr/python-autopxd2/compare/v3.2.3...v4.0.0
 [3.2.3]: https://github.com/elijahr/python-autopxd2/compare/v3.2.2...v3.2.3
