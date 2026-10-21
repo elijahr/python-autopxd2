@@ -1275,7 +1275,7 @@
 </tbody>
 </table>
 <p>Use libclang unless you cannot install LLVM. Use tree-sitter for self-contained
-headers in environments where a system <code>libclang</code> is unavailable.</p>
+headers in environments (such as minimal CI or Docker containers) where a system <code>libclang</code> is unavailable.</p>
 <h2 id="libclang">libclang<a class="headerlink" href="#libclang" title="Permanent link">&para;</a></h2>
 <p>Uses LLVM's clang library for parsing. Provides the same parser used by production compilers.</p>
 <p><strong>Features:</strong></p>
@@ -1283,9 +1283,10 @@ headers in environments where a system <code>libclang</code> is unavailable.</p>
 <li>Full C++ support (classes, templates, namespaces)</li>
 <li>Extracts macros as constants (integers, floats, strings, expressions)</li>
 <li>Automatic system include path detection</li>
+<li>Follows and recursively expands <code>#include</code> directives across translation units</li>
 <li>Handles comments and preprocessor directives directly</li>
 <li>Better error messages</li>
-<li>Handles complex headers reliably</li>
+<li>Handles complex and umbrella headers reliably</li>
 </ul>
 <p><strong>Limitations:</strong></p>
 <ul>
@@ -1300,7 +1301,7 @@ headers in environments where a system <code>libclang</code> is unavailable.</p>
 </code></pre></div>
 <h2 id="tree-sitter">tree-sitter<a class="headerlink" href="#tree-sitter" title="Permanent link">&para;</a></h2>
 <p>Uses <a href="https://tree-sitter.github.io/">tree-sitter</a> grammars for C and C++. It needs no
-system LLVM, so it installs and runs anywhere Python does.</p>
+system LLVM, so it installs and runs anywhere Python does using pre-built PyPI wheels.</p>
 <p><strong>Install:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"autopxd2[treesitter]"</span>
 </code></pre></div>
@@ -1311,17 +1312,21 @@ system LLVM, so it installs and runs anywhere Python does.</p>
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>autopxd<span class="w"> </span>--backend<span class="w"> </span>tree-sitter<span class="w"> </span>--cpp<span class="w"> </span>myclass.hpp
 </code></pre></div>
 <p><strong>Limitations:</strong></p>
+<p>The tree-sitter backend is substantially more limited than libclang:</p>
 <ul>
-<li>Does not follow <code>#include</code> directives. Given <code>#include "inner.h"</code>, declarations from
-  <code>inner.h</code> do not appear in the output; only the parsed file's own declarations do.</li>
-<li>Does not extract <code>#define</code> macros as constants.</li>
-<li>Does not detect system include paths.</li>
-<li>Rejects <code>--std</code> and <code>--clang-arg</code>:</li>
+<li><strong>No <code>#include</code> recursion</strong>: It parses only the file given to it. Given <code>#include "inner.h"</code> or <code>#include &lt;header.h&gt;</code>, declarations from the included headers do not appear in the output; only the parsed file's own declarations do. If the header relies on types defined in included files, those type definitions will not be present.</li>
+<li><strong>No <code>#define</code> macro extraction</strong>: Constants and macro functions defined via <code>#define</code> are not extracted into the <code>.pxd</code>.</li>
+<li><strong>No system include paths</strong>: It does not query or search compiler system include directories.</li>
+<li><strong>Rejects compiler driver options</strong>: Options that configure the compiler frontend (<code>--std</code> and <code>--clang-arg</code>) are rejected with an explicit error:</li>
 </ul>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="gp">$ </span>autopxd<span class="w"> </span>--backend<span class="w"> </span>tree-sitter<span class="w"> </span>--std<span class="w"> </span>c11<span class="w"> </span>myheader.h
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="go">Error: --std is only supported by the libclang backend, but the resolved backend is 'tree-sitter'.</span>
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="go">Use --backend libclang, or drop the option.</span>
 </code></pre></div>
+<p><strong>When to use tree-sitter:</strong>
+- Single, self-contained C or C++ header files.
+- Headless CI pipelines, Docker containers, or minimal environments (e.g. Alpine/musllinux) where installing LLVM/Clang is impractical.
+- When you do not need macro constants or included header declarations in the generated <code>.pxd</code>.</p>
 <h2 id="system-include-paths">System Include Paths<a class="headerlink" href="#system-include-paths" title="Permanent link">&para;</a></h2>
 <p>The libclang backend automatically detects system include directories by querying the system clang compiler. This means headers like <code>&lt;stddef.h&gt;</code> and <code>&lt;stdint.h&gt;</code> work without requiring manual <code>-I</code> flags.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># This works automatically - system includes are detected</span>

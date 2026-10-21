@@ -480,6 +480,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#alpine-linux-musl" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alpine Linux / musl
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#fedora-rhel" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -503,6 +514,17 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#headless-ci-build-containers-cibuildwheel-docker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Headless CI &amp; Build Containers (cibuildwheel, Docker)
+      
+    </span>
+  </a>
   
 </li>
       
@@ -1056,6 +1078,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#alpine-linux-musl" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alpine Linux / musl
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#fedora-rhel" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1079,6 +1112,17 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#headless-ci-build-containers-cibuildwheel-docker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Headless CI &amp; Build Containers (cibuildwheel, Docker)
+      
+    </span>
+  </a>
   
 </li>
       
@@ -1154,8 +1198,8 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>autopxd<span class="w"> </span>--backend<span class="w"> </span>tree-sitter<span class="w"> </span>myheader.h<span class="w"> </span>myheader.pxd
 </code></pre></div>
 <p>This backend parses only the file you give it: it does not follow <code>#include</code>
-directives, does not extract <code>#define</code> macros, and rejects <code>--std</code> and
-<code>--clang-arg</code>. See <a href="../../user-guide/backends/">Parser Backends</a>.</p>
+directives, does not extract <code>#define</code> macros, does not detect system include
+paths, and rejects <code>--std</code> and <code>--clang-arg</code>. See <a href="../../user-guide/backends/">Parser Backends</a>.</p>
 <h2 id="system-package-managers">System Package Managers<a class="headerlink" href="#system-package-managers" title="Permanent link">&para;</a></h2>
 <p>Alternatively, you can install LLVM / libclang using your system's package manager:</p>
 <h3 id="macos">macOS<a class="headerlink" href="#macos" title="Permanent link">&para;</a></h3>
@@ -1164,35 +1208,59 @@ directives, does not extract <code>#define</code> macros, and rejects <code>--st
 <h3 id="ubuntu-debian">Ubuntu / Debian<a class="headerlink" href="#ubuntu-debian" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>sudo<span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>libclang-dev<span class="w"> </span>llvm
 </code></pre></div>
+<h3 id="alpine-linux-musl">Alpine Linux / musl<a class="headerlink" href="#alpine-linux-musl" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>apk<span class="w"> </span>add<span class="w"> </span>clang-dev
+</code></pre></div>
 <h3 id="fedora-rhel">Fedora / RHEL<a class="headerlink" href="#fedora-rhel" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>sudo<span class="w"> </span>dnf<span class="w"> </span>install<span class="w"> </span>clang-devel<span class="w"> </span>llvm
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>sudo<span class="w"> </span>dnf<span class="w"> </span>install<span class="w"> </span>clang-devel<span class="w"> </span>llvm
 </code></pre></div>
 <h3 id="windows">Windows<a class="headerlink" href="#windows" title="Permanent link">&para;</a></h3>
 <ol>
 <li>Install LLVM from <a href="https://releases.llvm.org/">releases.llvm.org</a> or via <code>winget install LLVM.LLVM</code></li>
 <li>Ensure the LLVM <code>bin</code> directory is in your <code>PATH</code></li>
 </ol>
+<h2 id="headless-ci-build-containers-cibuildwheel-docker">Headless CI &amp; Build Containers (cibuildwheel, Docker)<a class="headerlink" href="#headless-ci-build-containers-cibuildwheel-docker" title="Permanent link">&para;</a></h2>
+<p>In minimal Docker containers or CI build environments (such as Alpine/<code>musllinux</code>, <code>manylinux</code>, or slim Debian images) where <code>libclang</code> is not present, you can:</p>
+<ol>
+<li><strong>Install <code>libclang</code> in the container:</strong></li>
+<li><strong>Alpine / musllinux</strong>: <code>apk add clang-dev</code></li>
+<li><strong>Debian / Ubuntu</strong>: <code>apt-get install -y libclang-dev</code></li>
+<li><strong>RHEL / manylinux</strong>: <code>dnf install -y clang-devel</code></li>
+</ol>
+<p><em>(For example, in <code>cibuildwheel</code> config in <code>pyproject.toml</code>:)</em>
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="k">[[tool.cibuildwheel.overrides]]</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="n">select</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"*-musllinux_*"</span><span class="p">]</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="n">before-all</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"apk add clang-dev"</span>
+</code></pre></div></p>
+<ol>
+<li><strong>Or use the Tree-sitter backend (no system packages required):</strong>
+   Declare <code>autopxd2[treesitter]</code> in your build dependencies:
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="k">[build-system]</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="n">requires</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"meson-python"</span><span class="p">,</span><span class="w"> </span><span class="s2">"autopxd2[treesitter]"</span><span class="p">]</span>
+</code></pre></div>
+   and pass <code>--backend tree-sitter</code> in your build script (e.g. <code>meson.build</code>).</li>
+</ol>
 <h2 id="development-installation">Development Installation<a class="headerlink" href="#development-installation" title="Permanent link">&para;</a></h2>
 <p>For development, clone the repository and install with development dependencies:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/elijahr/python-autopxd2.git
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="nb">cd</span><span class="w"> </span>python-autopxd2
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.<span class="o">[</span>dev<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/elijahr/python-autopxd2.git
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="nb">cd</span><span class="w"> </span>python-autopxd2
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.<span class="o">[</span>dev<span class="o">]</span>
 </code></pre></div>
 <h2 id="docker-no-installation-required">Docker (No Installation Required)<a class="headerlink" href="#docker-no-installation-required" title="Permanent link">&para;</a></h2>
 <p>Use the Docker image for pre-configured libclang support without installing anything on your host system:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>-v<span class="w"> </span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>:/work<span class="w"> </span>-w<span class="w"> </span>/work<span class="w"> </span>ghcr.io/elijahr/python-autopxd2<span class="w"> </span>autopxd<span class="w"> </span>myheader.h
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>-v<span class="w"> </span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>:/work<span class="w"> </span>-w<span class="w"> </span>/work<span class="w"> </span>ghcr.io/elijahr/python-autopxd2<span class="w"> </span>autopxd<span class="w"> </span>myheader.h
 </code></pre></div>
 <p>See <a href="../docker/">Docker Usage</a> for more details.</p>
 <h2 id="verifying-installation">Verifying Installation<a class="headerlink" href="#verifying-installation" title="Permanent link">&para;</a></h2>
 <p>Check that autopxd2 can find libclang:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>autopxd<span class="w"> </span>--list-backends
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>autopxd<span class="w"> </span>--list-backends
 </code></pre></div>
 <p>If libclang is installed correctly, you will see:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>Available backends:
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>  libclang     Full C/C++ support via LLVM [available] (default)
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>  tree-sitter  Fast C/C++ parsing without system LLVM dependencies [available]
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>Default: libclang
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>Available backends:
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>  libclang     Full C/C++ support via LLVM [available] (default)
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>  tree-sitter  Fast C/C++ parsing without system LLVM dependencies [available]
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>Default: libclang
 </code></pre></div>
 <p>The <code>tree-sitter</code> line appears once the <code>treesitter</code> extra is installed; it is listed
 as unavailable otherwise.</p>
