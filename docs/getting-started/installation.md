@@ -35,8 +35,8 @@ autopxd --backend tree-sitter myheader.h myheader.pxd
 ```
 
 This backend parses only the file you give it: it does not follow `#include`
-directives, does not extract `#define` macros, and rejects `--std` and
-`--clang-arg`. See [Parser Backends](../user-guide/backends.md).
+directives, does not extract `#define` macros, does not detect system include
+paths, and rejects `--std` and `--clang-arg`. See [Parser Backends](../user-guide/backends.md).
 
 ## System Package Managers
 
@@ -54,6 +54,12 @@ brew install llvm
 sudo apt-get install libclang-dev llvm
 ```
 
+### Alpine Linux / musl
+
+```bash
+apk add clang-dev
+```
+
 ### Fedora / RHEL
 
 ```bash
@@ -64,6 +70,30 @@ sudo dnf install clang-devel llvm
 
 1. Install LLVM from [releases.llvm.org](https://releases.llvm.org/) or via `winget install LLVM.LLVM`
 2. Ensure the LLVM `bin` directory is in your `PATH`
+
+## Headless CI & Build Containers (cibuildwheel, Docker)
+
+In minimal Docker containers or CI build environments (such as Alpine/`musllinux`, `manylinux`, or slim Debian images) where `libclang` is not present, you can:
+
+1. **Install `libclang` in the container:**
+   - **Alpine / musllinux**: `apk add clang-dev`
+   - **Debian / Ubuntu**: `apt-get install -y libclang-dev`
+   - **RHEL / manylinux**: `dnf install -y clang-devel`
+
+   *(For example, in `cibuildwheel` config in `pyproject.toml`:)*
+   ```toml
+   [[tool.cibuildwheel.overrides]]
+   select = ["*-musllinux_*"]
+   before-all = "apk add clang-dev"
+   ```
+
+2. **Or use the Tree-sitter backend (no system packages required):**
+   Declare `autopxd2[treesitter]` in your build dependencies:
+   ```toml
+   [build-system]
+   requires = ["meson-python", "autopxd2[treesitter]"]
+   ```
+   and pass `--backend tree-sitter` in your build script (e.g. `meson.build`).
 
 ## Development Installation
 

@@ -23,7 +23,7 @@ Default: libclang
 | `--std` / `--clang-arg` | ✅ | ❌ (rejected with an error) |
 
 Use libclang unless you cannot install LLVM. Use tree-sitter for self-contained
-headers in environments where a system `libclang` is unavailable.
+headers in environments (such as minimal CI or Docker containers) where a system `libclang` is unavailable.
 
 ## libclang
 
@@ -34,9 +34,10 @@ Uses LLVM's clang library for parsing. Provides the same parser used by producti
 - Full C++ support (classes, templates, namespaces)
 - Extracts macros as constants (integers, floats, strings, expressions)
 - Automatic system include path detection
+- Follows and recursively expands `#include` directives across translation units
 - Handles comments and preprocessor directives directly
 - Better error messages
-- Handles complex headers reliably
+- Handles complex and umbrella headers reliably
 
 **Limitations:**
 
@@ -55,7 +56,7 @@ autopxd myheader.hpp
 ## tree-sitter
 
 Uses [tree-sitter](https://tree-sitter.github.io/) grammars for C and C++. It needs no
-system LLVM, so it installs and runs anywhere Python does.
+system LLVM, so it installs and runs anywhere Python does using pre-built PyPI wheels.
 
 **Install:**
 
@@ -74,17 +75,23 @@ autopxd --backend tree-sitter --cpp myclass.hpp
 
 **Limitations:**
 
-- Does not follow `#include` directives. Given `#include "inner.h"`, declarations from
-  `inner.h` do not appear in the output; only the parsed file's own declarations do.
-- Does not extract `#define` macros as constants.
-- Does not detect system include paths.
-- Rejects `--std` and `--clang-arg`:
+The tree-sitter backend is substantially more limited than libclang:
+
+- **No `#include` recursion**: It parses only the file given to it. Given `#include "inner.h"` or `#include <header.h>`, declarations from the included headers do not appear in the output; only the parsed file's own declarations do. If the header relies on types defined in included files, those type definitions will not be present.
+- **No `#define` macro extraction**: Constants and macro functions defined via `#define` are not extracted into the `.pxd`.
+- **No system include paths**: It does not query or search compiler system include directories.
+- **Rejects compiler driver options**: Options that configure the compiler frontend (`--std` and `--clang-arg`) are rejected with an explicit error:
 
   ```console
   $ autopxd --backend tree-sitter --std c11 myheader.h
   Error: --std is only supported by the libclang backend, but the resolved backend is 'tree-sitter'.
   Use --backend libclang, or drop the option.
   ```
+
+**When to use tree-sitter:**
+- Single, self-contained C or C++ header files.
+- Headless CI pipelines, Docker containers, or minimal environments (e.g. Alpine/musllinux) where installing LLVM/Clang is impractical.
+- When you do not need macro constants or included header declarations in the generated `.pxd`.
 
 ## System Include Paths
 

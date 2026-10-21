@@ -7,7 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [4.0.1] - 2026-10-19
+### Changed
+- Improved CLI error message when `libclang` is unavailable: now lists platform
+  package manager commands (including Alpine Linux `apk add clang-dev`), details
+  the `autopxd2[treesitter]` alternative, and explicitly summarizes tree-sitter's
+  limitations (parses single file only, no `#include` recursion, no `#define` macros).
+
+### Documentation
+- Added Alpine Linux (`apk add clang-dev`) to system package manager installation
+  instructions in `README.md` and `docs/getting-started/installation.md`.
+- Added a dedicated "Headless CI & Build Containers (cibuildwheel, Docker)" guide
+  to `README.md` and `docs/getting-started/installation.md` for projects using
+  autopxd2 in automated container builds.
+- Expanded the documentation of the `tree-sitter` backend's limitations and
+  trade-offs versus `libclang` in `README.md`, `installation.md`, and
+  `docs/user-guide/backends.md`.
 
 ### Changed
 - Updated test snapshot fixtures (`issue_039_opaque_struct.test`, `keywords.test`, `array_dimensions.test`, `simple_c.expected.pxd`, and `json_lib.expected.pxd`) to reflect HeaderKit 0.46.2 struct/variable ordering, `ctypedef struct` opaque struct typedef semantics, and topological dependency sort order.
