@@ -346,11 +346,26 @@ def _print_backends_json() -> None:
 
 
 DOCKER_DOCS_URL = "https://elijahr.github.io/python-autopxd2/getting-started/docker/"
+INSTALL_DOCS_URL = "https://elijahr.github.io/python-autopxd2/getting-started/installation/"
 
 LIBCLANG_REQUIRED_ERROR = f"""Error: libclang backend not available.
-Install libclang with headerkit: python -m headerkit.install_libclang
-Or install LLVM/Clang manually (e.g., apt install libclang-dev, brew install llvm)
-Or use Docker: {DOCKER_DOCS_URL}
+To use libclang, install it via your system package manager:
+  - Ubuntu/Debian:       sudo apt-get install libclang-dev
+  - Alpine Linux (musl): apk add clang-dev
+  - Fedora/RHEL:         sudo dnf install clang-devel
+  - macOS:               brew install llvm
+  - Automated installer: python -m headerkit.install_libclang
+
+Alternatively, use the tree-sitter backend (no LLVM / system library required):
+  pip install "autopxd2[treesitter]"
+  autopxd --backend tree-sitter <header.h> [<output.pxd>]
+
+Note: The tree-sitter backend is more limited than libclang: it parses the input
+file only (does not follow #include directives), does not extract #define macros,
+and cannot detect system include paths.
+
+See installation docs: {INSTALL_DOCS_URL}
+Or Docker usage: {DOCKER_DOCS_URL}
 """
 
 

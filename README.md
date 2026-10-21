@@ -69,6 +69,7 @@ You only need the system `libclang` shared library (`libclang.so`, `libclang.dyl
 If `libclang` is not already installed on your system, install it via your system package manager:
 - **macOS**: `brew install llvm`
 - **Ubuntu/Debian**: `sudo apt-get install libclang-dev`
+- **Alpine Linux (musl)**: `apk add clang-dev`
 - **Fedora/RHEL**: `sudo dnf install clang-devel`
 - **Windows**: `winget install LLVM.LLVM`
 
@@ -93,12 +94,37 @@ Then specify `--backend tree-sitter`:
 autopxd --backend tree-sitter myheader.h myheader.pxd
 ```
 
-The tree-sitter backend parses the given file only. Compared to libclang it does not:
+> **Limitations:** The tree-sitter backend is more limited than `libclang`. It operates purely on the syntax tree of the given file. Compared to libclang, it:
+> - **Does not follow `#include` directives**: Declarations from included headers are absent.
+> - **Does not extract `#define` macros**: Macro constants and macro functions are not emitted.
+> - **Does not detect system include paths**: Local/system header lookups are skipped.
+> - **Rejects compiler driver options**: Options like `--std` or `--clang-arg` are rejected with an error.
 
-- follow `#include` directives, so declarations from included headers are absent
-- extract `#define` macros as constants
-- detect system include paths
-- accept `--std` or `--clang-arg` (both are rejected with an error)
+Use `tree-sitter` for self-contained headers where installing system LLVM is not feasible. For umbrella headers and full macro extraction, use `libclang`.
+
+### Headless CI & Build Containers (cibuildwheel, Docker)
+
+In minimal Docker containers or CI build environments (such as Alpine/`musllinux`, `manylinux`, or slim Debian images) where `libclang` is not present, you can:
+
+1. **Install `libclang` in the container:**
+   - **Alpine / musllinux**: `apk add clang-dev`
+   - **Debian / Ubuntu**: `apt-get install -y libclang-dev`
+   - **RHEL / manylinux**: `dnf install -y clang-devel`
+
+   *(For example, in `cibuildwheel` config in `pyproject.toml`:)*
+   ```toml
+   [[tool.cibuildwheel.overrides]]
+   select = ["*-musllinux_*"]
+   before-all = "apk add clang-dev"
+   ```
+
+2. **Or use the Tree-sitter backend (no system packages required):**
+   Declare `autopxd2[treesitter]` in your build dependencies:
+   ```toml
+   [build-system]
+   requires = ["meson-python", "autopxd2[treesitter]"]
+   ```
+   and pass `--backend tree-sitter` in your build script (e.g. `meson.build`).
 
 ## Quick Start
 

@@ -30,6 +30,19 @@ class TestBackendAvailability:
         """Unknown backends should not be available."""
         assert is_backend_available("nonexistent") is False
 
+    def test_libclang_unavailable_error_message(self, monkeypatch: pytest.MonkeyPatch, simple_header_file: str) -> None:
+        """When libclang is requested but unavailable, print helpful guidance."""
+        import autopxd
+
+        monkeypatch.setattr(autopxd, "is_backend_available", lambda name: False)
+        runner = CliRunner()
+        result = runner.invoke(cli, ["--backend", "libclang", simple_header_file])
+        assert result.exit_code != 0
+        assert "Error: libclang backend not available" in result.output
+        assert "apk add clang-dev" in result.output
+        assert "tree-sitter" in result.output
+        assert 'pip install "autopxd2[treesitter]"' in result.output
+
 
 class TestBackendInfo:
     """Tests for backend info retrieval."""
