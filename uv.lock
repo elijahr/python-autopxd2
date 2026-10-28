@@ -72,7 +72,7 @@ wheels = [
 
 [[package]]
 name = "autopxd2"
-version = "4.0.1"
+version = "4.0.2"
 source = { editable = "." }
 dependencies = [
     { name = "click" },
@@ -120,8 +120,8 @@ requires-dist = [
     { name = "autopxd2", extras = ["treesitter"], marker = "extra == 'test'" },
     { name = "click" },
     { name = "cython", marker = "extra == 'test'" },
-    { name = "headerkit", specifier = ">=0.46.2,<1.0.0" },
-    { name = "headerkit", extras = ["treesitter"], marker = "extra == 'treesitter'", specifier = ">=0.46.2,<1.0.0" },
+    { name = "headerkit", specifier = "==0.46.2" },
+    { name = "headerkit", extras = ["treesitter"], marker = "extra == 'treesitter'", specifier = "==0.46.2" },
     { name = "mike", marker = "extra == 'docs'", specifier = ">=2.0" },
     { name = "mkdocs", marker = "extra == 'docs'", specifier = ">=1.5" },
     { name = "mkdocs-material", marker = "extra == 'docs'", specifier = ">=9.0" },

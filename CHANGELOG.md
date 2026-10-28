@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Pinned `headerkit` and `headerkit[treesitter]` dependencies to `==0.46.2` in `pyproject.toml` and `uv.lock` so upstream `headerkit` releases cannot break `python-autopxd2` installations or Cython `.pxd` macro heuristics.
+
 ## [4.0.2] - 2026-10-21
 
 ### Changed
