@@ -120,8 +120,8 @@ requires-dist = [
     { name = "autopxd2", extras = ["treesitter"], marker = "extra == 'test'" },
     { name = "click" },
     { name = "cython", marker = "extra == 'test'" },
-    { name = "headerkit", specifier = "==0.46.2" },
-    { name = "headerkit", extras = ["treesitter"], marker = "extra == 'treesitter'", specifier = "==0.46.2" },
+    { name = "headerkit", specifier = "==0.48.1" },
+    { name = "headerkit", extras = ["treesitter"], marker = "extra == 'treesitter'", specifier = "==0.48.1" },
     { name = "mike", marker = "extra == 'docs'", specifier = ">=2.0" },
     { name = "mkdocs", marker = "extra == 'docs'", specifier = ">=1.5" },
     { name = "mkdocs-material", marker = "extra == 'docs'", specifier = ">=9.0" },
@@ -418,11 +418,11 @@ wheels = [
 
 [[package]]
 name = "headerkit"
-version = "0.46.2"
+version = "0.48.1"
 source = { registry = "http://proxpi.flanopticon.lan/index/" }
-sdist = { url = "http://proxpi.flanopticon.lan/index/headerkit/headerkit-0.46.2.tar.gz", hash = "sha256:dea6c7fba6fdc7b3d23de6c0a6cf6d4b751f0d05962a6d9cedc7fe7233325fc0" }
+sdist = { url = "http://proxpi.flanopticon.lan/index/headerkit/headerkit-0.48.1.tar.gz", hash = "sha256:6adc4dd8b0943d1ff8a478ae6a81ebb2089950862deff5db06faf91fe9ddda57" }
 wheels = [
-    { url = "http://proxpi.flanopticon.lan/index/headerkit/headerkit-0.46.2-py3-none-any.whl", hash = "sha256:da01e7bd4d803af364b8fec407205a7ba6bbe7976065a466d11331eb3b9e0448" },
+    { url = "http://proxpi.flanopticon.lan/index/headerkit/headerkit-0.48.1-py3-none-any.whl", hash = "sha256:b46fd6a0efbbddd012f08d3e886c98c3663165ee4afa993452e1479128d053d5" },
 ]
 
 [package.optional-dependencies]

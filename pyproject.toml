@@ -31,14 +31,14 @@ classifiers = [
 requires-python = ">=3.11"
 dependencies = [
   "Click",
-  "headerkit==0.46.2",
+  "headerkit==0.48.1",
 ]
 
 [project.optional-dependencies]
 # libclang backend (C++ support) - headerkit vendors clang bindings, kept for backwards compatibility
 libclang = []
 # tree-sitter backend - headerkit owns the tree-sitter dependency set
-treesitter = ["headerkit[treesitter]==0.46.2"]
+treesitter = ["headerkit[treesitter]==0.48.1"]
 
 # Testing
 # tree-sitter is included so the default dev install exercises both backends

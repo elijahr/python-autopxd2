@@ -31,7 +31,7 @@ cdef extern from "json_lib.h":
         char text[160]
 
 
-    int JSON_INDENT(int n)
+    # Macro function 'JSON_INDENT(n)' skipped (preprocessor macro)
 
     int json_is_object(const json_t* json)
 
