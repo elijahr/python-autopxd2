@@ -94,17 +94,17 @@ cdef extern from "zlib.h":
 
     int Z_NULL
 
-    int deflateInit(int strm, int level)
+    # Macro function 'deflateInit(strm, level)' skipped (preprocessor macro)
 
-    int inflateInit(int strm)
+    # Macro function 'inflateInit(strm)' skipped (preprocessor macro)
 
-    int deflateInit2(int strm, int level, int method, int windowBits, int memLevel, int strategy)
+    # Macro function 'deflateInit2(strm, level, method, windowBits, memLevel, strategy)' skipped (preprocessor macro)
 
-    int inflateInit2(int strm, int windowBits)
+    # Macro function 'inflateInit2(strm, windowBits)' skipped (preprocessor macro)
 
-    int inflateBackInit(int strm, int windowBits, int window)
+    # Macro function 'inflateBackInit(strm, windowBits, window)' skipped (preprocessor macro)
 
-    int gzgetc(int g)
+    # Macro function 'gzgetc(g)' skipped (preprocessor macro)
 
     ctypedef voidpf (*alloc_func)(voidpf opaque, uInt items, uInt size)
 
@@ -328,7 +328,7 @@ cdef extern from "zlib.h":
 
     int MAX_WBITS
 
-    int OF(int args)
+    # Macro function 'OF(args)' skipped (preprocessor macro)
 
     int SEEK_SET
 

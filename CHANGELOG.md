@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Pinned `headerkit` and `headerkit[treesitter]` dependencies to `==0.48.1` in `pyproject.toml` and `uv.lock`, and updated Cython macro-function comment snapshot fixtures (`zlib.expected.pxd`, `jansson.expected.pxd`, `json_lib.expected.pxd`) to match `headerkit` 0.48.1 output.
+
+## [4.0.3] - 2026-10-28
+
+### Changed
+- Pinned `headerkit` and `headerkit[treesitter]` dependencies to `==0.48.1` in `pyproject.toml` and `uv.lock`, and updated Cython macro-function comment snapshot fixtures (`zlib.expected.pxd`, `jansson.expected.pxd`, `json_lib.expected.pxd`) to match `headerkit` 0.48.1 output.
+
 ## [4.0.2] - 2026-10-21
 
 ### Changed
@@ -317,7 +325,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - macOS support
 
-[Unreleased]: https://github.com/elijahr/python-autopxd2/compare/v4.0.2...HEAD
+[Unreleased]: https://github.com/elijahr/python-autopxd2/compare/v4.0.3...HEAD
+[4.0.3]: https://github.com/elijahr/python-autopxd2/compare/v4.0.2...v4.0.3
 [4.0.2]: https://github.com/elijahr/python-autopxd2/compare/v4.0.1...v4.0.2
 [4.0.1]: https://github.com/elijahr/python-autopxd2/compare/v4.0.0...v4.0.1
 [4.0.0]: https://github.com/elijahr/python-autopxd2/compare/v3.2.3...v4.0.0

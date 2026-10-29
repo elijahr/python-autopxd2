@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "autopxd2"
-version = "4.0.2"
+version = "4.0.3"
 description = "Automatically generate Cython pxd files from C headers"
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -31,14 +31,14 @@ classifiers = [
 requires-python = ">=3.11"
 dependencies = [
   "Click",
-  "headerkit>=0.46.2,<1.0.0",
+  "headerkit==0.48.1",
 ]
 
 [project.optional-dependencies]
 # libclang backend (C++ support) - headerkit vendors clang bindings, kept for backwards compatibility
 libclang = []
 # tree-sitter backend - headerkit owns the tree-sitter dependency set
-treesitter = ["headerkit[treesitter]>=0.46.2,<1.0.0"]
+treesitter = ["headerkit[treesitter]==0.48.1"]
 
 # Testing
 # tree-sitter is included so the default dev install exercises both backends

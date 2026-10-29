@@ -15,51 +15,51 @@ cdef extern from "jansson.h":
 
     int JANSSON_THREAD_SAFE_REFCOUNT
 
-    int JANSSON_ATTRS(int x)
+    # Macro function 'JANSSON_ATTRS(x)' skipped (preprocessor macro)
 
     const char* JSON_INTEGER_FORMAT
 
-    int json_typeof(int json)
+    # Macro function 'json_typeof(json)' skipped (preprocessor macro)
 
-    int json_is_object(int json)
+    # Macro function 'json_is_object(json)' skipped (preprocessor macro)
 
-    int json_is_array(int json)
+    # Macro function 'json_is_array(json)' skipped (preprocessor macro)
 
-    int json_is_string(int json)
+    # Macro function 'json_is_string(json)' skipped (preprocessor macro)
 
-    int json_is_integer(int json)
+    # Macro function 'json_is_integer(json)' skipped (preprocessor macro)
 
-    int json_is_real(int json)
+    # Macro function 'json_is_real(json)' skipped (preprocessor macro)
 
-    int json_is_number(int json)
+    # Macro function 'json_is_number(json)' skipped (preprocessor macro)
 
-    int json_is_true(int json)
+    # Macro function 'json_is_true(json)' skipped (preprocessor macro)
 
-    int json_is_false(int json)
+    # Macro function 'json_is_false(json)' skipped (preprocessor macro)
 
-    int json_is_boolean(int json)
+    # Macro function 'json_is_boolean(json)' skipped (preprocessor macro)
 
-    int json_is_null(int json)
+    # Macro function 'json_is_null(json)' skipped (preprocessor macro)
 
-    int json_boolean(int val)
+    # Macro function 'json_boolean(val)' skipped (preprocessor macro)
 
-    int JSON_INTERNAL_INCREF(int json)
+    # Macro function 'JSON_INTERNAL_INCREF(json)' skipped (preprocessor macro)
 
-    int JSON_INTERNAL_DECREF(int json)
+    # Macro function 'JSON_INTERNAL_DECREF(json)' skipped (preprocessor macro)
 
     int JSON_ERROR_TEXT_LENGTH
 
     int JSON_ERROR_SOURCE_LENGTH
 
-    int json_object_foreach(int object, int key, int value)
+    # Macro function 'json_object_foreach(object, key, value)' skipped (preprocessor macro)
 
-    int json_object_keylen_foreach(int object, int key, int key_len, int value)
+    # Macro function 'json_object_keylen_foreach(object, key, key_len, value)' skipped (preprocessor macro)
 
-    int json_object_foreach_safe(int object, int n, int key, int value)
+    # Macro function 'json_object_foreach_safe(object, n, key, value)' skipped (preprocessor macro)
 
-    int json_object_keylen_foreach_safe(int object, int n, int key, int key_len, int value)
+    # Macro function 'json_object_keylen_foreach_safe(object, n, key, key_len, value)' skipped (preprocessor macro)
 
-    int json_array_foreach(int array, int index, int value)
+    # Macro function 'json_array_foreach(array, index, value)' skipped (preprocessor macro)
 
     int JSON_VALIDATE_ONLY
 
@@ -77,7 +77,7 @@ cdef extern from "jansson.h":
 
     int JSON_MAX_INDENT
 
-    int JSON_INDENT(int n)
+    # Macro function 'JSON_INDENT(n)' skipped (preprocessor macro)
 
     int JSON_COMPACT
 
@@ -91,7 +91,7 @@ cdef extern from "jansson.h":
 
     int JSON_ESCAPE_SLASH
 
-    int JSON_REAL_PRECISION(int n)
+    # Macro function 'JSON_REAL_PRECISION(n)' skipped (preprocessor macro)
 
     int JSON_EMBED
 
