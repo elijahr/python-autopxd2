@@ -1,12 +1,14 @@
 # Build and push Docker image to GitHub Container Registry
 name: Docker
 
+# yamllint disable rule:truthy
 on:
   push:
     branches: [master]
-    tags: ['v*']
   pull_request:
     branches: [master]
+  workflow_call:
+# yamllint enable rule:truthy
 
 env:
   REGISTRY: ghcr.io

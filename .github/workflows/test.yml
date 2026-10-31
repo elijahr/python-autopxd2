@@ -2,7 +2,14 @@
 
 name: Test
 
-on: [push, pull_request]
+# yamllint disable rule:truthy
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_call:
+# yamllint enable rule:truthy
 
 jobs:
   test:

@@ -4,6 +4,8 @@ name: Publish to PyPI
 
 # yamllint disable rule:truthy
 on:
+  push:
+    tags: ['v*']
   release:
     types: [published]
   workflow_dispatch:
@@ -13,9 +15,26 @@ on:
         required: true
 # yamllint enable rule:truthy
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
+  test:
+    uses: ./.github/workflows/test.yml
+
+  pre-commit:
+    uses: ./.github/workflows/pre-commit.yml
+
+  docker:
+    uses: ./.github/workflows/docker.yml
+    permissions:
+      contents: read
+      packages: write
+
   build:
     name: Build distribution
+    needs: [test, pre-commit, docker]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -30,6 +49,29 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: '3.13'
+
+      - name: Verify version matches tag
+        env:
+          REF_NAME: ${{ github.event.inputs.git-ref || github.event.release.tag_name || github.ref_name }}
+        run: |
+          case "$REF_NAME" in
+            v*)
+              EXPECTED="${REF_NAME#v}"
+              VERSION=$(python -c "
+          import tomllib
+          with open('pyproject.toml', 'rb') as f:
+              print(tomllib.load(f)['project']['version'])
+          ")
+              if [ "$VERSION" != "$EXPECTED" ]; then
+                echo "::error::Version mismatch: tag=$EXPECTED, pyproject.toml=$VERSION"
+                exit 1
+              fi
+              echo "Verified version matches tag: $VERSION"
+              ;;
+            *)
+              echo "Non-tag ref ($REF_NAME); skipping tag version match check"
+              ;;
+          esac
 
       - name: Install build dependencies
         run: uv pip install --system build
@@ -74,3 +116,28 @@ jobs:
         with:
           verbose: true
           print-hash: true
+
+  github-release:
+    name: Create GitHub Release
+    needs: [build, publish-pypi]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download distribution artifacts
+        uses: actions/download-artifact@v8
+        with:
+          name: python-package-distributions
+          path: dist/
+
+      - name: Create or update GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.inputs.git-ref || github.event.release.tag_name || github.ref_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          if gh release view "$TAG" --repo "$REPO" > /dev/null 2>&1; then
+            gh release upload "$TAG" dist/* --repo "$REPO" --clobber
+          else
+            gh release create "$TAG" dist/* --repo "$REPO" --generate-notes
+          fi
