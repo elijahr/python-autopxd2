@@ -72,7 +72,7 @@ wheels = [
 
 [[package]]
 name = "autopxd2"
-version = "4.0.3"
+version = "4.0.4"
 source = { editable = "." }
 dependencies = [
     { name = "click" },
@@ -120,8 +120,8 @@ requires-dist = [
     { name = "autopxd2", extras = ["treesitter"], marker = "extra == 'test'" },
     { name = "click" },
     { name = "cython", marker = "extra == 'test'" },
-    { name = "headerkit", specifier = "==0.48.1" },
-    { name = "headerkit", extras = ["treesitter"], marker = "extra == 'treesitter'", specifier = "==0.48.1" },
+    { name = "headerkit", specifier = "==0.49.4" },
+    { name = "headerkit", extras = ["treesitter"], marker = "extra == 'treesitter'", specifier = "==0.49.4" },
     { name = "mike", marker = "extra == 'docs'", specifier = ">=2.0" },
     { name = "mkdocs", marker = "extra == 'docs'", specifier = ">=1.5" },
     { name = "mkdocs-material", marker = "extra == 'docs'", specifier = ">=9.0" },
@@ -419,11 +419,11 @@ wheels = [
 
 [[package]]
 name = "headerkit"
-version = "0.48.1"
+version = "0.49.4"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/f8/fa/4515b8a69e143481a9ab423ce2c52cce892ecdf748304e44d20356be2eea/headerkit-0.48.1.tar.gz", hash = "sha256:6adc4dd8b0943d1ff8a478ae6a81ebb2089950862deff5db06faf91fe9ddda57", size = 1529701, upload-time = "2026-10-29T00:34:38.434Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/3c/59/94c9e420cea61f4b78512ef681f629f65a0e100091329ac164caca3c8639/headerkit-0.49.4.tar.gz", hash = "sha256:44a58189b74953cc5afacfcc431abcc497b4ecc9125945f07905a255ae3191c6", size = 1545003, upload-time = "2026-10-31T03:18:45.892Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/89/3b/7e213de2cb2495c5b759a7155847b461ec6f957da6b045dbdf349e725e8b/headerkit-0.48.1-py3-none-any.whl", hash = "sha256:b46fd6a0efbbddd012f08d3e886c98c3663165ee4afa993452e1479128d053d5", size = 815177, upload-time = "2026-10-29T00:34:36.711Z" },
+    { url = "https://files.pythonhosted.org/packages/1f/74/163bf8939d2307bea23e95798eb9a28f9a54db9bac1e66447ee21c507324/headerkit-0.49.4-py3-none-any.whl", hash = "sha256:779f9dc30de3095725fa2fc9593c321abeefd7dee6d5a3846a444fb78b9027ae", size = 817851, upload-time = "2026-10-31T03:18:44.076Z" },
 ]
 
 [package.optional-dependencies]
