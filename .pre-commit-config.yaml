@@ -23,7 +23,7 @@ repos:
         files: ^autopxd/
         additional_dependencies:
           - click
-          - headerkit>=0.38.0,<0.39
+          - "headerkit @ git+https://github.com/axiomantic/headerkit.git@feat/headerkit-roundtable-v2"
 
   - repo: https://github.com/mgedmin/check-manifest
     rev: "0.51"
