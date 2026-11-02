@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `translate`: add optional `stub_cimport_prefix`, `stub_mode` (`"cimport"` or `"standalone"`), `nogil`, and `exception_spec` keyword arguments forwarded directly to `headerkit.writers.cython.write_pxd`.
+
+### Changed
+- Replace manual declaration allowlist/denylist path-matching helpers in `autopxd/__init__.py` with `headerkit.transforms.builtin.FilterByHeader` and backend capability properties (`follows_includes`, `supports_compiler_args`).
+- Pin `headerkit` and `headerkit[treesitter]` to `git+https://github.com/axiomantic/headerkit.git@feat/headerkit-roundtable-v2` in `pyproject.toml`.
+
 ## [4.0.4] - 2026-10-30
 
 ### Changed

@@ -127,6 +127,28 @@ class TestHdrnameNormalization:
         extern_line = next(line for line in pxd.splitlines() if line.startswith("cdef extern from"))
         assert "\\" not in extern_line
 
+    def test_translate_standalone_stub_mode_and_nogil(self):
+        """translate() forwards stub_mode='standalone', nogil=True, and exception_spec to write_pxd."""
+        code = "#include <stdarg.h>\nvoid vlog(va_list ap);\n"
+        pxd = autopxd.translate(
+            code,
+            "log.h",
+            backend="libclang",
+            stub_mode="standalone",
+            nogil=True,
+            exception_spec="+",
+        )
+        expected = (
+            'cdef extern from "<stdarg.h>":\n'
+            "    ctypedef struct va_list:\n"
+            "        pass\n"
+            "\n"
+            'cdef extern from "log.h":\n'
+            "\n"
+            "    void vlog(va_list ap) except + nogil\n"
+        )
+        assert pxd == expected
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
