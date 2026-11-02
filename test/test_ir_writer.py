@@ -310,6 +310,28 @@ class TestFunctionPointers:
             [
                 Typedef(
                     "callback",
+                    FunctionPointer(
+                        CType("int"),
+                        [Parameter(None, CType("int"))],
+                    ),
+                )
+            ],
+        )
+        assert_ir_to_pxd_equals(
+            header,
+            """cdef extern from "test.h":
+
+    ctypedef int (*callback)(int)
+""",
+            tmp_path,
+        )
+
+    def test_two_star_function_pointer_typedef(self, tmp_path):
+        header = Header(
+            "test.h",
+            [
+                Typedef(
+                    "callback",
                     Pointer(
                         FunctionPointer(
                             CType("int"),
@@ -323,7 +345,7 @@ class TestFunctionPointers:
             header,
             """cdef extern from "test.h":
 
-    ctypedef int (*callback)(int)
+    ctypedef int (**callback)(int)
 """,
             tmp_path,
         )
