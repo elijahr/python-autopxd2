@@ -7,7 +7,7 @@ name = "autopxd2"
 version = "4.0.4"
 description = "Automatically generate Cython pxd files from C headers"
 readme = "README.md"
-license = { file = "LICENSE" }
+license = "MIT"
 authors = [
   { name = "elijahr", email = "elijahr+autopxd2@gmail.com" },
   { name = "Emmanuel Leblond", email = "emmanuel.leblond@gmail.com" },

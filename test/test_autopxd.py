@@ -149,6 +149,64 @@ class TestHdrnameNormalization:
         )
         assert pxd == expected
 
+    def test_translate_custom_stub_cimport_prefix_and_nogil_str(self):
+        """translate() forwards custom stub_cimport_prefix and string-form nogil to write_pxd."""
+        code = "#include <stdarg.h>\nvoid vlog(va_list ap);\n"
+        pxd_custom_prefix = autopxd.translate(
+            code,
+            "log.h",
+            backend="libclang",
+            stub_cimport_prefix="my_pkg.stubs",
+            stub_mode="cimport",
+            nogil="nogil except *",
+        )
+        expected_custom_prefix = (
+            "from my_pkg.stubs.stdarg cimport va_list\n"
+            "\n"
+            'cdef extern from "log.h":\n'
+            "\n"
+            "    void vlog(va_list ap) nogil except *\n"
+        )
+        assert pxd_custom_prefix == expected_custom_prefix
+
+        pxd_no_prefix = autopxd.translate(
+            code,
+            "log.h",
+            backend="libclang",
+            stub_cimport_prefix=None,
+            stub_mode="cimport",
+            nogil="nogil",
+        )
+        expected_no_prefix = 'cdef extern from "log.h":\n\n    void vlog(va_list ap) nogil\n'
+        assert pxd_no_prefix == expected_no_prefix
+
+    def test_translate_custom_stub_cimport_prefix(self):
+        """translate() forwards non-default stub_cimport_prefix in stub_mode='cimport'."""
+        code = "#include <stdarg.h>\nvoid vlog(va_list ap);\n"
+        pxd = autopxd.translate(
+            code,
+            "log.h",
+            backend="libclang",
+            stub_mode="cimport",
+            stub_cimport_prefix="my_pkg.stubs",
+        )
+        expected = (
+            'from my_pkg.stubs.stdarg cimport va_list\n\ncdef extern from "log.h":\n\n    void vlog(va_list ap)\n'
+        )
+        assert pxd == expected
+
+    def test_translate_nogil_string_form(self):
+        """translate() forwards string-form nogil modifier directly to write_pxd."""
+        code = "void run(void);\n"
+        pxd = autopxd.translate(
+            code,
+            "run.h",
+            backend="libclang",
+            nogil="nogil except *",
+        )
+        expected = 'cdef extern from "run.h":\n\n    void run() nogil except *\n'
+        assert pxd == expected
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
