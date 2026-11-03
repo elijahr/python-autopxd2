@@ -176,7 +176,6 @@ class TestTypedefParsing:
         typedef = header.declarations[0]
         assert isinstance(typedef, Typedef)
         assert typedef.name == "callback"
-        assert isinstance(typedef.underlying_type, Pointer)
-        pointee = typedef.underlying_type.pointee
-        assert isinstance(pointee, FunctionPointer)
-        assert len(pointee.parameters) == 2
+        assert isinstance(typedef.underlying_type, FunctionPointer)
+        assert typedef.underlying_type.is_pointer is True
+        assert len(typedef.underlying_type.parameters) == 2

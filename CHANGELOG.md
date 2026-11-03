@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.1.0] - 2026-11-03
+
+### Added
+- `translate`: add optional `stub_cimport_prefix`, `stub_mode` (`"cimport"` or `"standalone"`), `nogil`, and `exception_spec` keyword arguments forwarded directly to `headerkit.writers.cython.write_pxd`, with test coverage for `stub_mode="standalone"`, custom `stub_cimport_prefix`, boolean/string `nogil`, and `exception_spec`.
+
+### Changed
+- Use PEP 639 SPDX license string (`license = "MIT"`) in `pyproject.toml` and add unit test coverage for custom `stub_cimport_prefix` and string-form `nogil` in `test/test_autopxd.py`.
+- Align `TestFunctionPointers` with 1-star `FunctionPointer` vs 2-star `Pointer(FunctionPointer)` IR semantics in `headerkit>=0.50.0`.
+- Replace manual declaration allowlist/denylist path-matching helpers in `autopxd/__init__.py` with `headerkit.transforms.builtin.FilterByHeader` and backend capability properties (`follows_includes`, `supports_compiler_args`).
+- Update `headerkit` and `headerkit[treesitter]` dependencies to `>=0.50.0` in `pyproject.toml`, `.pre-commit-config.yaml`, and `uv.lock`.
+
 ## [4.0.4] - 2026-10-30
 
 ### Changed

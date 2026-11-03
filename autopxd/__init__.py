@@ -1,27 +1,24 @@
-import fnmatch
 import json
 import os
 import sys
 import warnings
-from collections.abc import (
-    Callable,
-)
 from importlib.metadata import (
     version as get_version,
 )
 from typing import (
     IO,
+    Literal,
 )
 
 import click
-from headerkit import (
-    Declaration,
-)
 from headerkit.backends import (
     get_backend,
     get_backend_info,
     get_default_backend,
     is_backend_available,
+)
+from headerkit.transforms.builtin import (
+    FilterByHeader,
 )
 from headerkit.writers.cython import (
     write_pxd,
@@ -33,11 +30,6 @@ __version__ = get_version("autopxd2")
 def _debug_print(msg: str) -> None:
     """Print debug message to stderr."""
     print(f"[autopxd] {msg}", file=sys.stderr)
-
-
-def _normalize_for_match(path: str) -> str:
-    """Normalize a path for comparison, mirroring headerkit's ``normalize_path``."""
-    return path.replace("\\", "/").lower()
 
 
 def _normalize_hdrname(hdrname: str) -> str:
@@ -54,129 +46,6 @@ def _normalize_hdrname(hdrname: str) -> str:
     return hdrname
 
 
-def _list_search_dirs(hdrname: str, include_dirs: list[str] | None) -> list[str]:
-    """Directories a relative allowlist/denylist pattern is resolved against, in priority order.
-
-    Mirrors headerkit's rule: the parsed file's own directory first, then the
-    include search path, then the process working directory.
-    """
-    dirs = [os.path.dirname(os.path.abspath(hdrname)) or os.getcwd()]
-    if include_dirs:
-        dirs.extend(include_dirs)
-    dirs.append(os.getcwd())
-    return dirs
-
-
-def _pattern_candidates(pattern: str, search_dirs: list[str]) -> list[str]:
-    """Absolute forms an allowlist/denylist pattern may take, in priority order."""
-    if os.path.isabs(pattern):
-        absolute = os.path.abspath(pattern)
-        return [_normalize_for_match(absolute), _normalize_for_match(os.path.realpath(absolute))]
-    candidates: list[str] = []
-    for directory in search_dirs:
-        joined = os.path.abspath(os.path.join(directory, pattern))
-        for variant in (joined, os.path.realpath(joined)):
-            normalized = _normalize_for_match(variant)
-            if normalized not in candidates:
-                candidates.append(normalized)
-    return candidates
-
-
-def _pattern_matcher(
-    patterns: list[str],
-    search_dirs: list[str],
-) -> "Callable[[Declaration], bool]":
-    """Build a predicate reporting whether a declaration's file matches ``patterns``.
-
-    A pattern containing no path separator is matched against the declaration
-    file's BASENAME, so both a bare filename and a bare glob keep working
-    wherever the file lives.  A pattern containing a separator is matched
-    against the declaration file's absolute path; a relative such pattern is
-    resolved the way headerkit resolves one -- against the parsed file's own
-    directory first, then each include directory, then the working directory --
-    and matches if any of those resolutions matches.
-
-    Backends report ``location.file`` as whatever path reached the parser, which
-    is often relative (e.g. ``./tux_foo.h``), so both sides are made absolute
-    before comparison; symlinked and non-symlinked forms are both tried.
-
-    Path comparison is case-insensitive and separator-normalized for
-    cross-platform compatibility.
-    """
-    basename_patterns: list[str] = []
-    path_patterns: list[str] = []
-    for pattern in patterns:
-        normalized = pattern.replace("\\", "/")
-        if "/" in normalized:
-            path_patterns.append(_normalize_for_match(normalized))
-        else:
-            basename_patterns.append(_normalize_for_match(normalized))
-
-    resolved_patterns: list[str] = []
-    for pattern in path_patterns:
-        resolved_patterns.extend(_pattern_candidates(pattern, search_dirs))
-
-    def matches(decl: Declaration) -> bool:
-        if decl.location is None:
-            return False
-        decl_abs = os.path.abspath(decl.location.file)
-        decl_forms = {
-            _normalize_for_match(decl_abs),
-            _normalize_for_match(os.path.realpath(decl_abs)),
-        }
-        decl_base = _normalize_for_match(os.path.basename(decl_abs))
-        return any(fnmatch.fnmatch(decl_base, pattern) for pattern in basename_patterns) or any(
-            fnmatch.fnmatch(form, pattern) for form in decl_forms for pattern in resolved_patterns
-        )
-
-    return matches
-
-
-def _filter_declarations(
-    declarations: list[Declaration],
-    allowlist: list[str] | None = None,
-    denylist: list[str] | None = None,
-    hdrname: str = "",
-    include_dirs: list[str] | None = None,
-) -> list[Declaration]:
-    """Narrow declarations to the allowlist, then subtract the denylist.
-
-    headerkit applies both lists while parsing, but it never applies either to
-    the declarations of the file it was handed: an allowlist that omits the
-    input header still yields that header's declarations, and a denylist naming
-    it does not remove them.  This pass closes that gap, so the lists mean the
-    same thing for the root header as for every header it includes.
-
-    Deny is applied after allow, so a file matching both is excluded -- the same
-    precedence headerkit uses.
-
-    Declarations without location info are excluded when an allowlist is active,
-    because nothing can establish that they came from an allowed file.
-    """
-    search_dirs = _list_search_dirs(hdrname, include_dirs)
-    result = declarations
-    if allowlist:
-        allowed = _pattern_matcher(allowlist, search_dirs)
-        result = [decl for decl in result if allowed(decl)]
-    if denylist:
-        denied = _pattern_matcher(denylist, search_dirs)
-        result = [decl for decl in result if not denied(decl)]
-    return result
-
-
-_INCLUDE_FOLLOWING_BACKENDS = frozenset({"libclang"})
-
-
-def _backend_follows_includes(backend_name: str) -> bool:
-    """Report whether a backend resolves and parses ``#include`` directives.
-
-    Umbrella-header options only have something to act on when the backend
-    reads included files. A backend that parses just the text it is given
-    cannot honor them.
-    """
-    return backend_name.strip().lower() in _INCLUDE_FOLLOWING_BACKENDS
-
-
 def translate(
     code: str,
     hdrname: str,
@@ -190,6 +59,11 @@ def translate(
     max_depth: int | None = None,
     denylist: list[str] | None = None,
     whitelist: list[str] | None = None,
+    *,
+    stub_cimport_prefix: str | None = "headerkit.stubs",
+    stub_mode: Literal["cimport", "standalone"] = "cimport",
+    nogil: bool | str = False,
+    exception_spec: str | None = None,
 ) -> str:
     """Generate Cython .pxd from C/C++ header code.
 
@@ -222,6 +96,10 @@ def translate(
             excluded: deny wins over allow.
         whitelist: Deprecated alias for ``allowlist``. Emits
             :class:`DeprecationWarning`. Passing both raises :class:`ValueError`.
+        stub_cimport_prefix: Package prefix for Cython stub cimports.
+        stub_mode: Stub type resolution mode (``"cimport"`` or ``"standalone"``).
+        nogil: If True, append ``nogil`` to emitted function declarations.
+        exception_spec: Optional Cython exception specification (e.g. ``"+"``).
 
     Returns:
         Cython .pxd file contents.
@@ -246,7 +124,9 @@ def translate(
     else:
         backend_name = backend
 
-    if max_depth is not None and not _backend_follows_includes(backend_name):
+    backend_obj = get_backend(backend_name)
+
+    if max_depth is not None and not getattr(backend_obj, "follows_includes", backend_name == "libclang"):
         warnings.warn(
             f"The {backend_name} backend does not follow #include directives, so "
             f"max_depth={max_depth} cannot be honored and no declarations from "
@@ -263,9 +143,6 @@ def translate(
         if project_prefixes:
             _debug_print(f"Project prefixes: {project_prefixes}")
 
-    # Parse with backend
-    backend_obj = get_backend(backend_name)
-
     # Extract include_dirs from extra_args
     # Handle both "-I/path" and "-I", "/path" formats
     include_dirs: list[str] = []
@@ -273,11 +150,10 @@ def translate(
     args_iter = iter(extra_args or [])
     for arg in args_iter:
         if arg == "-I":
-            # Next arg is the path
             try:
                 include_dirs.append(next(args_iter))
             except StopIteration:
-                pass  # -I at end with no path, ignore
+                pass
         elif arg.startswith("-I"):
             include_dirs.append(arg[2:])
         else:
@@ -299,16 +175,13 @@ def translate(
     if debug:
         _debug_print(f"Found {len(header.declarations)} declarations")
 
-    # headerkit applies both lists while parsing, but never to the root header's
-    # own declarations; this pass makes the lists mean the same thing there.
     if allowlist or denylist:
-        header.declarations = _filter_declarations(
-            header.declarations,
+        header = FilterByHeader(
             allowlist=allowlist,
             denylist=denylist,
-            hdrname=hdrname,
+            header_path=hdrname,
             include_dirs=include_dirs or None,
-        )
+        ).transform(header)
         if debug:
             _debug_print(f"After allow/deny filtering: {len(header.declarations)} declarations")
 
@@ -318,7 +191,13 @@ def translate(
             _debug_print(f"  {type(decl).__name__}: {name}")
 
     # Generate pxd
-    return write_pxd(header)
+    return write_pxd(
+        header,
+        stub_cimport_prefix=stub_cimport_prefix,
+        stub_mode=stub_mode,
+        nogil=nogil,
+        exception_spec=exception_spec,
+    )
 
 
 CONTEXT_SETTINGS: dict[str, list[str]] = dict(help_option_names=["-h", "--help"])
@@ -597,10 +476,11 @@ def cli(
         cpp_mode = True
 
     resolved_backend = resolve_backend(backend)
+    backend_obj = get_backend(resolved_backend)
 
-    # --std and --clang-arg reach the compiler driver only on libclang; any other
-    # backend would drop them silently and emit plausible but wrong output.
-    if resolved_backend != "libclang":
+    # --std and --clang-arg reach the compiler driver only on backends that support compiler args;
+    # any other backend would drop them silently and emit plausible but wrong output.
+    if not getattr(backend_obj, "supports_compiler_args", resolved_backend == "libclang"):
         clang_only = []
         if std:
             clang_only.append("--std")
