@@ -23,7 +23,7 @@ repos:
         files: ^autopxd/
         additional_dependencies:
           - click
-          - "headerkit[treesitter]>=0.50.0"
+          - "headerkit[treesitter]>=0.50.1"
 
   - repo: https://github.com/mgedmin/check-manifest
     rev: "0.51"

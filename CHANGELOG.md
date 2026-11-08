@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.1.1] - 2026-11-08
+
+### Changed
+- Update `headerkit` and `headerkit[treesitter]` dependencies to `>=0.50.1` in `pyproject.toml`, `.pre-commit-config.yaml`, and `uv.lock`.
+
 ## [4.1.0] - 2026-11-03
 
 ### Added
@@ -338,7 +343,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - macOS support
 
-[Unreleased]: https://github.com/elijahr/python-autopxd2/compare/v4.0.4...HEAD
+[Unreleased]: https://github.com/elijahr/python-autopxd2/compare/v4.1.1...HEAD
+[4.1.1]: https://github.com/elijahr/python-autopxd2/compare/v4.1.0...v4.1.1
+[4.1.0]: https://github.com/elijahr/python-autopxd2/compare/v4.0.4...v4.1.0
 [4.0.4]: https://github.com/elijahr/python-autopxd2/compare/v4.0.3...v4.0.4
 [4.0.3]: https://github.com/elijahr/python-autopxd2/compare/v4.0.2...v4.0.3
 [4.0.2]: https://github.com/elijahr/python-autopxd2/compare/v4.0.1...v4.0.2
