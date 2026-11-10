@@ -51,7 +51,7 @@ class TestBackendInfo:
         """get_backend_info should return a list of backend info dicts."""
         info = get_backend_info()
         assert isinstance(info, list)
-        assert {b["name"] for b in info} == {"libclang", "tree-sitter"}
+        assert {b["name"] for b in info} == {"libclang", "nim", "nimony", "tree-sitter"}
 
     def test_backend_info_has_required_fields(self) -> None:
         """Each backend info should have name, available, default, description."""

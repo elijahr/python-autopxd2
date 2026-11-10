@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
-- Update `headerkit` and `headerkit[treesitter]` dependencies to `>=0.51.0` in `pyproject.toml`, `.pre-commit-config.yaml`, and `uv.lock`.
+- Update `headerkit` and `headerkit[treesitter]` dependencies to `>=0.51.0` in `pyproject.toml`, `.pre-commit-config.yaml`, and `uv.lock`, and align `TestBackendInfo.test_get_backend_info_returns_list` with `headerkit` 0.51.0's registered backends (`libclang`, `nim`, `nimony`, `tree-sitter`).
 
 ## [4.1.1] - 2026-11-08
 
