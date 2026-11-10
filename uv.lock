@@ -120,8 +120,8 @@ requires-dist = [
     { name = "autopxd2", extras = ["treesitter"], marker = "extra == 'test'" },
     { name = "click" },
     { name = "cython", marker = "extra == 'test'" },
-    { name = "headerkit", specifier = ">=0.50.1" },
-    { name = "headerkit", extras = ["treesitter"], marker = "extra == 'treesitter'", specifier = ">=0.50.1" },
+    { name = "headerkit", specifier = ">=0.51.0" },
+    { name = "headerkit", extras = ["treesitter"], marker = "extra == 'treesitter'", specifier = ">=0.51.0" },
     { name = "mike", marker = "extra == 'docs'", specifier = ">=2.0" },
     { name = "mkdocs", marker = "extra == 'docs'", specifier = ">=1.5" },
     { name = "mkdocs-material", marker = "extra == 'docs'", specifier = ">=9.0" },
@@ -419,11 +419,11 @@ wheels = [
 
 [[package]]
 name = "headerkit"
-version = "0.50.1"
+version = "0.51.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/a4/64/d6b2ce624a9aeb55d7e0ee69f197a1fa5a50abbc38d332e907c722b2df1b/headerkit-0.50.1.tar.gz", hash = "sha256:344f39cb1062df58832ab2f02446c374c6303c651f1985e82b7178fe57af1aae", size = 1492259, upload-time = "2026-11-08T20:51:37.006Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/3a/2d/55ed248c8aa6b33b29212c10d8ed83e1da306d78c80946e876f2aa37b636/headerkit-0.51.0.tar.gz", hash = "sha256:8ad304ef52dfe2336a80d6e0ad0924cc8af536de5628cd80cd170dc0f4a7bf6f", size = 1550216, upload-time = "2026-11-10T05:50:40.005Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d2/19/141df767286e0e681f9e76f2363c62ba7730588166b2d3a8e1b4c6fb2f82/headerkit-0.50.1-py3-none-any.whl", hash = "sha256:b67daf439a953149f889879c29add81e7e0a884616489d5937184c26b14e0149", size = 810190, upload-time = "2026-11-08T20:51:33.641Z" },
+    { url = "https://files.pythonhosted.org/packages/ac/83/cc1f10e07880b3d437a88bbc3318be101bb2bd304b36ecf32e0b613d08c7/headerkit-0.51.0-py3-none-any.whl", hash = "sha256:449e665188ec60058ec6b3e23d65ffec9901c02b73d448b01c1c1066b7da3af3", size = 850432, upload-time = "2026-11-10T05:50:38.003Z" },
 ]
 
 [package.optional-dependencies]
